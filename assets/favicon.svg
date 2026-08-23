@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" fill="#EDE9E2"/>
   <defs>
-    <clipPath id="b"><text x="16" y="24.8" font-family="Archivo,Arial,sans-serif" font-weight="800" font-size="25.6" text-anchor="middle">B</text></clipPath>
+    <clipPath id="b"><text x="16" y="24.8" font-family="Archivo,Arial,sans-serif" font-weight="800" font-size="25.6" text-anchor="middle">T</text></clipPath>
     <clipPath id="w"><polygon points="0,24.6 32,6.7 32,32 0,32"/></clipPath>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#16202B" stop-opacity=".40"/>
       <stop offset="1" stop-color="#16202B" stop-opacity=".08"/>
     </linearGradient>
   </defs>
-  <text x="16" y="24.8" font-family="Archivo,Arial,sans-serif" font-weight="800" font-size="25.6" text-anchor="middle" fill="#16202B">B</text>
+  <text x="16" y="24.8" font-family="Archivo,Arial,sans-serif" font-weight="800" font-size="25.6" text-anchor="middle" fill="#16202B">T</text>
   <g clip-path="url(#b)">
     <g clip-path="url(#w)">
       <image href="art/cumulus03.jpg" x="-38" y="-52" width="120" height="120" preserveAspectRatio="xMidYMid slice"/>

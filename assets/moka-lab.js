@@ -140,7 +140,7 @@
            than a straight lerp: the control point is the midpoint of its own
            start vector pushed perpendicular to it, alternating side, so the
            six arrive on arcs that sweep in from different directions. Same
-           technique as the fx-path curve in bonaventis-fx.js — the anchors
+           technique as the fx-path curve in telaventis-fx.js — the anchors
            are known, the handle is derived from them, nothing is hard-coded
            per fragment, so it holds at every viewport width. */
         var len=Math.sqrt(x*x+y*y)||1;

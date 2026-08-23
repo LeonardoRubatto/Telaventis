@@ -1,4 +1,4 @@
-/* Bonaventis — behaviour layer.
+/* Telaventis — behaviour layer.
  * 1) safety-net .js class (the authoritative one is the inline snippet in
  *    <head>, which runs before first paint; this just guarantees it's set)
  * 2) staggered reveal-on-scroll for [data-reveal] — a handful of major
@@ -215,7 +215,7 @@
   var MSG = {
     sending:  form.dataset.msgSending  || 'Envoi en cours…',
     success:  form.dataset.msgSuccess  || 'Message envoyé — vous recevrez une réponse écrite sous un jour ouvré.',
-    error:    form.dataset.msgError    || 'L’envoi a échoué. Réessayez, ou écrivez directement à hello@bonaventis.com.',
+    error:    form.dataset.msgError    || 'L’envoi a échoué. Réessayez, ou écrivez directement à hello@telaventis.com.',
     submitIdle:    form.dataset.msgSubmitIdle    || 'Envoyer →',
     submitSending: form.dataset.msgSubmitSending || 'Envoi en cours…',
     submitDone:    form.dataset.msgSubmitDone    || 'Envoyé ✓'

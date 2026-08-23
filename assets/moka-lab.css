@@ -9,7 +9,7 @@
       block from index.html / en/index.html / it/index.html.
    3. Delete the <script src="assets/moka-lab.js?v=..."> tag.
    4. Repoint the hero primary CTA at #selected-work instead of #direction-lab.
-   Nothing in bonaventis.css or bonaventis.js depends on this file, and
+   Nothing in telaventis.css or telaventis.js depends on this file, and
    nothing outside <section id="direction-lab"> depends on it either — nav,
    palette, type and every other homepage section are untouched by it. The
    #selected-work .proj--lead/--dark/--wide variants below are a separate,
@@ -26,7 +26,7 @@
 @keyframes mokaCue{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}
 
 .moka-story__track{height:520svh;position:relative}
-/* same 100dvh follow-up as .era__sticky in bonaventis-fx.css: svh alone
+/* same 100dvh follow-up as .era__sticky in telaventis-fx.css: svh alone
    can fall short of the real viewport once iOS Safari's toolbar auto-hides
    mid-scroll, leaving an uncovered sliver below the pinned box. */
 .moka-story__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden;background:var(--cream);isolation:isolate}

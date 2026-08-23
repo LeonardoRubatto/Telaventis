@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BONAVENTIS — FX layer
+   TELAVENTIS — FX layer
    Four scroll/viewport-driven effects, adapted (not copied) from published
    demos. Every one of them was originally written against a library — GSAP
    in three cases, Three.js in the fourth. None of that is used here: this
@@ -44,7 +44,7 @@
                  MotionPathPlugin.
 
    TO REMOVE THE WHOLE FX LAYER: delete this file's <link>, delete
-   assets/bonaventis-fx.js's <script>, and delete the
+   assets/telaventis-fx.js's <script>, and delete the
    <section id="digital-era"> block from the three index.html files.
    Nothing else depends on either file; every effect below is additive and
    every one of them has a visible, static, no-JS resting state.
@@ -143,7 +143,7 @@
    ========================================================================== */
 
 /* The pinned layout is opt-in and the script opts in: [data-era-live] is set
-   by bonaventis-fx.js the moment it has taken control of this section. Until
+   by telaventis-fx.js the moment it has taken control of this section. Until
    then — and forever, if the script is blocked, fails or is not loaded at
    all — the section is an ordinary stacked block of three readable panels in
    normal flow. Nothing here can leave a tall empty band behind. */
@@ -210,6 +210,26 @@
    already is. */
 .era__ripple{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
 
+/* ---- the seascape: mobile-only panning backdrop --------------------------
+   Desktop keeps the jellyfish (.era__aurora / .era__ripple, just above); on
+   mobile neither of those mounts at all any more (telaventis-fx.js, the
+   isMobileEra branch in §3b) — replaced by one large picture, generated
+   once and never redrawn, that the visitor pans sideways through as they
+   scroll. After Alex Andrix's "Jellyfish" (codepen jgyWww): what survives
+   the trip is the idea of one big, continuous painted scene you travel
+   across, not the jellyfish or the bubbles themselves — both read as noise
+   at phone size, which was the actual source of "unreadable" here. See
+   mentions-legales.html for the full credit.
+   Same z-index slot as .era__aurora — the two are mutually exclusive by
+   device (never both mounted at once), so there is no stacking conflict to
+   resolve between them. overflow:hidden on the wrapper is what turns the
+   oversized canvas inside it into a viewport onto one small window of a
+   much bigger picture; the canvas itself is only ever moved with
+   transform, never resized or redrawn, which is the whole reason panning
+   it costs nothing. */
+.era__sea{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+.era__sea-canvas{position:absolute;top:0;left:0;display:block;will-change:transform}
+
 /* the scroll cue only means anything while the section is pinned */
 .era__cue{display:none}
 
@@ -254,7 +274,7 @@
 /* Plain crossfade — no wipe, no rise, still deliberately the least amount
    of "effect" the text itself gets. What DOES get a flourish now is the
    pair of bubble words, which keep dissolving upward on their own canvas
-   for a while after this fade starts (EXIT_MS in bonaventis-fx.js) — so
+   for a while after this fade starts (EXIT_MS in telaventis-fx.js) — so
    the duration here stays matched to that and to the camera's own glide
    to the next vantage (GPU_SCENES' setView duration), all three tuned
    down together from an earlier pass that read as sluggish. The DEFAULT
@@ -355,24 +375,55 @@
      already just reads a threshold off however tall this is. */
   .era[data-era-live] .era__track{height:960svh}
   .era__body{padding:clamp(74px,12vh,98px) 22px clamp(58px,10vh,76px)}
-  .era__mix{font-size:35px}
-  /* still em (still tied to .era__mix above, still one number to tune —
-     see the comment on .era__w--key itself), just a smaller ratio than
-     desktop's 2.6em: the text column here is only ~280-330px wide, and
-     the longest key word at 2.6× a 35px phrase overflows it outright */
-  /* the JS skips the bubble-particle canvas for these words on mobile
-     entirely (see the .era__w--key comment in bonaventis-fx.js) — its own
-     palette is a handful of pale, low-contrast tones tuned to read on a
-     big screen, easy to lose on a small one. Plain coral instead, so the
-     couple of key words in the phrase stay unmistakably the couple of key
-     words: no particle canvas to be legible without. */
-  .era__w--key{font-size:1.5em;color:var(--coral-2)}
-  .era__note{font-size:15.5px}
+  /* Nothing here is fx-type any more — no particle canvas exists on mobile
+     at all (see the isMobileEra branch in telaventis-fx.js §3b), so every
+     word in the phrase is always just the plain DOM text underneath. What
+     used to differentiate the couple of [data-fx-key] words was a
+     different canvas and a fixed coral colour; now it's typography only —
+     a bigger, tilted, serif-italic setting of the same colour as the rest
+     of the sentence — because that colour is no longer a fixed guess: it's
+     --panel-fg, sampled by buildSea() in the JS off the actual patch of
+     the generated seascape sitting behind THIS panel, so it stays legible
+     wherever the pan happens to put it, not just against one assumed dark
+     background. --panel-shadow-rgb is the same sampling's inverse, so the
+     shadow always darkens against light text and lightens against dark
+     text instead of one shadow colour fighting whichever it landed on. */
+  .era__mix{
+    font-size:35px;
+    color:var(--panel-fg,var(--cream));
+    text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
+  }
+  /* asymmetric on purpose — the one deliberate flourish left in this
+     section now that there is no particle canvas to carry it. --key-rot/
+     --key-y are set once per word by telaventis-fx.js (a plain index
+     alternation, not read from anything about the word itself), so the
+     couple of key words in a phrase tilt in opposite directions rather
+     than mirroring each other. Still sized in em off .era__mix, same
+     reasoning as the desktop 2.6em ratio above: one number to tune, and
+     the text column here is only ~280–330px wide, so the ratio stays
+     smaller than desktop's or the longest key word overflows it outright. */
+  .era__w--key{
+    font-family:var(--serif);font-style:italic;font-weight:600;
+    font-size:1.7em;line-height:1;letter-spacing:-.008em;
+    color:var(--panel-fg,var(--cream));
+    text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 0 24px rgba(224,116,47,.32);
+    display:inline-block;transform:rotate(var(--key-rot,-2deg)) translateY(var(--key-y,0));
+  }
+  .era__note{
+    font-size:15.5px;
+    color:rgba(var(--panel-fg-rgb,237,233,226),.76);
+  }
+  /* panel 3's plain heading gets the same sampled colour — it sits over
+     the identical seascape, just without any [data-fx-key] words in it */
+  .era__phrase{
+    color:var(--panel-fg,var(--cream));
+    text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
+  }
 }
 
 /* ---- fx-type / era resting state ----------------------------------------
    The pinned layout above is gated entirely on [data-era-live], which only
-   bonaventis-fx.js sets and which it never sets under reduced motion. So
+   telaventis-fx.js sets and which it never sets under reduced motion. So
    "no JS", "script blocked" and "reduced motion" all land on the same
    resting state with no overrides at all: three panels stacked in normal
    flow, .era__mix as the one visible, readable copy of each phrase, nothing
@@ -385,7 +436,8 @@
   .era{background:#fff;color:#000}
   .era__sticky::before{display:none}
   .era__aurora{display:none !important}
-  .era__mix,.era__note{color:#000}
+  .era__sea{display:none !important}
+  .era__mix,.era__note,.era__phrase{color:#000}
   .era__w--key{color:#000}
   /* if the script did run, undo the pin so all three panels print */
   .era[data-era-live] .era__track{height:auto !important}

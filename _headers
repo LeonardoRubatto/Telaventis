@@ -1,0 +1,80 @@
+# Cloudflare Pages reads this file at deploy time and attaches these
+# response headers to every request it serves. See:
+# https://developers.cloudflare.com/pages/configuration/headers/
+#
+# The whole site is static HTML/CSS/JS — no server, no database, no
+# cookies, no user accounts — so most of the classic web attack surface
+# (SQL injection, server-side RCE, session hijacking, auth bypass) simply
+# does not apply. What IS worth locking down at this layer is the browser
+# side: what a malicious or compromised script could do if one ever got
+# onto the page, and how the site can be embedded or framed by others.
+#
+# Content-Security-Policy, directive by directive:
+#   default-src 'self'      baseline: only this origin, for anything not
+#                            covered by a more specific directive below.
+#   script-src               only same-origin script FILES (telaventis.js,
+#                            telaventis-fx.js, moka-lab.js, the aurelia.js
+#                            dynamic import — all self-hosted, nothing from
+#                            a CDN) plus one exact inline script, allow-
+#                            listed by its SHA-256 hash rather than a blanket
+#                            'unsafe-inline': the single
+#                              document.documentElement.classList.add('js')
+#                            line every page opens with. No 'unsafe-eval'
+#                            on purpose — the one thing on this site that
+#                            wants it is the optional WebGPU jellyfish in
+#                            assets/aurelia/aurelia.js (Three.js's shader
+#                            node system calls `new Function` internally);
+#                            that whole load is already wrapped in a
+#                            .catch() that falls back to the plain 2D
+#                            canvas version (see telaventis-fx.js), so
+#                            blocking it here just means every visitor
+#                            quietly gets the 2D fallback instead of a
+#                            script-level escape hatch staying open
+#                            site-wide. Re-add 'unsafe-eval' here if you'd
+#                            rather keep the WebGPU version and accept that
+#                            trade-off.
+#   style-src 'unsafe-inline' the one deliberate exception: the page design
+#                            leans on inline style="" attributes throughout
+#                            (not a CSS file to swap in). CSS injection is
+#                            real but far lower severity than script
+#                            injection — no arbitrary JS execution — so it
+#                            stays allowed while script-src stays strict.
+#   img-src / font-src       self-hosted only (assets/, incl. the woff2
+#                            font files); data: kept for img-src as a small
+#                            safety margin for inline data-URI assets.
+#   connect-src / form-action  'self' plus api.web3forms.com specifically:
+#                            the contact form's only network call, needed
+#                            for the fetch() in telaventis.js AND for the
+#                            <form action> itself (form-action is its own
+#                            CSP directive, separate from connect-src).
+#   frame-ancestors 'none'  refuses to be embedded in an <iframe> anywhere,
+#                            including this same site — the modern,
+#                            enforced-by-CSP replacement for X-Frame-Options
+#                            (kept below too, as a fallback for the very
+#                            few browsers that only understand the old
+#                            header). Blocks clickjacking outright: nothing
+#                            legitimately needs to iframe this site.
+#   object-src 'none'       no Flash/plugin content, ever.
+#   base-uri 'self'         stops a <base> tag injected via any future bug
+#                            from silently rewriting every relative link/
+#                            script/asset on the page to another origin.
+#   upgrade-insecure-requests  belt-and-braces on top of Cloudflare's own
+#                            automatic HTTPS.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; manifest-src 'self'; upgrade-insecure-requests
+
+# Every file in assets/ is either content-hashed by convention (the
+# ?v=NN query string bumped by hand on every edit — see the <link>/<script>
+# tags in any page) or genuinely static (fonts, art, icons). Either way the
+# URL changes the moment the content does, so caching it "forever" on the
+# CDN and in visitors' browsers is safe and meaningfully faster on repeat
+# visits — a page-speed signal search engines do factor in.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
