@@ -56161,9 +56161,9 @@ const ps = class ps {
     yo.materialInner.roughness = e, yo.materialOuter.roughness = e;
   }
 };
-q(ps, "uniforms", {}), /* Bonaventis integration: the original spawn was a single uniform draw
+q(ps, "uniforms", {}), /* Telaventis integration: the original spawn was a single uniform draw
    centred on 0 — which, since the camera always looks roughly at world
-   origin (see GPU_SCENES in bonaventis-fx.js), meant "roughly centred
+   origin (see GPU_SCENES in telaventis-fx.js), meant "roughly centred
    on screen" was the single most likely spot for a fresh medusa to
    appear, i.e. squarely behind the readable text every panel places
    there. This keeps the same rough footprint but carves the middle out

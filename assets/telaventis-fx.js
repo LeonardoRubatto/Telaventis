@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BONAVENTIS — FX layer (behaviour)
+   TELAVENTIS — FX layer (behaviour)
 
    Four effects adapted from published demos. Each source was written against
    a library (GSAP three times, Three.js once); none of that is loaded here.
@@ -7,7 +7,7 @@
    effect was re-derived from its source technique and rewritten in the same
    plain, single-rAF, progressive-enhancement idiom as moka-lab.js. What was
    kept, what was changed and why is documented per section below and in
-   assets/bonaventis-fx.css. Sources are credited in mentions-legales.html.
+   assets/telaventis-fx.css. Sources are credited in mentions-legales.html.
 
    Shared contract, identical to the rest of the site:
      · nothing is hidden before the script has proved it can reveal it again
@@ -31,7 +31,7 @@
   var SELF_SRC = (doc.currentScript && doc.currentScript.src) || (function () {
     var scripts = doc.getElementsByTagName('script');
     for (var i = scripts.length - 1; i >= 0; i--) {
-      if (/bonaventis-fx\.js/.test(scripts[i].src)) return scripts[i].src;
+      if (/telaventis-fx\.js/.test(scripts[i].src)) return scripts[i].src;
     }
     return '';
   }());
@@ -575,21 +575,6 @@
           bubbleSprite(240, 182, 122),
           bubbleSprite(172, 206, 216),
           bubbleSprite(248, 240, 225)
-        ],
-        /* Mobile-only variant of the same bubble (see the isMobileEra
-           branch above): all four tints pulled from the coral family
-           instead of "bubbles"' cream/pale-blue mix, and each one darker/
-           more saturated than that palette's own coral entry — but still
-           nowhere near the brand's actual darkest corals (--coral #B4441C,
-           --coral-ink #8A3616): the comment on `bubbles` above already
-           found that a color needs real distance from the #16202B ink
-           behind it to read as a bubble instead of a hole in the word, and
-           that same floor applies here just as much as it did there. */
-        coral: [
-          bubbleSprite(224, 116, 47),  /* --coral-2 */
-          bubbleSprite(217, 104, 43),
-          bubbleSprite(232, 168, 124),
-          bubbleSprite(240, 149, 90)
         ]
       };
       return SPRITES;
@@ -868,7 +853,7 @@
      animates by. Every frame, the script decides which of three states
      each panel is in — before, active, or after — from where the scroll
      currently sits; the actual motion between those states is a plain CSS
-     opacity crossfade (see .era__body in bonaventis-fx.css) that starts the
+     opacity crossfade (see .era__body in telaventis-fx.css) that starts the
      instant the class changes and then runs on its own clock. That split is
      deliberate: a mouse-wheel notch or a momentum flick does not deliver
      scroll in smooth, even steps, so a value that animates BY scroll
@@ -901,26 +886,24 @@
       var n = panels.length;
       var seg = 1 / n;
       /* same breakpoint as this section's own CSS (max-width:759px in
-         bonaventis-fx.css) — the couple of mobile-only cuts below (the
+         telaventis-fx.css) — the couple of mobile-only cuts below (the
          WebGPU jellyfish, the SVG text warp) both trade a purely
          decorative extra for real per-frame cost on exactly the class of
          device least able to absorb it. */
       var isMobileEra = mq('(max-width:759px)');
 
       var kinds = panels.map(function (p) { return p.getAttribute('data-fx-kind'); });
-      /* Mobile keeps the bubble-particle canvas (unlike the WebGPU
-         jellyfish and the SVG warp above, this one is cheap — a single
-         small offscreen canvas per key word) but swaps its palette: the
-         default "bubbles" set leans pale/pastel (cream, powder blue),
-         tuned to read on a big screen, and got lost on a small one. The
-         "coral" palette below is the same bubble shape, all in the site's
-         own coral family instead — see the coral: entry in getSprites()
-         for why it still stops short of the brand's darkest corals. */
+      /* Mobile drops the particle canvas entirely — not just its palette.
+         It used to keep a recoloured "coral" variant of it (see the
+         removed entry in getSprites()), but a scatter of small bubbles
+         turned out to be exactly the "unreadable" a phone-sized backdrop
+         also had to stop being; see the isMobileEra branch further down
+         for what replaced both of them. Every word here just stays the
+         plain DOM text it always was underneath the canvas. */
       var words = panels.map(function (p) {
-        if (!p.getAttribute('data-fx-kind')) return [];
-        var kind = isMobileEra ? 'coral' : p.getAttribute('data-fx-kind');
+        if (!p.getAttribute('data-fx-kind') || isMobileEra) return [];
         return [].slice.call(p.querySelectorAll('.era__w')).map(function (el) {
-          var glyph = fxType.makeKeyGlyph(el, kind);
+          var glyph = fxType.makeKeyGlyph(el, p.getAttribute('data-fx-kind'));
           return glyph && { el: el, glyph: glyph, key: el.classList.contains('era__w--key') };
         }).filter(Boolean);
       });
@@ -951,6 +934,18 @@
         if (ptr.x < r.left - rad || ptr.x > r.right + rad || ptr.y < r.top - rad || ptr.y > r.bottom + rad) return null;
         return { x: ptr.x - r.left, y: ptr.y - r.top, r: rad, active: true };
       };
+
+      /* ---- background layer: jellyfish (desktop) or seascape (mobile) ---
+         Exactly one of these two branches ever mounts — decided once here
+         by isMobileEra, the same split the WebGPU/2D and warp choices
+         already use elsewhere in this file. render() and the panel-change
+         trigger further down are shared by both and only ever call
+         renderAurora/renderRipple/setAuroraScene OR renderSea/setSeaScene,
+         whichever pair actually ran; `var` hoists every one of those names
+         to this whole callback's scope, so referencing whichever pair did
+         NOT run is simply undefined, never a ReferenceError — the same
+         reasoning the gpu/GPU_SCENES names below already relied on. */
+      if (!isMobileEra) {
       /* ---- the aurora backdrop ------------------------------------------
          "Aurelia" (holtsetio, https://github.com/holtsetio/aurelia) turns
          out to be a moon-jellyfish simulation, not a light effect the name
@@ -991,7 +986,7 @@
          this is a continuous trail where every bubble is born at its own
          moment, which fits a short-lived, self-contained loop better than
          bending drawParticles' shared-evap model to a spawner. A z-index
-         above either jellyfish layer (bonaventis-fx.css) keeps it visible
+         above either jellyfish layer (telaventis-fx.css) keeps it visible
          over whichever one is actually showing. */
       var rippleCanvas = doc.createElement('canvas');
       rippleCanvas.className = 'era__ripple';
@@ -1408,7 +1403,7 @@
           /* resolved against THIS SCRIPT's own captured location (SELF_SRC,
              top of file), not the page, so it finds assets/aurelia/aurelia.js
              at any page depth (site root or /en/, /it/) — same reasoning as
-             the ink-hover art path in bonaventis.js */
+             the ink-hover art path in telaventis.js */
           var url;
           try { url = new URL('aurelia/aurelia.js', SELF_SRC).href; }
           catch (e) { gpuLoading = false; return; }
@@ -1463,10 +1458,208 @@
            start the request at all. */
         loadGpu();
       }
+      } else {
+      /* ---- the seascape: one big picture, panned, never redrawn --------
+         After Alex Andrix's "Jellyfish" (codepen jgyWww) — see
+         mentions-legales.html for exactly what that credit covers. What
+         survives the trip from that demo is only the idea of one
+         continuous painted scene the visitor travels sideways through as
+         they scroll; neither the jellyfish nor the bubbles it actually
+         draws are used here — both read as noise at phone size, which is
+         the whole reason this branch exists instead of just reusing the
+         2D aurora above on mobile too.
+         The picture is generated once into an offscreen-sized canvas
+         (SEA_PAN_X/Y times the viewport) and never redrawn after that:
+         panel-to-panel motion and the slow ambient drift are both just a
+         CSS-composited translate3d() on that one canvas, so this costs
+         nothing like the 60fps redraw the aurora above needs. Scene order
+         (SEA_SCENES) deliberately does not sweep left-to-right in panel
+         order — a far corner, then a near one, then a middle one — so the
+         pan reads as "a different, unrelated patch of one big painting"
+         rather than a predictable slide in one direction. */
+      var eraSticky = era.querySelector('.era__sticky');
+      var seaWrap = doc.createElement('div');
+      seaWrap.className = 'era__sea';
+      seaWrap.setAttribute('aria-hidden', 'true');
+      var seaCanvas = doc.createElement('canvas');
+      seaCanvas.className = 'era__sea-canvas';
+      seaWrap.appendChild(seaCanvas);
+      eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
+
+      /* asymmetric, deterministic per key word rather than guessed from a
+         CSS structural selector — a phrase mixes plain and key <span>s, so
+         nth-of-type on the key ones alone would count position among ALL
+         of them and land unpredictably. Walked once, here, since none of
+         this ever needs to change again. */
+      [].forEach.call(era.querySelectorAll('.era__w--key'), function (el, idx) {
+        el.style.setProperty('--key-rot', idx % 2 ? '1.6deg' : '-2.3deg');
+        el.style.setProperty('--key-y', idx % 2 ? '.05em' : '-.04em');
+      });
+
+      var SEA_HUES = [
+        [224, 116, 47],   /* --coral-2 — the same warm tone era__sticky::before already glows with */
+        [51, 98, 122],    /* the cool teal from that same ::before gradient */
+        [96, 58, 78]      /* a muted plum — a third hue so the field reads as painted, not two-tone */
+      ];
+
+      /* No canvas-filter blur anywhere below: every field here is already
+         soft because it IS a radial gradient, which is both cheaper and
+         safer — blur is one of the few canvas ops several mobile browsers
+         still software-fall-back on, exactly the cost this whole branch
+         exists to avoid reintroducing. Alpha stays low on every layer on
+         purpose (never above ~.30) so the result can never drift bright
+         regardless of how the random placement lands — "not too bright,
+         not too much" kept as a hard ceiling in the numbers, not left to
+         chance. */
+      var drawSeaArt = function (ctx, W, H) {
+        ctx.clearRect(0, 0, W, H);
+        var base = ctx.createLinearGradient(0, 0, 0, H);
+        base.addColorStop(0, '#1C2833');
+        base.addColorStop(1, '#121A22');
+        ctx.fillStyle = base;
+        ctx.fillRect(0, 0, W, H);
+
+        var BLOBS = 10;
+        for (var i = 0; i < BLOBS; i++) {
+          var hue = SEA_HUES[i % SEA_HUES.length];
+          var cx = Math.random() * W, cy = Math.random() * H;
+          var r = (0.30 + Math.random() * 0.30) * Math.max(W, H) * 0.5;
+          var a = 0.13 + Math.random() * 0.15;
+          var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          g.addColorStop(0, 'rgba(' + hue[0] + ',' + hue[1] + ',' + hue[2] + ',' + a.toFixed(3) + ')');
+          g.addColorStop(1, 'rgba(' + hue[0] + ',' + hue[1] + ',' + hue[2] + ',0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        /* a few long, very faint currents — pure abstraction, no bell, no
+           tentacle, nothing figurative — just enough incident that the
+           field reads as one continuous painted thing rather than a stack
+           of circles */
+        ctx.lineCap = 'round';
+        for (var s = 0; s < 4; s++) {
+          var y0 = Math.random() * H;
+          ctx.beginPath();
+          ctx.moveTo(-40, y0);
+          ctx.bezierCurveTo(
+            W * 0.3, y0 + (Math.random() - 0.5) * H * 0.3,
+            W * 0.7, y0 + (Math.random() - 0.5) * H * 0.3,
+            W + 40, y0 + (Math.random() - 0.5) * H * 0.2
+          );
+          ctx.strokeStyle = 'rgba(237,233,226,' + (0.025 + Math.random() * 0.03).toFixed(3) + ')';
+          ctx.lineWidth = 40 + Math.random() * 80;
+          ctx.stroke();
+        }
+
+        /* the same cheap depth cue SPARK_N gives the desktop jellyfish
+           scene above — sparse enough to read as texture under text, not
+           content competing with it */
+        var SPECKS = Math.round(W * H / 9000);
+        for (var k = 0; k < SPECKS; k++) {
+          ctx.beginPath();
+          ctx.arc(Math.random() * W, Math.random() * H, 0.6 + Math.random() * 1.1, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(237,233,226,' + (0.05 + Math.random() * 0.08).toFixed(3) + ')';
+          ctx.fill();
+        }
+      };
+
+      /* relative luminance of a coarse grid sampled directly off the
+         canvas's own real pixels — not a guess at what the palette above
+         "should" produce — so the couple of words sitting over whatever
+         patch a panel actually lands on stay readable even if the random
+         placement above ever puts something unexpectedly light there.
+         Both outcomes are the exact same cream/ink pairing the rest of the
+         site already uses for light-on-dark vs dark-on-light text. */
+      var seaLuma = function (r, g, b) { return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+      var seaSampleDark = function (ctx, x0, y0, ww, hh, dpr) {
+        var sx = Math.max(0, Math.round(x0 * dpr)), sy = Math.max(0, Math.round(y0 * dpr));
+        var sw = Math.max(1, Math.round(ww * dpr)), sh = Math.max(1, Math.round(hh * dpr));
+        var data;
+        try { data = ctx.getImageData(sx, sy, sw, sh).data; } catch (e) { return true; }
+        var stride = Math.max(4, Math.round(20 * dpr));
+        var sum = 0, n = 0;
+        for (var y = 0; y < sh; y += stride) {
+          for (var x = 0; x < sw; x += stride) {
+            var idx = (y * sw + x) * 4;
+            sum += seaLuma(data[idx], data[idx + 1], data[idx + 2]);
+            n++;
+          }
+        }
+        return n ? (sum / n) < 0.5 : true;
+      };
+
+      var SEA_PAN_X = 2.6, SEA_PAN_Y = 1.5;
+      var SEA_SCENES = [
+        { x: 0.08, y: 0.16 },
+        { x: 0.90, y: 0.68 },
+        { x: 0.40, y: 0.02 }
+      ];
+      var seaRangeX = 0, seaRangeY = 0, seaBuilt = false;
+      var sea = { x: 0, y: 0, fx: 0, fy: 0, tx: 0, ty: 0 };
+      var seaT0 = 0;
+      var SEA_DUR = 1000; /* same pace as AURORA_DUR on the desktop branch */
+
+      var buildSea = function () {
+        var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
+        if (!w || !h) return false;
+        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        var bigW = Math.round(w * SEA_PAN_X), bigH = Math.round(h * SEA_PAN_Y);
+        seaCanvas.style.width = bigW + 'px';
+        seaCanvas.style.height = bigH + 'px';
+        seaCanvas.width = Math.round(bigW * dpr);
+        seaCanvas.height = Math.round(bigH * dpr);
+        var ctx = seaCanvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawSeaArt(ctx, bigW, bigH);
+        seaRangeX = Math.max(0, bigW - w);
+        seaRangeY = Math.max(0, bigH - h);
+        for (var i = 0; i < panels.length; i++) {
+          var sc = SEA_SCENES[i % SEA_SCENES.length];
+          var dark = seaSampleDark(ctx, sc.x * seaRangeX, sc.y * seaRangeY, w, h, dpr);
+          panels[i].style.setProperty('--panel-fg', dark ? 'var(--cream)' : 'var(--ink)');
+          panels[i].style.setProperty('--panel-fg-rgb', dark ? '237,233,226' : '22,32,43');
+          panels[i].style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
+        }
+        return true;
+      };
+
+      var setSeaScene = function (idx, now) {
+        idx = ((idx % SEA_SCENES.length) + SEA_SCENES.length) % SEA_SCENES.length;
+        var s = SEA_SCENES[idx];
+        sea.fx = sea.x; sea.fy = sea.y;
+        sea.tx = s.x; sea.ty = s.y;
+        seaT0 = now;
+      };
+
+      var renderSea = function (now) {
+        if (!seaBuilt) {
+          seaBuilt = buildSea();
+          if (!seaBuilt) return;
+          setSeaScene(Math.max(0, target), now);
+        }
+        var e = seaT0 ? easeInOutCubic(clamp((now - seaT0) / SEA_DUR, 0, 1)) : 1;
+        sea.x = sea.fx + (sea.tx - sea.fx) * e;
+        sea.y = sea.fy + (sea.ty - sea.fy) * e;
+        var t = now / 1000;
+        /* the same idle-drift idiom the desktop jelly uses above (two
+           unrelated sine harmonics per axis, so the path never repeats a
+           visible loop) — kept small, so it reads as the painting itself
+           breathing, not a second motion competing with the panel pan */
+        var dX = Math.sin(t * 0.07 + 1.1) * 0.5 + Math.sin(t * 0.023 + 3) * 0.5;
+        var dY = Math.sin(t * 0.05 + 0.4) * 0.5 + Math.sin(t * 0.019 + 2) * 0.5;
+        var offX = sea.x * seaRangeX + dX * Math.min(seaRangeX * 0.06, 22);
+        var offY = sea.y * seaRangeY + dY * Math.min(seaRangeY * 0.06, 16);
+        seaCanvas.style.transform = 'translate3d(' + (-offX).toFixed(1) + 'px,' + (-offY).toFixed(1) + 'px,0)';
+      };
+
+      onResize(function () { seaBuilt = false; });
+      }
 
       /* How long a departed panel's bubble words keep dissolving after the
          panel itself starts fading — matched to .era__body's own opacity
-         duration in bonaventis-fx.css (see the comment there) and close to
+         duration in telaventis-fx.css (see the comment there) and close to
          the camera's glide to the next vantage (gpu.setView's own ms
          below), so the fade, the rise-and-scatter, and the camera still
          read as one beat and not three separate cuts. Brought down from an
@@ -1529,13 +1722,18 @@
          land, so the pace a visitor sees is set by this number alone,
          never by scroll speed — a fast flick past several thresholds just
          plays each panel in turn at this same fixed pace instead of
-         glitching through them. Set to AURORA_DUR — the longest of the
-         handful of fixed-duration animations a step kicks off (the jelly/
-         camera glide, matching gpu.setView's own 1000ms below; the
-         .era__body crossfade and EXIT_MS bubble dissolve both finish
-         sooner, at 850ms) — so none of them is ever cut short by the next
-         step starting underneath it. */
-      var STEP_COOLDOWN_MS = AURORA_DUR;
+         glitching through them. 1000ms — the longest of the handful of
+         fixed-duration animations a step kicks off (the jelly/camera
+         glide on desktop, AURORA_DUR, matching gpu.setView's own 1000ms;
+         the seascape pan on mobile, SEA_DUR, the same number for the same
+         reason; the .era__body crossfade and EXIT_MS bubble dissolve both
+         finish sooner, at 850ms) — so none of them is ever cut short by
+         the next step starting underneath it. A literal here rather than
+         a reference to either AURORA_DUR or SEA_DUR: this line is shared
+         code that runs regardless of which of the two branches above
+         actually mounted, and whichever one did NOT run never assigned
+         its constant — see the comment where the two branches split. */
+      var STEP_COOLDOWN_MS = 1000;
       var lastStepAt = 0;
 
       var render = function (now) {
@@ -1575,21 +1773,25 @@
           var dir = target < 0 ? 1 : (next > target ? 1 : -1);
           target = next;
           lastStepAt = now;
-          setAuroraScene(target, now);
-          /* the real camera flying to a different vantage point in actual
-             3D space — the same trigger, the same idea as setAuroraScene
-             above, just driven by a real perspective camera instead of a
-             2D x/y/scale interpolation */
-          if (gpu && gpu.setView) {
-            var gscene = GPU_SCENES[target % GPU_SCENES.length];
-            gpu.setView(gscene[0], gscene[1], 1000);
+          if (isMobileEra) {
+            if (setSeaScene) setSeaScene(target, now);
+          } else {
+            setAuroraScene(target, now);
+            /* the real camera flying to a different vantage point in
+               actual 3D space — the same trigger, the same idea as
+               setAuroraScene above, just driven by a real perspective
+               camera instead of a 2D x/y/scale interpolation */
+            if (gpu && gpu.setView) {
+              var gscene = GPU_SCENES[target % GPU_SCENES.length];
+              gpu.setView(gscene[0], gscene[1], 1000);
+            }
           }
           for (var i = 0; i < n; i++) {
             applyState(i, i < target ? 'after' : (i > target ? 'before' : 'active'), now, dir);
           }
         }
-        renderAurora(now);
-        renderRipple(now);
+        if (isMobileEra) { if (renderSea) renderSea(now); }
+        else { renderAurora(now); renderRipple(now); }
 
         /* the same live cursor already tracked for the word-glyph canvases
            (ptr, above) also nudges any medusa it passes near — the sim

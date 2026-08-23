@@ -1,5 +1,5 @@
-/* Bonaventis — shared stylesheet.
-   Design language carried over from the Bonaventis.dc.html source: ink navy
+/* Telaventis — shared stylesheet.
+   Design language carried over from the Telaventis.dc.html source: ink navy
    (#16202B), warm cream (#EDE9E2), coral accent (#B4441C / #E0742F), Archivo
    for text, Source Serif 4 for longer-form copy. Rebuilt here as plain,
    dependency-free CSS + real HTML pages instead of the original templated
@@ -72,7 +72,7 @@ summary::-webkit-details-marker{display:none}
 
 /* ---- progressive-enhancement reveal --------------------------------------
    Content is visible by default (no JavaScript, JS failure, print, crawlers).
-   bonaventis.js adds .js to <html> before paint; only then do [data-reveal]
+   telaventis.js adds .js to <html> before paint; only then do [data-reveal]
    groups start hidden so they can animate in. If JS never runs, nothing is
    ever hidden. Applied to a handful of major narrative groups only — not to
    every card. */
@@ -107,8 +107,8 @@ html.js [data-reveal].in{opacity:1;transform:none}
    overwrites it wherever IT is visible, so only one clip-path is needed).
    The literal text lives once, in .nav__brand-top; .nav__brand-bottom is a
    duplicate marked aria-hidden, and the accessible name is carried by the
-   anchor's aria-label instead — the same pattern bonaventis-fx.js already
-   uses for split headings, so a screen reader announces "BONAVENTIS" once,
+   anchor's aria-label instead — the same pattern telaventis-fx.js already
+   uses for split headings, so a screen reader announces "TELAVENTIS" once,
    not twice. */
 .nav__brand-in{position:relative;display:inline-block}
 .nav__brand-top{display:block;color:inherit}
@@ -296,7 +296,7 @@ html.js [data-reveal].in{opacity:1;transform:none}
   .h-hero{font-size:clamp(40.5px,11.5vw,61.5px)}
   /* exact same component as desktop (same clip-path split, same two-tone
      ink/cream treatment) — the only difference is the word is allowed to
-     wrap at the single break point marked in the markup (BONA<wbr>VENTIS),
+     wrap at the single break point marked in the markup (TELA<wbr>VENTIS),
      and the container is twice as tall to fit two lines instead of one.
      Nothing else about the effect changes. */
   .hero__band{height:1.56em;font-size:27.3vw}
