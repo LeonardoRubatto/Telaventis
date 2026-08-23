@@ -1459,24 +1459,52 @@
         loadGpu();
       }
       } else {
-      /* ---- the seascape: one big picture, panned, never redrawn --------
-         After Alex Andrix's "Jellyfish" (codepen jgyWww) — see
-         mentions-legales.html for exactly what that credit covers. What
-         survives the trip from that demo is only the idea of one
-         continuous painted scene the visitor travels sideways through as
-         they scroll; neither the jellyfish nor the bubbles it actually
-         draws are used here — both read as noise at phone size, which is
-         the whole reason this branch exists instead of just reusing the
-         2D aurora above on mobile too.
-         The picture is generated once into an offscreen-sized canvas
-         (SEA_PAN_X/Y times the viewport) and never redrawn after that:
-         panel-to-panel motion and the slow ambient drift are both just a
-         CSS-composited translate3d() on that one canvas, so this costs
-         nothing like the 60fps redraw the aurora above needs. Scene order
-         (SEA_SCENES) deliberately does not sweep left-to-right in panel
-         order — a far corner, then a near one, then a middle one — so the
-         pan reads as "a different, unrelated patch of one big painting"
-         rather than a predictable slide in one direction. */
+      /* ---- the flow field: Alex Andrix's actual technique, tamed --------
+         codepen.io is not reachable from where this file is written, so
+         the very first pass here guessed at what "jgyWww" showed and
+         built an invented painted backdrop instead — wrong, and replaced
+         outright by this block. What runs below is verified against a
+         derivative that reproduces the real pen line-for-line and credits
+         it explicitly (github.com/rolandkorgowski, gist
+         9f1ce287db6c7efebb3e8b5ec49d1b2a, itself "inspired in very large
+         part by Alex Andrix's work… https://codepen.io/alexandrix/pen/
+         jgyWww"). The real pen — titled "A random world of Turbulence",
+         after earth.nullschool.net's wind map — is not jellyfish or
+         bubbles at all: a handful of invisible "eddies" (vortices) sum
+         into one velocity field; a swarm of particles drifts through it,
+         each drawn every frame as a short line from its last position to
+         its new one. createEddy/createParticle/move below are that
+         source's own maths, unchanged (radial pull toward each eddy's
+         radius + angular spin around it, falling off with distance —
+         see move() for the exact terms).
+         What changed, and why:
+         · The source's canvas is NEVER cleared — strokes accumulate
+           forever, which is fine for a standalone demo but would
+           eventually paint solid over the body text sitting on top of
+           it. FADE below stands in for that: a translucent ink wash
+           painted under every new stroke each frame, so old strokes
+           dim by degrees instead of staying at full strength — trails
+           still read as flowing threads, the canvas never climbs toward
+           opaque.
+         · Hue is still driven by particle speed exactly as the source
+           computes it — only the RANGE moved, from the full 0–360°
+           rainbow down to a band between this site's own coral and the
+           teal era__sticky::before already glows with, and lightness is
+           capped mid-tone rather than bright — "not too bright" was the
+           brief, and constraining the same speed-driven hue shift to two
+           brand hues gets there without giving up what made the source
+           read as alive.
+         · Reseeded — a fresh set of eddies AND a fresh particle swarm —
+           on every panel change, the same trigger as everything else in
+           this section; the source only ever reseeds on click or resize,
+           since it has no panels to react to. The still-fading old
+           trails already on the canvas cross-fade into the new field on
+           their own, for free, because FADE dims them regardless of
+           which simulation state produced them.
+         · Eddy/particle counts are a fraction of the source's 5/1000 —
+           this canvas is a phone-width strip behind body copy, not a
+           fullscreen standalone piece, and the per-particle maths is
+           identical either way. */
       var eraSticky = era.querySelector('.era__sticky');
       var seaWrap = doc.createElement('div');
       seaWrap.className = 'era__sea';
@@ -1485,6 +1513,7 @@
       seaCanvas.className = 'era__sea-canvas';
       seaWrap.appendChild(seaCanvas);
       eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
+      var seaCtx = seaCanvas.getContext('2d');
 
       /* asymmetric, deterministic per key word rather than guessed from a
          CSS structural selector — a phrase mixes plain and key <span>s, so
@@ -1496,162 +1525,173 @@
         el.style.setProperty('--key-y', idx % 2 ? '.05em' : '-.04em');
       });
 
-      var SEA_HUES = [
-        [224, 116, 47],   /* --coral-2 — the same warm tone era__sticky::before already glows with */
-        [51, 98, 122],    /* the cool teal from that same ::before gradient */
-        [96, 58, 78]      /* a muted plum — a third hue so the field reads as painted, not two-tone */
-      ];
+      var NB_EDDIES = 4, NB_PARTICLES = 240, LIFETIME = 420;
+      /* ~9% dimmer per frame under a fresh stroke ⇒ roughly a 1s half-life
+         at 60fps: long enough that motion still reads as trailing
+         threads, short enough that no patch of the canvas can drift
+         toward opaque underneath the text sitting on top of it. */
+      var FADE = 'rgba(18,26,34,.09)';
+      var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
 
-      /* No canvas-filter blur anywhere below: every field here is already
-         soft because it IS a radial gradient, which is both cheaper and
-         safer — blur is one of the few canvas ops several mobile browsers
-         still software-fall-back on, exactly the cost this whole branch
-         exists to avoid reintroducing. Alpha stays low on every layer on
-         purpose (never above ~.30) so the result can never drift bright
-         regardless of how the random placement lands — "not too bright,
-         not too much" kept as a hard ceiling in the numbers, not left to
-         chance. */
-      var drawSeaArt = function (ctx, W, H) {
-        ctx.clearRect(0, 0, W, H);
-        var base = ctx.createLinearGradient(0, 0, 0, H);
-        base.addColorStop(0, '#1C2833');
-        base.addColorStop(1, '#121A22');
-        ctx.fillStyle = base;
-        ctx.fillRect(0, 0, W, H);
+      var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
 
-        var BLOBS = 10;
-        for (var i = 0; i < BLOBS; i++) {
-          var hue = SEA_HUES[i % SEA_HUES.length];
-          var cx = Math.random() * W, cy = Math.random() * H;
-          var r = (0.30 + Math.random() * 0.30) * Math.max(W, H) * 0.5;
-          var a = 0.13 + Math.random() * 0.15;
-          var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-          g.addColorStop(0, 'rgba(' + hue[0] + ',' + hue[1] + ',' + hue[2] + ',' + a.toFixed(3) + ')');
-          g.addColorStop(1, 'rgba(' + hue[0] + ',' + hue[1] + ',' + hue[2] + ',0)');
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      /* alea/intAlea/createEddy/createParticle/move: the source's own
+         functions (same names, same signatures), only the constants
+         feeding them and the hue mapping at the very end of move() are
+         this site's. */
+      var alea = function (a, b) { return b === undefined ? a * Math.random() : a + (b - a) * Math.random(); };
+      var intAlea = function (a, b) { if (b === undefined) { b = a; a = 0; } return Math.floor(a + (b - a) * Math.random()); };
 
-        /* a few long, very faint currents — pure abstraction, no bell, no
-           tentacle, nothing figurative — just enough incident that the
-           field reads as one continuous painted thing rather than a stack
-           of circles */
-        ctx.lineCap = 'round';
-        for (var s = 0; s < 4; s++) {
-          var y0 = Math.random() * H;
-          ctx.beginPath();
-          ctx.moveTo(-40, y0);
-          ctx.bezierCurveTo(
-            W * 0.3, y0 + (Math.random() - 0.5) * H * 0.3,
-            W * 0.7, y0 + (Math.random() - 0.5) * H * 0.3,
-            W + 40, y0 + (Math.random() - 0.5) * H * 0.2
-          );
-          ctx.strokeStyle = 'rgba(237,233,226,' + (0.025 + Math.random() * 0.03).toFixed(3) + ')';
-          ctx.lineWidth = 40 + Math.random() * 80;
-          ctx.stroke();
-        }
-
-        /* the same cheap depth cue SPARK_N gives the desktop jellyfish
-           scene above — sparse enough to read as texture under text, not
-           content competing with it */
-        var SPECKS = Math.round(W * H / 9000);
-        for (var k = 0; k < SPECKS; k++) {
-          ctx.beginPath();
-          ctx.arc(Math.random() * W, Math.random() * H, 0.6 + Math.random() * 1.1, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(237,233,226,' + (0.05 + Math.random() * 0.08).toFixed(3) + ')';
-          ctx.fill();
-        }
+      var createEddy = function () {
+        return {
+          x: alea(dimx), y: alea(dimy),
+          coeffR: 0.001 * alea(0.7, 1.3),          /* coefficient for radial velocity */
+          radius: 90 + alea(-30, 30),               /* radius where angular velocity is max — smaller than the source's 150±50: this canvas is a phone-width strip, not a fullscreen window */
+          coeffA1: 10000 * alea(0.8, 1.2),          /* coefficient in exponent for angular velocity */
+          coeffA2: 0.01 * alea(0.8, 1.2),           /* multiplying coefficient for angular velocity */
+          dir: Math.random() > 0.5 ? 1 : -1         /* direction of rotation */
+        };
       };
 
-      /* relative luminance of a coarse grid sampled directly off the
-         canvas's own real pixels — not a guess at what the palette above
-         "should" produce — so the couple of words sitting over whatever
-         patch a panel actually lands on stay readable even if the random
-         placement above ever puts something unexpectedly light there.
-         Both outcomes are the exact same cream/ink pairing the rest of the
-         site already uses for light-on-dark vs dark-on-light text. */
-      var seaLuma = function (r, g, b) { return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
-      var seaSampleDark = function (ctx, x0, y0, ww, hh, dpr) {
-        var sx = Math.max(0, Math.round(x0 * dpr)), sy = Math.max(0, Math.round(y0 * dpr));
-        var sw = Math.max(1, Math.round(ww * dpr)), sh = Math.max(1, Math.round(hh * dpr));
-        var data;
-        try { data = ctx.getImageData(sx, sy, sw, sh).data; } catch (e) { return true; }
-        var stride = Math.max(4, Math.round(20 * dpr));
-        var sum = 0, n = 0;
-        for (var y = 0; y < sh; y += stride) {
-          for (var x = 0; x < sw; x += stride) {
-            var idx = (y * sw + x) * 4;
-            sum += seaLuma(data[idx], data[idx + 1], data[idx + 2]);
-            n++;
-          }
-        }
-        return n ? (sum / n) < 0.5 : true;
+      var createParticle = function () {
+        /* hue fixed per particle at birth — coral or teal, never anything
+           between: interpolating hue itself from 22° to 200° at render
+           time was tried first and rejected, because the short way round
+           the wheel between those two crosses yellow and green, which
+           read as neither brand colour. Keeping each thread a single
+           consistent hue and letting speed drive brightness instead (see
+           move()) keeps the palette to exactly the two colours intended. */
+        return {
+          x: alea(-40, dimx + 40), y: alea(-40, dimy + 40),
+          hue: (Math.random() < 0.5 ? HUE_LO : HUE_HI) + alea(-8, 8),
+          TTL: intAlea(LIFETIME * 0.8, LIFETIME * 1.2)
+        };
       };
 
-      var SEA_PAN_X = 2.6, SEA_PAN_Y = 1.5;
-      var SEA_SCENES = [
-        { x: 0.08, y: 0.16 },
-        { x: 0.90, y: 0.68 },
-        { x: 0.40, y: 0.02 }
-      ];
-      var seaRangeX = 0, seaRangeY = 0, seaBuilt = false;
-      var sea = { x: 0, y: 0, fx: 0, fy: 0, tx: 0, ty: 0 };
-      var seaT0 = 0;
-      var SEA_DUR = 1000; /* same pace as AURORA_DUR on the desktop branch */
+      var reseed = function () {
+        eddies = [];
+        for (var i = 0; i < NB_EDDIES; i++) eddies.push(createEddy());
+        particles = [];
+        for (var j = 0; j < NB_PARTICLES; j++) {
+          var p = createParticle();
+          p.TTL = intAlea(LIFETIME);   /* staggered, so this reseed doesn't die/respawn every particle in lockstep once TTL starts running out */
+          particles.push(p);
+        }
+      };
 
       var buildSea = function () {
         var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
         if (!w || !h) return false;
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        var bigW = Math.round(w * SEA_PAN_X), bigH = Math.round(h * SEA_PAN_Y);
-        seaCanvas.style.width = bigW + 'px';
-        seaCanvas.style.height = bigH + 'px';
-        seaCanvas.width = Math.round(bigW * dpr);
-        seaCanvas.height = Math.round(bigH * dpr);
-        var ctx = seaCanvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawSeaArt(ctx, bigW, bigH);
-        seaRangeX = Math.max(0, bigW - w);
-        seaRangeY = Math.max(0, bigH - h);
-        for (var i = 0; i < panels.length; i++) {
-          var sc = SEA_SCENES[i % SEA_SCENES.length];
-          var dark = seaSampleDark(ctx, sc.x * seaRangeX, sc.y * seaRangeY, w, h, dpr);
-          panels[i].style.setProperty('--panel-fg', dark ? 'var(--cream)' : 'var(--ink)');
-          panels[i].style.setProperty('--panel-fg-rgb', dark ? '237,233,226' : '22,32,43');
-          panels[i].style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
-        }
+        seaDpr = dpr;
+        dimx = w; dimy = h;
+        seaCanvas.style.width = w + 'px';
+        seaCanvas.style.height = h + 'px';
+        seaCanvas.width = Math.round(w * dpr);
+        seaCanvas.height = Math.round(h * dpr);
+        seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        seaCtx.lineWidth = 1.4;
+        seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
+        seaCtx.fillRect(0, 0, w, h);
+        reseed();
         return true;
       };
 
-      var setSeaScene = function (idx, now) {
-        idx = ((idx % SEA_SCENES.length) + SEA_SCENES.length) % SEA_SCENES.length;
-        var s = SEA_SCENES[idx];
-        sea.fx = sea.x; sea.fy = sea.y;
-        sea.tx = s.x; sea.ty = s.y;
-        seaT0 = now;
+      /* the source's move(), per particle: sum every eddy's radial + angular
+         contribution, advance the particle, stroke old→new, then colour
+         that stroke by how far it just moved. */
+      var moveSea = function () {
+        seaCtx.fillStyle = FADE;
+        seaCtx.fillRect(0, 0, dimx, dimy);
+        for (var k = 0; k < NB_PARTICLES; k++) {
+          var part = particles[k];
+          if (part.TTL <= 0) { part = createParticle(); particles[k] = part; }
+          var px = part.x, py = part.y;
+          for (var e = 0; e < eddies.length; e++) {
+            var ed = eddies[e];
+            var dx = px - ed.x, dy = py - ed.y;
+            var r = Math.hypot(dx, dy); if (r < 0.001) r = 0.001;
+            var s = dy / r, c = dx / r;
+            var deltar = r - ed.radius;
+            var av = ed.coeffA2 * Math.exp(-deltar * deltar / ed.coeffA1) * ed.dir;  /* angular velocity */
+            var rv = -deltar * ed.coeffR;                                            /* radial velocity */
+            part.x += rv * c - av * r * s;
+            part.y += rv * s + av * r * c;
+          }
+          part.TTL--;
+          var speed = Math.hypot(px - part.x, py - part.y);
+          /* the source's stroke is coloured by that frame's speed (hue =
+             min(speed*100,300)); here hue is fixed per particle (see
+             createParticle) and speed drives LIGHTNESS instead — same
+             underlying idea, "motion reads as brighter", without ever
+             producing a hue this palette doesn't own. 0.7 is tuned
+             against this field's actual per-frame speeds (roughly
+             0.3–1.5px, measured) so the range is used, not clipped at
+             one end; capped at 54% so even the fastest stroke stays
+             mid-tone, never pastel-bright. */
+          var light = 26 + Math.min(speed * 0.7, 1) * 28;
+          seaCtx.beginPath();
+          seaCtx.moveTo(px, py);
+          seaCtx.lineTo(part.x, part.y);
+          seaCtx.strokeStyle = 'hsl(' + part.hue.toFixed(0) + ',44%,' + light.toFixed(0) + '%)';
+          seaCtx.stroke();
+        }
       };
 
-      var renderSea = function (now) {
-        if (!seaBuilt) {
-          seaBuilt = buildSea();
-          if (!seaBuilt) return;
-          setSeaScene(Math.max(0, target), now);
+      /* ---- live contrast: read the pixels actually behind the active
+         phrase, not a guess about what the palette "should" produce.
+         A static background could be sampled once and trusted; this one
+         can't — particles genuinely pile up brighter wherever several of
+         them happen to pass at once, so a patch under the text can drift
+         lighter at any moment regardless of the fixed hue/lightness caps
+         above. Reading the true pixels is what makes "readable" a
+         guarantee instead of a hope. Threshold and both outcomes are the
+         same cream/ink pairing every other backdrop on this site already
+         uses for light-on-dark vs dark-on-light text; --panel-fg is set
+         on the <section> itself so it cascades to whichever panel is
+         actually showing (.era__mix, .era__w--key, .era__phrase, .era__note
+         in telaventis-fx.css all read it, with var(--cream) as the
+         resting-state fallback if this never runs at all). */
+      var sampleActiveTextFg = function () {
+        var activeText = era.querySelector('.era__panel.is-active .era__mix, .era__panel.is-active .era__phrase');
+        if (!activeText) return;
+        var cr = seaCanvas.getBoundingClientRect();
+        var tr = activeText.getBoundingClientRect();
+        var x0 = Math.max(0, tr.left - cr.left), y0 = Math.max(0, tr.top - cr.top);
+        var ww = Math.min(tr.width, cr.width - x0), hh = Math.min(tr.height, cr.height - y0);
+        if (ww <= 4 || hh <= 4) return;
+        var sx = Math.round(x0 * seaDpr), sy = Math.round(y0 * seaDpr);
+        var sw = Math.max(1, Math.round(ww * seaDpr)), sh = Math.max(1, Math.round(hh * seaDpr));
+        var data;
+        try { data = seaCtx.getImageData(sx, sy, sw, sh).data; } catch (e) { return; }
+        var stride = Math.max(4, Math.round(16 * seaDpr));
+        var sum = 0, n = 0;
+        for (var y = 0; y < sh; y += stride) {
+          for (var x = 0; x < sw; x += stride) {
+            var idx = (y * sw + x) * 4;
+            sum += (0.2126 * data[idx] + 0.7152 * data[idx + 1] + 0.0722 * data[idx + 2]) / 255;
+            n++;
+          }
         }
-        var e = seaT0 ? easeInOutCubic(clamp((now - seaT0) / SEA_DUR, 0, 1)) : 1;
-        sea.x = sea.fx + (sea.tx - sea.fx) * e;
-        sea.y = sea.fy + (sea.ty - sea.fy) * e;
-        var t = now / 1000;
-        /* the same idle-drift idiom the desktop jelly uses above (two
-           unrelated sine harmonics per axis, so the path never repeats a
-           visible loop) — kept small, so it reads as the painting itself
-           breathing, not a second motion competing with the panel pan */
-        var dX = Math.sin(t * 0.07 + 1.1) * 0.5 + Math.sin(t * 0.023 + 3) * 0.5;
-        var dY = Math.sin(t * 0.05 + 0.4) * 0.5 + Math.sin(t * 0.019 + 2) * 0.5;
-        var offX = sea.x * seaRangeX + dX * Math.min(seaRangeX * 0.06, 22);
-        var offY = sea.y * seaRangeY + dY * Math.min(seaRangeY * 0.06, 16);
-        seaCanvas.style.transform = 'translate3d(' + (-offX).toFixed(1) + 'px,' + (-offY).toFixed(1) + 'px,0)';
+        if (!n) return;
+        var dark = (sum / n) < 0.5;
+        era.style.setProperty('--panel-fg', dark ? 'var(--cream)' : 'var(--ink)');
+        era.style.setProperty('--panel-fg-rgb', dark ? '237,233,226' : '22,32,43');
+        era.style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
+      };
+
+      var setSeaScene = function () { if (seaBuilt) reseed(); };   /* idx/now args ignored — kept so the shared trigger below can call it identically to setAuroraScene */
+
+      var seaFrame = 0;
+      var renderSea = function () {
+        if (!seaBuilt) { seaBuilt = buildSea(); if (!seaBuilt) return; }
+        moveSea();
+        /* every 4th frame (~15×/s at 60fps) — frequent enough that a
+           brightening patch under the text gets caught well within a
+           blink, cheap enough (getImageData forces a GPU→CPU readback)
+           to not be worth paying for on every single frame */
+        seaFrame++;
+        if (seaFrame % 4 === 0) sampleActiveTextFg();
       };
 
       onResize(function () { seaBuilt = false; });

@@ -210,25 +210,20 @@
    already is. */
 .era__ripple{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
 
-/* ---- the seascape: mobile-only panning backdrop --------------------------
+/* ---- the flow field: mobile-only backdrop ---------------------------------
    Desktop keeps the jellyfish (.era__aurora / .era__ripple, just above); on
    mobile neither of those mounts at all any more (telaventis-fx.js, the
-   isMobileEra branch in §3b) — replaced by one large picture, generated
-   once and never redrawn, that the visitor pans sideways through as they
-   scroll. After Alex Andrix's "Jellyfish" (codepen jgyWww): what survives
-   the trip is the idea of one big, continuous painted scene you travel
-   across, not the jellyfish or the bubbles themselves — both read as noise
-   at phone size, which was the actual source of "unreadable" here. See
-   mentions-legales.html for the full credit.
+   isMobileEra branch in §3b) — replaced by Alex Andrix's actual "A random
+   world of Turbulence" technique (codepen jgyWww), a live particle/eddy
+   velocity-field simulation, redrawn every frame at a viewport-sized canvas
+   (not the oversized panned picture an earlier pass here guessed at and
+   got wrong — see the long comment in telaventis-fx.js for exactly what
+   was verified and what changed). See mentions-legales.html for the credit.
    Same z-index slot as .era__aurora — the two are mutually exclusive by
    device (never both mounted at once), so there is no stacking conflict to
-   resolve between them. overflow:hidden on the wrapper is what turns the
-   oversized canvas inside it into a viewport onto one small window of a
-   much bigger picture; the canvas itself is only ever moved with
-   transform, never resized or redrawn, which is the whole reason panning
-   it costs nothing. */
+   resolve between them. */
 .era__sea{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
-.era__sea-canvas{position:absolute;top:0;left:0;display:block;will-change:transform}
+.era__sea-canvas{position:absolute;top:0;left:0;display:block}
 
 /* the scroll cue only means anything while the section is pinned */
 .era__cue{display:none}
