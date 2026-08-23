@@ -1694,7 +1694,20 @@
         era.style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
       };
 
-      var setSeaScene = function () { if (seaBuilt) reseed(); };   /* idx/now args ignored — kept so the shared trigger below can call it identically to setAuroraScene */
+      /* idx is ignored (no per-panel scene table like the desktop's
+         AURORA_SCENES — the field itself is the whole backdrop, there is
+         nothing panel-specific to look up); `pending` is what matters.
+         true = the trigger just stepped one leg of a longer catch-up and
+         the true scroll position (raw) still hasn't been reached, so
+         this call is skipped outright — reseeding here would be exactly
+         the flicker being fixed. false = target has actually caught up
+         to raw, i.e. the scroll has genuinely settled on this panel (the
+         common case — one step, immediately settled — reaches this
+         branch on its very first and only call), so this is the one
+         real reseed for wherever the visitor ended up. Net effect: a
+         single fast fling across the whole track still only ever
+         reseeds once, right at the end, not once per intermediate step. */
+      var setSeaScene = function (idx, pending) { if (seaBuilt && !pending) reseed(); };
 
       var seaNeedsReseed = true;   /* true for the very first build; after that, only a genuine width change (set by onResize, below) asks for another — a height-only resize (mobile address-bar collapse) does not */
       var seaFrame = 0;
@@ -1846,7 +1859,17 @@
           target = next;
           lastStepAt = now;
           if (isMobileEra) {
-            if (setSeaScene) setSeaScene(target, now);
+            /* raw !== target here means the step just taken is only a
+               COOLDOWN-PACED leg of a longer catch-up — the scroll has
+               already carried the visitor further than one step's worth
+               (a fast fling on a 960svh track easily does), and
+               STEP_COOLDOWN_MS below only allows one step per second, so
+               reaching where the scroll actually is can take several
+               more frames yet. Reseeding on every one of those legs is
+               exactly what read as the background "changing 2-3 times"
+               even while the visitor wasn't actively scrolling any more
+               — see setSeaScene. */
+            if (setSeaScene) setSeaScene(target, raw !== target);
           } else {
             setAuroraScene(target, now);
             /* the real camera flying to a different vantage point in
