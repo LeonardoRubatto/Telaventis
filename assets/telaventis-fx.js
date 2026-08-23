@@ -1579,35 +1579,41 @@
         }
       };
 
-      var seaBuiltW = 0;
+      /* The canvas is deliberately built TALLER than the viewport that
+         asked for it (SEA_HEADROOM). Setting .width/.height always wipes a
+         canvas's pixel buffer — there is no way to resize one and keep what
+         is drawn on it — so every rebuild instantly erases every accumulated
+         trail and restarts the field from black. That wipe is itself a
+         visible flash, entirely separate from reseeding, and mobile browsers
+         provoke it constantly: their address bar collapses and expands
+         DURING the very scroll that carries a visitor from the hero into
+         this section, changing clientHeight (never width) two or three times
+         in one gesture. Building with headroom means those height changes
+         land INSIDE the canvas that already exists, so onResize below can
+         skip the rebuild altogether rather than merely making it cheaper.
+         The wrapper is overflow:hidden, so the extra height is simply
+         clipped; dimx/dimy are the canvas's own box (not the viewport) so
+         the simulation fills all of it and no empty band can ever scroll
+         into view when the toolbar retracts. */
+      var SEA_HEADROOM = 1.25;
+      var seaCanvasW = 0, seaCanvasH = 0;
       var buildSea = function (keepField) {
         var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
         if (!w || !h) return false;
+        var ch = Math.round(Math.max(h * SEA_HEADROOM, seaCanvasH));
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         seaDpr = dpr;
-        dimx = w; dimy = h;
+        dimx = w; dimy = ch;
         seaCanvas.style.width = w + 'px';
-        seaCanvas.style.height = h + 'px';
-        /* setting .width/.height always wipes the canvas's own pixels —
-           there is no way around a repaint here — but reseed() (a whole
-           new set of eddies AND particles, i.e. a visibly different
-           swirl) is a separate, avoidable cost: keepField skips it so a
-           resize just continues the SAME field at its new size instead
-           of jumping to a new one. See the onResize handler below for
-           why this matters in practice: mobile browsers collapse/expand
-           their own address bar DURING the very scroll that carries a
-           visitor from the hero into this section, firing exactly this
-           resize path — without keepField that reseeded the whole field
-           every time the bar moved, which is what visibly "changed 3-4
-           times" on the way in. */
+        seaCanvas.style.height = ch + 'px';
         seaCanvas.width = Math.round(w * dpr);
-        seaCanvas.height = Math.round(h * dpr);
+        seaCanvas.height = Math.round(ch * dpr);
         seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
         seaCtx.lineWidth = 1.4;
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
-        seaCtx.fillRect(0, 0, w, h);
+        seaCtx.fillRect(0, 0, w, ch);
         if (!keepField) reseed();
-        seaBuiltW = w;
+        seaCanvasW = w; seaCanvasH = ch;
         return true;
       };
 
@@ -1707,7 +1713,14 @@
          real reseed for wherever the visitor ended up. Net effect: a
          single fast fling across the whole track still only ever
          reseeds once, right at the end, not once per intermediate step. */
-      var setSeaScene = function (idx, pending) { if (seaBuilt && !pending) reseed(); };
+      /* No setSeaScene(): the field is NOT reseeded when the scroll moves
+         from one phrase to the next. Reseeding swaps every eddy and every
+         particle at once, which is exactly the "different positions" flash
+         being reported — and unlike the source demo (which only ever
+         reseeds on an explicit click or a resize) there is nothing here
+         that needs it: the field is a continuously living backdrop, not a
+         per-panel illustration. Panel changes are carried entirely by the
+         text crossfade above. Seeded once, then left alone. */
 
       var seaNeedsReseed = true;   /* true for the very first build; after that, only a genuine width change (set by onResize, below) asks for another — a height-only resize (mobile address-bar collapse) does not */
       var seaFrame = 0;
@@ -1727,17 +1740,20 @@
       };
 
       onResize(function () {
-        /* every resize invalidates the canvas's own pixel buffer (setting
-           .width/.height always clears it, so it has to be re-measured
-           and repainted regardless) — but only a real WIDTH change also
-           asks buildSea() for a fresh reseed. Mobile browsers fire this
-           same resize path purely from their own address bar collapsing
-           or expanding mid-scroll — height changes, width does not — and
-           reseeding on that was the actual bug: the field visibly jumped
-           to a new arrangement every time the bar moved, often 2–3 times
-           in the single scroll gesture that carries a visitor from the
-           hero into this section. */
-        if (eraSticky && Math.abs(eraSticky.clientWidth - seaBuiltW) > 2) seaNeedsReseed = true;
+        if (!eraSticky) return;
+        var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
+        /* The common mobile case — the address bar sliding in or out
+           mid-scroll — changes height only, and thanks to SEA_HEADROOM the
+           new height still fits inside the canvas that is already drawn. So
+           there is nothing to do at all: no rebuild, no wipe, no reseed. The
+           field just keeps running, which is the whole point. */
+        if (w === seaCanvasW && h <= seaCanvasH) return;
+        /* A genuine WIDTH change (rotation, desktop window resize) is a real
+           layout change and does start over, exactly as the source demo does
+           on resize. A height change big enough to outgrow the headroom only
+           needs the canvas re-made at the larger size — the field itself
+           carries over untouched. */
+        if (Math.abs(w - seaCanvasW) > 2) seaNeedsReseed = true;
         seaBuilt = false;
       });
       }
@@ -1794,6 +1810,29 @@
       /* Only now does the CSS switch from the plain stacked resting state to
          the pinned one — a throw anywhere above leaves the section readable. */
       era.setAttribute('data-era-live', '');
+
+      /* Seed the mobile field NOW, while the visitor is still up on the
+         hero, rather than lazily on the first frame the section is actually
+         on screen. Two reasons, both about the arrival being settled before
+         anyone can see it:
+         · The pinned layout only exists once [data-era-live] is set, one
+           line above — which is why this sits here and not inside the
+           mobile branch itself: only from this point does .era__sticky have
+           its real 100dvh box to measure.
+         · Building lazily meant the very first frame of the field was drawn
+           at whatever instant the section scrolled into view, i.e. in the
+           middle of the arriving scroll, and any panel step that same
+           gesture triggered landed on top of it. Deciding it up front makes
+           the first phrase's backdrop a fact before the scroll starts, so
+           there is nothing left to re-decide on the way in.
+         renderSea() keeps its own lazy build as a fallback for the one case
+         this cannot cover: a layout that still measures 0 here (display
+         none, a font/layout pass not yet flushed), where seaBuilt stays
+         false and the first on-screen frame builds it exactly as before. */
+      if (isMobileEra && typeof buildSea === 'function' && !seaBuilt) {
+        seaBuilt = buildSea(false);
+        if (seaBuilt) seaNeedsReseed = false;
+      }
 
       var target = -1;
       /* Two problems, one fix: on a fast flick `raw` can land several
@@ -1858,19 +1897,7 @@
           var dir = target < 0 ? 1 : (next > target ? 1 : -1);
           target = next;
           lastStepAt = now;
-          if (isMobileEra) {
-            /* raw !== target here means the step just taken is only a
-               COOLDOWN-PACED leg of a longer catch-up — the scroll has
-               already carried the visitor further than one step's worth
-               (a fast fling on a 960svh track easily does), and
-               STEP_COOLDOWN_MS below only allows one step per second, so
-               reaching where the scroll actually is can take several
-               more frames yet. Reseeding on every one of those legs is
-               exactly what read as the background "changing 2-3 times"
-               even while the visitor wasn't actively scrolling any more
-               — see setSeaScene. */
-            if (setSeaScene) setSeaScene(target, raw !== target);
-          } else {
+          if (!isMobileEra) {
             setAuroraScene(target, now);
             /* the real camera flying to a different vantage point in
                actual 3D space — the same trigger, the same idea as
