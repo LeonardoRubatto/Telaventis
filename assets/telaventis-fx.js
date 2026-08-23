@@ -1579,7 +1579,8 @@
         }
       };
 
-      var buildSea = function () {
+      var seaBuiltW = 0;
+      var buildSea = function (keepField) {
         var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
         if (!w || !h) return false;
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -1587,13 +1588,26 @@
         dimx = w; dimy = h;
         seaCanvas.style.width = w + 'px';
         seaCanvas.style.height = h + 'px';
+        /* setting .width/.height always wipes the canvas's own pixels —
+           there is no way around a repaint here — but reseed() (a whole
+           new set of eddies AND particles, i.e. a visibly different
+           swirl) is a separate, avoidable cost: keepField skips it so a
+           resize just continues the SAME field at its new size instead
+           of jumping to a new one. See the onResize handler below for
+           why this matters in practice: mobile browsers collapse/expand
+           their own address bar DURING the very scroll that carries a
+           visitor from the hero into this section, firing exactly this
+           resize path — without keepField that reseeded the whole field
+           every time the bar moved, which is what visibly "changed 3-4
+           times" on the way in. */
         seaCanvas.width = Math.round(w * dpr);
         seaCanvas.height = Math.round(h * dpr);
         seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
         seaCtx.lineWidth = 1.4;
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
         seaCtx.fillRect(0, 0, w, h);
-        reseed();
+        if (!keepField) reseed();
+        seaBuiltW = w;
         return true;
       };
 
@@ -1682,9 +1696,14 @@
 
       var setSeaScene = function () { if (seaBuilt) reseed(); };   /* idx/now args ignored — kept so the shared trigger below can call it identically to setAuroraScene */
 
+      var seaNeedsReseed = true;   /* true for the very first build; after that, only a genuine width change (set by onResize, below) asks for another — a height-only resize (mobile address-bar collapse) does not */
       var seaFrame = 0;
       var renderSea = function () {
-        if (!seaBuilt) { seaBuilt = buildSea(); if (!seaBuilt) return; }
+        if (!seaBuilt) {
+          seaBuilt = buildSea(!seaNeedsReseed);
+          seaNeedsReseed = false;
+          if (!seaBuilt) return;
+        }
         moveSea();
         /* every 4th frame (~15×/s at 60fps) — frequent enough that a
            brightening patch under the text gets caught well within a
@@ -1694,7 +1713,20 @@
         if (seaFrame % 4 === 0) sampleActiveTextFg();
       };
 
-      onResize(function () { seaBuilt = false; });
+      onResize(function () {
+        /* every resize invalidates the canvas's own pixel buffer (setting
+           .width/.height always clears it, so it has to be re-measured
+           and repainted regardless) — but only a real WIDTH change also
+           asks buildSea() for a fresh reseed. Mobile browsers fire this
+           same resize path purely from their own address bar collapsing
+           or expanding mid-scroll — height changes, width does not — and
+           reseeding on that was the actual bug: the field visibly jumped
+           to a new arrangement every time the bar moved, often 2–3 times
+           in the single scroll gesture that carries a visitor from the
+           hero into this section. */
+        if (eraSticky && Math.abs(eraSticky.clientWidth - seaBuiltW) > 2) seaNeedsReseed = true;
+        seaBuilt = false;
+      });
       }
 
       /* How long a departed panel's bubble words keep dissolving after the
