@@ -1,11 +1,11 @@
 # Cloudflare Pages redirect rules: https://developers.cloudflare.com/pages/configuration/redirects/
 #
-# Canonical host is the bare apex, telaventis.com (see every <link
+# Canonical host is the bare apex, telaventis.fr (see every <link
 # rel="canonical"> and sitemap.xml). This rule only does anything once
-# www.telaventis.com is ALSO added as a custom domain on the Pages project
+# www.telaventis.fr is ALSO added as a custom domain on the Pages project
 # pointing here — until then it is simply inert. Once it is, this stops
 # the site being reachable at two different hostnames at once, which
 # search engines would otherwise treat as duplicate content and which
 # gives a spoofer one more look-alike surface to register a lookalike TLS
 # cert against and phish from.
-https://www.telaventis.com/* https://telaventis.com/:splat 301!
+https://www.telaventis.fr/* https://telaventis.fr/:splat 301!
