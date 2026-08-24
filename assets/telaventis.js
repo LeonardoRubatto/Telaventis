@@ -215,7 +215,7 @@
   var MSG = {
     sending:  form.dataset.msgSending  || 'Envoi en cours…',
     success:  form.dataset.msgSuccess  || 'Message envoyé — vous recevrez une réponse écrite sous un jour ouvré.',
-    error:    form.dataset.msgError    || 'L’envoi a échoué. Réessayez, ou écrivez directement à hello@telaventis.com.',
+    error:    form.dataset.msgError    || 'L’envoi a échoué. Réessayez, ou écrivez directement à hello@telaventis.fr.',
     submitIdle:    form.dataset.msgSubmitIdle    || 'Envoyer →',
     submitSending: form.dataset.msgSubmitSending || 'Envoi en cours…',
     submitDone:    form.dataset.msgSubmitDone    || 'Envoyé ✓'
