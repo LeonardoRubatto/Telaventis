@@ -1501,13 +1501,14 @@
            trails already on the canvas cross-fade into the new field on
            their own, for free, because FADE dims them regardless of
            which simulation state produced them.
-         · Eddy/particle counts stay well under the source's 5/1000 —
-           this canvas is a phone-width strip behind body copy, not a
-           fullscreen standalone piece, and the per-particle maths is
-           identical either way. Tuned up from an earlier, sparser pass
-           (4/240) that read as too empty on a tall phone canvas — more
-           eddies and particles fill the strip fuller without approaching
-           the source's own density. */
+         · Eddy/particle counts now sit close to the source's own 5/1000 —
+           an earlier, sparser pass (4/240, then 5/380) still read as
+           thin lines with visible gaps rather than the dense, almost-
+           solid grooves the original pen traces once its eddies have
+           had a couple of seconds to fill in. Getting that same filled-
+           in look needed both more particles AND a much slower fade (see
+           FADE below) — density alone with the old fast fade still faded
+           each stroke before enough of its neighbours had overlapped it. */
       var eraSticky = era.querySelector('.era__sticky');
       var seaWrap = doc.createElement('div');
       seaWrap.className = 'era__sea';
@@ -1518,13 +1519,23 @@
       eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
       var seaCtx = seaCanvas.getContext('2d');
 
-      var NB_EDDIES = 5, NB_PARTICLES = 380, LIFETIME = 420;
-      /* ~7.5% dimmer per frame under a fresh stroke ⇒ a bit over a 1s
-         half-life at 60fps — slightly longer than the previous 9% so
-         trails accumulate into a fuller field before fading, while still
-         staying well short of any patch drifting toward opaque underneath
-         the text sitting on top of it. */
-      var FADE = 'rgba(18,26,34,.075)';
+      var NB_EDDIES = 5, NB_PARTICLES = 900, LIFETIME = 420;
+      /* Pulled back from an even slower first try (2%/frame): left running
+         a few seconds, that settled into exactly what the source pen's own
+         screenshot shows — two tight, saturated vortices on an otherwise
+         mostly BLACK canvas, because particles keep drifting off toward
+         the eddies and the fade is slow enough that everywhere else has
+         time to go fully dark before fresh particles (reborn at random
+         positions — see createParticle) refill it. ~4.5%/frame (~0.25s
+         half-life) is the middle point: still several times slower than
+         the original 9%/7.5% passes, so strokes still overlap into real
+         grooves instead of thin scattered lines, but fast enough that
+         emptier patches keep getting refreshed before they go black —
+         dense texture across the whole field, not two blobs on a void.
+         Still a live fade, never a static painting: --panel-fg/
+         --panel-shadow-rgb below keep sampling the real pixels each
+         frame, so text contrast keeps adapting regardless. */
+      var FADE = 'rgba(18,26,34,.045)';
       var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
 
       var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
@@ -1603,7 +1614,7 @@
         seaCanvas.width = Math.round(w * dpr);
         seaCanvas.height = Math.round(ch * dpr);
         seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        seaCtx.lineWidth = 1.4;
+        seaCtx.lineWidth = 1.6;
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
         seaCtx.fillRect(0, 0, w, ch);
         if (!keepField) reseed();
@@ -1641,9 +1652,19 @@
              producing a hue this palette doesn't own. 0.7 is tuned
              against this field's actual per-frame speeds (roughly
              0.3–1.5px, measured) so the range is used, not clipped at
-             one end; capped at 54% so even the fastest stroke stays
-             mid-tone, never pastel-bright. */
-          var light = 26 + Math.min(speed * 0.7, 1) * 28;
+             one end; capped at 66% so the fastest stroke still stays
+             mid-tone, never pastel-bright.
+             Floor raised from an earlier 26% to 34%: near-stationary
+             particles (deltar≈0 both very close to an eddy's centre and
+             far past its ring — see move() above) are also exactly where
+             particles pile up densest, since the field keeps drawing
+             more of them there. At the old 26% floor, that pile-up of
+             near-minimum-lightness strokes read as a solid black patch
+             right at each vortex's core — "too dense = black" was really
+             "too dense AND too dark at once", not the fade. Raising the
+             floor means even the slowest, most-overlapped cluster still
+             paints as a muted colour, never black. */
+          var light = 34 + Math.min(speed * 0.7, 1) * 32;
           seaCtx.beginPath();
           seaCtx.moveTo(px, py);
           seaCtx.lineTo(part.x, part.y);
