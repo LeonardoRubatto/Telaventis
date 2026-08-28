@@ -32,6 +32,7 @@
     var page=story.querySelector('[data-moka-page]');
     var fragments=Array.prototype.slice.call(story.querySelectorAll('[data-moka-fragment]'));
     var progress=story.querySelector('[data-moka-progress]');
+    var phaseWrap=story.querySelector('.moka-story__phase');
     var phaseNum=story.querySelector('[data-moka-phase-num]');
     var phaseName=story.querySelector('[data-moka-phase-name]');
     var endcard=story.querySelector('[data-moka-endcard]');
@@ -41,6 +42,36 @@
       if(lang.indexOf('it')===0)return ['Raccogliere','Dare una direzione','Far vivere','Rendere utile','Renderlo tuo'];
       return ['Rassembler','Donner une direction','Faire vivre','Rendre utile','Vous appartient'];
     })();
+    /* Phase text used to just get overwritten in place, every frame the
+       index changed — legible enough once made bigger (see the CSS), but
+       an instant swap still read as a glitch rather than a deliberate
+       change. This is the clean version: the outgoing phrase swipes up
+       and fades (.is-out, a normal transition), then — the instant the
+       new text is written in — .is-in snaps it to "below and invisible"
+       with transition:none (no visible jump because nothing is animating
+       yet), and one rAF later .is-in comes off so the browser animates
+       FROM that snapped start back to rest. Net motion: old rises and
+       fades out, new rises and fades in, one swipe, ~0.3s, no scroll-
+       linked flourish stacked on top of it. */
+    var phasePainted=false, phaseTimer=0;
+    var setPhaseText=function(i){
+      if(phaseNum)phaseNum.textContent=('0'+i).slice(-2);
+      if(phaseName)phaseName.textContent=phaseNames[i];
+    };
+    var swapPhase=function(i){
+      if(!phaseWrap){setPhaseText(i);return;}
+      if(phaseTimer)clearTimeout(phaseTimer);
+      phaseWrap.classList.remove('is-in');
+      phaseWrap.classList.add('is-out');
+      phaseTimer=setTimeout(function(){
+        setPhaseText(i);
+        phaseWrap.classList.remove('is-out');
+        phaseWrap.classList.add('is-in');
+        void phaseWrap.offsetWidth;   /* force the .is-in (transition:none) start state to actually apply before it's removed */
+        phaseWrap.classList.remove('is-in');
+        phaseTimer=0;
+      },260);
+    };
     var canvas=story.querySelector('[data-moka-canvas]');
     var maxInner=0;
     var measure=function(){maxInner=Math.max(0,page.scrollHeight-viewport.clientHeight);};
@@ -160,8 +191,11 @@
       if(endcard){endcard.style.opacity=finish.toFixed(3);endcard.style.transform='translate(-50%,'+(28-28*finish).toFixed(1)+'px)';}
 
       var phase=p<.14?0:p<.34?1:p<.58?2:p<.82?3:4;
-      if(phaseNum)phaseNum.textContent=('0'+phase).slice(-2);
-      if(phaseName)phaseName.textContent=phaseNames[phase];
+      if(phase!==story._mokaPhase){
+        story._mokaPhase=phase;
+        if(!phasePainted){setPhaseText(phase);phasePainted=true;}
+        else swapPhase(phase);
+      }
 
       return p!==target;
     };

@@ -31,9 +31,25 @@
    mid-scroll, leaving an uncovered sliver below the pinned box. */
 .moka-story__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden;background:var(--cream);isolation:isolate}
 .moka-story__canvas{position:absolute;inset:clamp(88px,9.5vh,108px) clamp(18px,4.4vw,70px) clamp(28px,4vh,52px);min-height:0}
-.moka-story__phase{position:absolute;left:clamp(54px,7vw,118px);top:clamp(72px,8vh,88px);z-index:8;display:flex;align-items:baseline;gap:12px;pointer-events:none}
-.moka-story__phase-num{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--coral);min-width:22px}
-.moka-story__phase-name{font-size:12px;font-weight:650;letter-spacing:.02em}
+.moka-story__phase{position:absolute;left:clamp(54px,7vw,118px);top:clamp(72px,8vh,88px);z-index:8;display:flex;align-items:baseline;gap:14px;pointer-events:none}
+.moka-story__phase-num{font-family:var(--mono);font-size:clamp(12px,1.1vw,15px);letter-spacing:.14em;color:var(--coral);min-width:26px;transition:opacity .32s ease,transform .32s ease}
+/* Sized up from an earlier 12px — too small to read as the point of the
+   demo rather than a decorative label, per feedback that it wasn't clear
+   what was being shown. Bigger everywhere now, this is the one line meant
+   to be read while scrolling, not a caption. */
+.moka-story__phase-name{font-size:clamp(20px,2.1vw,30px);font-weight:750;letter-spacing:-.01em;transition:opacity .32s ease,transform .32s ease}
+/* the "swipe" between phase names — swapPhase() in moka-lab.js toggles
+   these two classes around the text swap: .is-out plays the outgoing
+   phrase up and away (transitions normally), .is-in is applied the instant
+   AFTER the new text is written, with transition:none so it snaps the
+   incoming phrase to "below and invisible" with no visible motion, then is
+   removed one frame later so the browser animates FROM that snapped state
+   back to rest — same one-old-fades-up/one-new-rises-in idea .era__body
+   crossfades use elsewhere on this site, just with a touch of vertical
+   motion instead of a plain fade, and kept to ~0.3s so it reads as a quick
+   clean swipe rather than a flourish. */
+.moka-story__phase.is-out .moka-story__phase-num,.moka-story__phase.is-out .moka-story__phase-name{opacity:0;transform:translateY(-10px)}
+.moka-story__phase.is-in .moka-story__phase-num,.moka-story__phase.is-in .moka-story__phase-name{transition:none;opacity:0;transform:translateY(10px)}
 .moka-story__rail{position:absolute;left:clamp(20px,2.7vw,44px);top:clamp(104px,11vh,126px);bottom:clamp(34px,5vh,58px);z-index:8;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:9px;pointer-events:none}
 .moka-story__rail-index{font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;color:var(--ink-soft)}
 .moka-story__rail-line{position:relative;width:1px;height:100%;background:var(--line)}
@@ -92,7 +108,14 @@
 #selected-work .proj--wide{display:block;padding:clamp(66px,8vw,118px) 0}.proj--wide>div:first-child{max-width:680px}.proj--wide .proj__shot-wrap{margin-top:clamp(34px,5vw,64px);padding:0}.proj--wide .proj__shot{width:100%;max-height:none}
 
 @media (max-width:900px){
-  .moka-story__intro{min-height:62svh}.moka-story__track{height:480svh}.moka-story__canvas{inset:122px 12px 28px 42px}.moka-story__phase{left:43px;top:103px}.moka-story__rail{left:17px;top:138px}.moka-browser{width:calc(100vw - 58px);height:75svh}.moka-browser__menu{display:none}.moka-browser__bar{grid-template-columns:1fr auto}.moka-browser__url{justify-self:end}.moka-page__hero{height:calc(75svh - 44px);min-height:470px}.moka-page__hero-copy{left:26px;right:26px;bottom:34px}.moka-page__hero-shade{background:linear-gradient(0deg,rgba(14,31,50,.86) 0%,rgba(14,31,50,.36) 55%,rgba(14,31,50,.03) 100%)}.moka-page__hero-side{display:none}.moka-page__statement{min-height:440px}.moka-page__statement h3{text-align:left;align-self:flex-start;margin-top:58px}.moka-page__gallery{grid-template-columns:1fr 1fr}.moka-page__gallery-main{grid-column:1/-1;grid-row:1;height:400px}.moka-page__gallery-copy{grid-column:1/-1;grid-row:2}.moka-page__gallery-small--coffee{grid-column:1;grid-row:3;height:230px}.moka-page__gallery-small--action{grid-column:2;grid-row:3;height:230px}.moka-page__material{grid-column:1/-1;grid-row:4;height:230px}.moka-page__useful{grid-template-columns:1fr}.moka-page__useful-copy{grid-column:1;grid-row:1;min-height:520px}.moka-page__pastries{grid-column:1;grid-row:2;height:300px}.moka-page__menu-photo{grid-column:1;grid-row:3;height:300px}.moka-page__qr-photo{grid-column:1;grid-row:4;height:300px}.moka-page__owned{min-height:520px}.moka-story__endcard{width:calc(100vw - 58px);left:calc(50% + 15px)}
+  .moka-story__intro{min-height:62svh}.moka-story__track{height:480svh}.moka-story__canvas{inset:122px 12px 28px 42px}
+  /* centred instead of pinned to the top-left corner, and sized up further
+     still — on a phone this is the one piece of overlay copy with room to
+     actually be the focal point while the demo assembles behind it. */
+  .moka-story__phase{left:24px;right:24px;top:103px;justify-content:center;text-align:center}
+  .moka-story__phase-name{font-size:clamp(22px,6.4vw,32px)}
+  .moka-story__phase-num{font-size:13px}
+  .moka-story__rail{left:17px;top:138px}.moka-browser{width:calc(100vw - 58px);height:75svh}.moka-browser__menu{display:none}.moka-browser__bar{grid-template-columns:1fr auto}.moka-browser__url{justify-self:end}.moka-page__hero{height:calc(75svh - 44px);min-height:470px}.moka-page__hero-copy{left:26px;right:26px;bottom:34px}.moka-page__hero-shade{background:linear-gradient(0deg,rgba(14,31,50,.86) 0%,rgba(14,31,50,.36) 55%,rgba(14,31,50,.03) 100%)}.moka-page__hero-side{display:none}.moka-page__statement{min-height:440px}.moka-page__statement h3{text-align:left;align-self:flex-start;margin-top:58px}.moka-page__gallery{grid-template-columns:1fr 1fr}.moka-page__gallery-main{grid-column:1/-1;grid-row:1;height:400px}.moka-page__gallery-copy{grid-column:1/-1;grid-row:2}.moka-page__gallery-small--coffee{grid-column:1;grid-row:3;height:230px}.moka-page__gallery-small--action{grid-column:2;grid-row:3;height:230px}.moka-page__material{grid-column:1/-1;grid-row:4;height:230px}.moka-page__useful{grid-template-columns:1fr}.moka-page__useful-copy{grid-column:1;grid-row:1;min-height:520px}.moka-page__pastries{grid-column:1;grid-row:2;height:300px}.moka-page__menu-photo{grid-column:1;grid-row:3;height:300px}.moka-page__qr-photo{grid-column:1;grid-row:4;height:300px}.moka-page__owned{min-height:520px}.moka-story__endcard{width:calc(100vw - 58px);left:calc(50% + 15px)}
   #selected-work .proj--lead,#selected-work .proj--dark{grid-template-columns:1fr;gap:28px}.proj--dark .proj__shot-wrap{order:2!important;padding:0!important}.proj--dark>div:not(.proj__shot-wrap){order:1!important}.proj--wide>div:first-child{max-width:none}
 }
 /* Phones: longer track (640svh vs 480svh above) than the tablet tier —
@@ -102,7 +125,7 @@
    story race ahead disproportionately to the gesture. More scroll runway
    here means the same flick now advances it noticeably less. */
 @media (max-width:580px){
-  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:640svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh}.moka-page__hero{height:calc(72svh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-story__phase-name{max-width:150px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
+  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:640svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh}.moka-page__hero{height:calc(72svh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
 }
 @media (prefers-reduced-motion:reduce){.moka-story__scrollcue i:after{animation:none}.moka-source,.moka-browser,.moka-story__endcard{will-change:auto}}
 
