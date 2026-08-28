@@ -1501,14 +1501,15 @@
            trails already on the canvas cross-fade into the new field on
            their own, for free, because FADE dims them regardless of
            which simulation state produced them.
-         · Eddy/particle counts now sit close to the source's own 5/1000 —
-           an earlier, sparser pass (4/240, then 5/380) still read as
-           thin lines with visible gaps rather than the dense, almost-
-           solid grooves the original pen traces once its eddies have
-           had a couple of seconds to fill in. Getting that same filled-
-           in look needed both more particles AND a much slower fade (see
-           FADE below) — density alone with the old fast fade still faded
-           each stroke before enough of its neighbours had overlapped it. */
+         · Eddy/particle counts (7/1700) are higher than the source's own
+           5/1000 — this canvas is now a whole WORLD larger than any one
+           viewport (see PAN_MARGIN_X/Y below), not a phone-width strip,
+           so it needs more of both to read as dense wherever the camera
+           happens to be sitting, not just in whichever corner was built
+           first. Getting a filled-in look at all also needed a much
+           slower fade (see FADE below) — density alone with a fast fade
+           still faded each stroke before enough of its neighbours had
+           overlapped it. */
       var eraSticky = era.querySelector('.era__sticky');
       var seaWrap = doc.createElement('div');
       seaWrap.className = 'era__sea';
@@ -1519,7 +1520,7 @@
       eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
       var seaCtx = seaCanvas.getContext('2d');
 
-      var NB_EDDIES = 5, NB_PARTICLES = 900, LIFETIME = 420;
+      var NB_EDDIES = 7, NB_PARTICLES = 1700, LIFETIME = 420;
       /* Pulled back from an even slower first try (2%/frame): left running
          a few seconds, that settled into exactly what the source pen's own
          screenshot shows — two tight, saturated vortices on an otherwise
@@ -1584,69 +1585,86 @@
         }
       };
 
-      /* Called once per phrase change (from applyState, below, gated to
-         isMobileEra) — a real reseed swaps every eddy AND every particle at
-         once, which is exactly the flash a full re-seed on panel change was
-         already rejected for (see the "No setSeaScene()" note further
-         down). This is the lighter alternative: slide the whole field — every
-         eddy and every particle — by the same random vector, wrapped at the
-         canvas edges so nothing permanently drifts off it. Nothing about
-         the field's own shape or motion changes, only where it sits; the
-         already-drawn trail on the canvas doesn't move with it (canvases
-         don't support that), so the old trail simply fades out under FADE
-         while fresh strokes start building up in the new spot — reads as a
-         camera nudging to a different part of a bigger canvas, at zero
-         extra cost over what render() already draws every frame. */
-      var nudgeSea = function () {
-        if (!dimx || !dimy) return;
-        var dx = alea(-0.3, 0.3) * dimx, dy = alea(-0.22, 0.22) * dimy;
-        var wrap = function (v, max) { return ((v + max) % max + max) % max; };
-        for (var i = 0; i < eddies.length; i++) {
-          eddies[i].x = wrap(eddies[i].x + dx, dimx);
-          eddies[i].y = wrap(eddies[i].y + dy, dimy);
-        }
-        for (var j = 0; j < particles.length; j++) {
-          particles[j].x = wrap(particles[j].x + dx, dimx);
-          particles[j].y = wrap(particles[j].y + dy, dimy);
-        }
-      };
       var seaHasActivated = false;
 
-      /* The canvas is deliberately built TALLER than the viewport that
-         asked for it (SEA_HEADROOM). Setting .width/.height always wipes a
-         canvas's pixel buffer — there is no way to resize one and keep what
-         is drawn on it — so every rebuild instantly erases every accumulated
-         trail and restarts the field from black. That wipe is itself a
-         visible flash, entirely separate from reseeding, and mobile browsers
-         provoke it constantly: their address bar collapses and expands
-         DURING the very scroll that carries a visitor from the hero into
-         this section, changing clientHeight (never width) two or three times
-         in one gesture. Building with headroom means those height changes
-         land INSIDE the canvas that already exists, so onResize below can
-         skip the rebuild altogether rather than merely making it cheaper.
-         The wrapper is overflow:hidden, so the extra height is simply
-         clipped; dimx/dimy are the canvas's own box (not the viewport) so
-         the simulation fills all of it and no empty band can ever scroll
-         into view when the toolbar retracts. */
+      /* ---- one continuous world, a moving window onto it ----------------
+         Earlier passes tried "nudging" by teleporting every eddy and
+         particle to a new spot: technically cheap, but it reads exactly
+         like what it is — a cut, not a pan. What actually reads as
+         movement is the opposite trick: the SIMULATION never jumps at
+         all, only the WINDOW looking at it does. So the canvas itself is
+         built much bigger than any one viewport (PAN_MARGIN_X/Y below,
+         layered on top of the pre-existing SEA_HEADROOM), the field runs
+         across that whole world continuously exactly as it always did —
+         same reseed() on real resize, same never-reseed on phrase change,
+         nothing about moveSea/createParticle/createEddy below changes —
+         and seaWrap (overflow:hidden, see the CSS) crops it down to the
+         viewport. A phrase change just slides the canvas element itself
+         under that crop via a CSS transform, panSea() below, so the
+         already-drawn trail comes along for the ride instead of staying
+         behind to fade out — the whole point being that there is nothing
+         to fade out any more, because nothing was reset. */
+      var PAN_MARGIN_X = 0.5, PAN_MARGIN_Y = 0.28;
       var SEA_HEADROOM = 1.25;
-      var seaCanvasW = 0, seaCanvasH = 0;
+      var viewW = 0, viewH = 0, seaCanvasW = 0, seaCanvasH = 0;
+      var camX = -1, camY = -1;   /* -1 sentinel: "not yet placed" — buildSea centres it on the very first build instead of pinning the top-left corner */
+      var setCam = function (x, y, animate) {
+        camX = x; camY = y;
+        seaCanvas.style.transition = animate ? 'transform 1100ms cubic-bezier(.22,.9,.24,1)' : 'none';
+        seaCanvas.style.transform = 'translate3d(' + (-camX) + 'px,' + (-camY) + 'px,0)';
+      };
+      /* Called once per phrase change (from applyState, below, gated to
+         isMobileEra) — picks a new spot inside the same world and glides
+         the camera there. Never picks somewhere too close to the current
+         spot to actually notice; falls back to whatever the last try found
+         if six attempts in a row all land too close (a handful of pixels
+         of headroom, not expected to matter in practice). */
+      var panSea = function () {
+        var maxX = dimx - viewW, maxY = dimy - viewH;
+        if (maxX <= 4 && maxY <= 4) return;
+        var minDist = Math.min(maxX, maxY) * 0.35;
+        var nx = camX, ny = camY;
+        for (var tries = 0; tries < 6; tries++) {
+          var tx = alea(0, maxX), ty = alea(0, maxY);
+          if (Math.hypot(tx - camX, ty - camY) >= minDist) { nx = tx; ny = ty; break; }
+          nx = tx; ny = ty;
+        }
+        setCam(nx, ny, true);
+      };
+
+      /* The canvas is deliberately built TALLER and WIDER than the
+         viewport that asked for it — SEA_HEADROOM for the vertical safety
+         margin against a mobile address bar collapsing/expanding mid-
+         scroll (unrelated to panning: a pure height change here never
+         needs a rebuild, see onResize below), PAN_MARGIN_X/Y on top of
+         that for the room panSea actually pans around inside. Setting
+         .width/.height always wipes a canvas's pixel buffer — there is no
+         way to resize one and keep what is drawn on it — so a genuine
+         rebuild (real resize, not a pan) still restarts the field, same
+         as always; it just now needs to happen far less often, since most
+         of what used to force a rebuild (needing a "different view") is
+         handled by moving the window instead. */
       var buildSea = function (keepField) {
         var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
         if (!w || !h) return false;
-        var ch = Math.round(Math.max(h * SEA_HEADROOM, seaCanvasH));
+        var worldW = Math.round(w * (1 + PAN_MARGIN_X));
+        var worldH = Math.round(Math.max(h * SEA_HEADROOM * (1 + PAN_MARGIN_Y), seaCanvasH));
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         seaDpr = dpr;
-        dimx = w; dimy = ch;
-        seaCanvas.style.width = w + 'px';
-        seaCanvas.style.height = ch + 'px';
-        seaCanvas.width = Math.round(w * dpr);
-        seaCanvas.height = Math.round(ch * dpr);
+        dimx = worldW; dimy = worldH;
+        seaCanvas.style.width = worldW + 'px';
+        seaCanvas.style.height = worldH + 'px';
+        seaCanvas.width = Math.round(worldW * dpr);
+        seaCanvas.height = Math.round(worldH * dpr);
         seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
         seaCtx.lineWidth = 1.6;
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
-        seaCtx.fillRect(0, 0, w, ch);
+        seaCtx.fillRect(0, 0, worldW, worldH);
         if (!keepField) reseed();
-        seaCanvasW = w; seaCanvasH = ch;
+        viewW = w; viewH = h; seaCanvasW = worldW; seaCanvasH = worldH;
+        var cx = camX < 0 ? (worldW - w) / 2 : clamp(camX, 0, worldW - w);
+        var cy = camY < 0 ? (worldH - h) / 2 : clamp(camY, 0, worldH - h);
+        setCam(cx, cy, false);
         return true;
       };
 
@@ -1789,14 +1807,16 @@
            mid-scroll — changes height only, and thanks to SEA_HEADROOM the
            new height still fits inside the canvas that is already drawn. So
            there is nothing to do at all: no rebuild, no wipe, no reseed. The
-           field just keeps running, which is the whole point. */
-        if (w === seaCanvasW && h <= seaCanvasH) return;
+           field just keeps running, which is the whole point. Compared
+           against viewW/viewH (the viewport this was last built for), not
+           seaCanvasW/H (the world buffer itself, deliberately bigger). */
+        if (w === viewW && h <= seaCanvasH) return;
         /* A genuine WIDTH change (rotation, desktop window resize) is a real
            layout change and does start over, exactly as the source demo does
            on resize. A height change big enough to outgrow the headroom only
            needs the canvas re-made at the larger size — the field itself
            carries over untouched. */
-        if (Math.abs(w - seaCanvasW) > 2) seaNeedsReseed = true;
+        if (Math.abs(w - viewW) > 2) seaNeedsReseed = true;
         seaBuilt = false;
       });
       }
@@ -1826,11 +1846,12 @@
         panels[i].setAttribute('aria-hidden', state === 'active' ? 'false' : 'true');
         panels[i].style.pointerEvents = state === 'active' ? '' : 'none';
 
-        /* every fresh phrase after the first nudges the mobile field to a
-           new spot (see nudgeSea above) — not on the very first activation,
-           which is the section arriving on screen, not a phrase change. */
+        /* every fresh phrase after the first pans the mobile camera to a
+           new spot in the same world (see panSea above) — not on the very
+           first activation, which is the section arriving on screen, not
+           a phrase change. */
         if (isMobileEra && state === 'active') {
-          if (seaHasActivated) nudgeSea();
+          if (seaHasActivated) panSea();
           seaHasActivated = true;
         }
 
