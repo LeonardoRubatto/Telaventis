@@ -1652,9 +1652,19 @@
              producing a hue this palette doesn't own. 0.7 is tuned
              against this field's actual per-frame speeds (roughly
              0.3–1.5px, measured) so the range is used, not clipped at
-             one end; capped at 54% so even the fastest stroke stays
-             mid-tone, never pastel-bright. */
-          var light = 26 + Math.min(speed * 0.7, 1) * 28;
+             one end; capped at 66% so the fastest stroke still stays
+             mid-tone, never pastel-bright.
+             Floor raised from an earlier 26% to 34%: near-stationary
+             particles (deltar≈0 both very close to an eddy's centre and
+             far past its ring — see move() above) are also exactly where
+             particles pile up densest, since the field keeps drawing
+             more of them there. At the old 26% floor, that pile-up of
+             near-minimum-lightness strokes read as a solid black patch
+             right at each vortex's core — "too dense = black" was really
+             "too dense AND too dark at once", not the fade. Raising the
+             floor means even the slowest, most-overlapped cluster still
+             paints as a muted colour, never black. */
+          var light = 34 + Math.min(speed * 0.7, 1) * 32;
           seaCtx.beginPath();
           seaCtx.moveTo(px, py);
           seaCtx.lineTo(part.x, part.y);
