@@ -1501,13 +1501,14 @@
            trails already on the canvas cross-fade into the new field on
            their own, for free, because FADE dims them regardless of
            which simulation state produced them.
-         · Eddy/particle counts stay well under the source's 5/1000 —
-           this canvas is a phone-width strip behind body copy, not a
-           fullscreen standalone piece, and the per-particle maths is
-           identical either way. Tuned up from an earlier, sparser pass
-           (4/240) that read as too empty on a tall phone canvas — more
-           eddies and particles fill the strip fuller without approaching
-           the source's own density. */
+         · Eddy/particle counts now sit close to the source's own 5/1000 —
+           an earlier, sparser pass (4/240, then 5/380) still read as
+           thin lines with visible gaps rather than the dense, almost-
+           solid grooves the original pen traces once its eddies have
+           had a couple of seconds to fill in. Getting that same filled-
+           in look needed both more particles AND a much slower fade (see
+           FADE below) — density alone with the old fast fade still faded
+           each stroke before enough of its neighbours had overlapped it. */
       var eraSticky = era.querySelector('.era__sticky');
       var seaWrap = doc.createElement('div');
       seaWrap.className = 'era__sea';
@@ -1518,13 +1519,18 @@
       eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
       var seaCtx = seaCanvas.getContext('2d');
 
-      var NB_EDDIES = 5, NB_PARTICLES = 380, LIFETIME = 420;
-      /* ~7.5% dimmer per frame under a fresh stroke ⇒ a bit over a 1s
-         half-life at 60fps — slightly longer than the previous 9% so
-         trails accumulate into a fuller field before fading, while still
-         staying well short of any patch drifting toward opaque underneath
-         the text sitting on top of it. */
-      var FADE = 'rgba(18,26,34,.075)';
+      var NB_EDDIES = 5, NB_PARTICLES = 900, LIFETIME = 420;
+      /* ~2% dimmer per frame under a fresh stroke ⇒ roughly a half-life
+         of half a second at 60fps, several times slower than the earlier
+         9%/7.5% passes — this is the change that actually gets the dense,
+         almost-solid grooves the source pen shows, since it's overlap
+         between many strokes over time that fills a groove in, not any
+         one stroke's own length. Still a live fade, never a static
+         painting: --panel-fg/--panel-shadow-rgb below keep sampling the
+         real pixels each frame, so even a much fuller field never breaks
+         text contrast — it just adapts the text colour to whatever the
+         field actually looks like at that moment, same as before. */
+      var FADE = 'rgba(18,26,34,.02)';
       var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
 
       var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
@@ -1603,7 +1609,7 @@
         seaCanvas.width = Math.round(w * dpr);
         seaCanvas.height = Math.round(ch * dpr);
         seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        seaCtx.lineWidth = 1.4;
+        seaCtx.lineWidth = 1.6;
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
         seaCtx.fillRect(0, 0, w, ch);
         if (!keepField) reseed();
