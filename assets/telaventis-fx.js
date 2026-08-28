@@ -1584,6 +1584,34 @@
         }
       };
 
+      /* Called once per phrase change (from applyState, below, gated to
+         isMobileEra) — a real reseed swaps every eddy AND every particle at
+         once, which is exactly the flash a full re-seed on panel change was
+         already rejected for (see the "No setSeaScene()" note further
+         down). This is the lighter alternative: slide the whole field — every
+         eddy and every particle — by the same random vector, wrapped at the
+         canvas edges so nothing permanently drifts off it. Nothing about
+         the field's own shape or motion changes, only where it sits; the
+         already-drawn trail on the canvas doesn't move with it (canvases
+         don't support that), so the old trail simply fades out under FADE
+         while fresh strokes start building up in the new spot — reads as a
+         camera nudging to a different part of a bigger canvas, at zero
+         extra cost over what render() already draws every frame. */
+      var nudgeSea = function () {
+        if (!dimx || !dimy) return;
+        var dx = alea(-0.3, 0.3) * dimx, dy = alea(-0.22, 0.22) * dimy;
+        var wrap = function (v, max) { return ((v + max) % max + max) % max; };
+        for (var i = 0; i < eddies.length; i++) {
+          eddies[i].x = wrap(eddies[i].x + dx, dimx);
+          eddies[i].y = wrap(eddies[i].y + dy, dimy);
+        }
+        for (var j = 0; j < particles.length; j++) {
+          particles[j].x = wrap(particles[j].x + dx, dimx);
+          particles[j].y = wrap(particles[j].y + dy, dimy);
+        }
+      };
+      var seaHasActivated = false;
+
       /* The canvas is deliberately built TALLER than the viewport that
          asked for it (SEA_HEADROOM). Setting .width/.height always wipes a
          canvas's pixel buffer — there is no way to resize one and keep what
@@ -1797,6 +1825,14 @@
         panels[i].classList.add('is-' + state);
         panels[i].setAttribute('aria-hidden', state === 'active' ? 'false' : 'true');
         panels[i].style.pointerEvents = state === 'active' ? '' : 'none';
+
+        /* every fresh phrase after the first nudges the mobile field to a
+           new spot (see nudgeSea above) — not on the very first activation,
+           which is the section arriving on screen, not a phrase change. */
+        if (isMobileEra && state === 'active') {
+          if (seaHasActivated) nudgeSea();
+          seaHasActivated = true;
+        }
 
         if (kinds[i] && state === 'active') {
           /* fresh entry, either direction: replay from the start. Only the
