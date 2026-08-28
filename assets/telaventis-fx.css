@@ -357,18 +357,17 @@
 
 @media (max-width:759px){
   /* gated exactly like the desktop height above — an ungated override here
-     would put a 300svh empty track back under the resting state.
-     Longer again than desktop's own (now-doubled) 660svh, for the same
-     reason it already was before the doubling: an `svh` is a fraction of
-     the same short mobile viewport a thumb-flick covers in one go, so the
-     same track height that reads as unhurried on a tall desktop window
-     blows past every trigger in a couple of flicks on a phone — the
-     transition (crossfade + bubble dissolve + camera glide, all
-     EXIT_MS/1.4s-ish) doesn't get the scroll room to actually play out
-     before the next one fires. More height per panel is what buys that
-     room back; the trigger logic itself needs nothing changed, it
-     already just reads a threshold off however tall this is. */
-  .era[data-era-live] .era__track{height:960svh}
+     would put an empty track back under the resting state.
+     One phrase per swipe, not two or three: ~110svh per panel (330svh
+     total for the 3 panels here) is close to what one deliberate flick
+     actually covers on a phone. Mobile has no bubble-dissolve or camera
+     glide to wait on — the only transition is the plain .85s opacity
+     crossfade on .era__body — so it doesn't need the generous buffer
+     desktop's richer transition does; the trigger logic itself needs
+     nothing changed, it already just reads a threshold off however tall
+     this is. If a future phrase set changes the panel count, keep this at
+     roughly panels × 110svh. */
+  .era[data-era-live] .era__track{height:330svh}
   .era__body{padding:clamp(74px,12vh,98px) 22px clamp(58px,10vh,76px)}
   /* Nothing here is fx-type any more — no particle canvas exists on mobile
      at all (see the isMobileEra branch in telaventis-fx.js §3b), so every
@@ -388,21 +387,18 @@
     color:var(--panel-fg,var(--cream));
     text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
   }
-  /* asymmetric on purpose — the one deliberate flourish left in this
-     section now that there is no particle canvas to carry it. --key-rot/
-     --key-y are set once per word by telaventis-fx.js (a plain index
-     alternation, not read from anything about the word itself), so the
-     couple of key words in a phrase tilt in opposite directions rather
-     than mirroring each other. Still sized in em off .era__mix, same
-     reasoning as the desktop 2.6em ratio above: one number to tune, and
-     the text column here is only ~280–330px wide, so the ratio stays
-     smaller than desktop's or the longest key word overflows it outright. */
+  /* same identity as the desktop bubble words (var(--sans), weight 800) —
+     no particle canvas to carry a flourish on mobile, so this used to
+     borrow an italic serif tilt + coral glow to compensate. Dropped: it
+     read as a decorative sticker effect rather than this site's own
+     typography. Plain bold sans, sized off .era__mix like before, is both
+     closer to the desktop treatment and reads as more deliberate. */
   .era__w--key{
-    font-family:var(--serif);font-style:italic;font-weight:600;
-    font-size:1.7em;line-height:1;letter-spacing:-.008em;
+    font-family:var(--sans);font-weight:800;letter-spacing:-.02em;
+    font-size:1.5em;line-height:1;
     color:var(--panel-fg,var(--cream));
-    text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 0 24px rgba(224,116,47,.32);
-    display:inline-block;transform:rotate(var(--key-rot,-2deg)) translateY(var(--key-y,0));
+    text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 14px rgba(var(--panel-shadow-rgb,10,16,22),.6);
+    display:inline-block;
   }
   .era__note{
     font-size:15.5px;

@@ -1501,10 +1501,13 @@
            trails already on the canvas cross-fade into the new field on
            their own, for free, because FADE dims them regardless of
            which simulation state produced them.
-         · Eddy/particle counts are a fraction of the source's 5/1000 —
+         · Eddy/particle counts stay well under the source's 5/1000 —
            this canvas is a phone-width strip behind body copy, not a
            fullscreen standalone piece, and the per-particle maths is
-           identical either way. */
+           identical either way. Tuned up from an earlier, sparser pass
+           (4/240) that read as too empty on a tall phone canvas — more
+           eddies and particles fill the strip fuller without approaching
+           the source's own density. */
       var eraSticky = era.querySelector('.era__sticky');
       var seaWrap = doc.createElement('div');
       seaWrap.className = 'era__sea';
@@ -1515,22 +1518,13 @@
       eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
       var seaCtx = seaCanvas.getContext('2d');
 
-      /* asymmetric, deterministic per key word rather than guessed from a
-         CSS structural selector — a phrase mixes plain and key <span>s, so
-         nth-of-type on the key ones alone would count position among ALL
-         of them and land unpredictably. Walked once, here, since none of
-         this ever needs to change again. */
-      [].forEach.call(era.querySelectorAll('.era__w--key'), function (el, idx) {
-        el.style.setProperty('--key-rot', idx % 2 ? '1.6deg' : '-2.3deg');
-        el.style.setProperty('--key-y', idx % 2 ? '.05em' : '-.04em');
-      });
-
-      var NB_EDDIES = 4, NB_PARTICLES = 240, LIFETIME = 420;
-      /* ~9% dimmer per frame under a fresh stroke ⇒ roughly a 1s half-life
-         at 60fps: long enough that motion still reads as trailing
-         threads, short enough that no patch of the canvas can drift
-         toward opaque underneath the text sitting on top of it. */
-      var FADE = 'rgba(18,26,34,.09)';
+      var NB_EDDIES = 5, NB_PARTICLES = 380, LIFETIME = 420;
+      /* ~7.5% dimmer per frame under a fresh stroke ⇒ a bit over a 1s
+         half-life at 60fps — slightly longer than the previous 9% so
+         trails accumulate into a fuller field before fading, while still
+         staying well short of any patch drifting toward opaque underneath
+         the text sitting on top of it. */
+      var FADE = 'rgba(18,26,34,.075)';
       var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
 
       var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
