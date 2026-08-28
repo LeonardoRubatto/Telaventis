@@ -30,7 +30,11 @@
    can fall short of the real viewport once iOS Safari's toolbar auto-hides
    mid-scroll, leaving an uncovered sliver below the pinned box. */
 .moka-story__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden;background:var(--cream);isolation:isolate}
-.moka-story__canvas{position:absolute;inset:clamp(88px,9.5vh,108px) clamp(18px,4.4vw,70px) clamp(28px,4vh,52px);min-height:0}
+/* top inset nudged +8px from the phase label above (was flush against
+   it, ~0 breathing room, once the label was sized up) — small on
+   purpose, this is a demo box wanting to sit close under its label, not
+   a section wanting real separation from one. */
+.moka-story__canvas{position:absolute;inset:clamp(96px,10.3vh,116px) clamp(18px,4.4vw,70px) clamp(28px,4vh,52px);min-height:0}
 .moka-story__phase{position:absolute;left:clamp(54px,7vw,118px);top:clamp(72px,8vh,88px);z-index:8;display:flex;align-items:baseline;gap:14px;pointer-events:none}
 .moka-story__phase-num{font-family:var(--mono);font-size:clamp(12px,1.1vw,15px);letter-spacing:.14em;color:var(--coral);min-width:26px;transition:opacity .32s ease,transform .32s ease}
 /* Sized up from an earlier 12px — too small to read as the point of the
@@ -62,8 +66,14 @@
 .moka-source span{display:block;margin-top:4px;font-family:var(--mono);font-size:9.5px;line-height:1.4;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
 .moka-source--instagram,.moka-source--address{min-width:225px;padding:18px 20px}.moka-source--instagram b,.moka-source--address b{font-size:19px}
 
-/* browser becomes the finished identity */
-.moka-browser{--open:0;position:absolute;z-index:3;left:50%;top:50%;width:min(1180px,88vw);height:min(790px,78svh);background:#f3eee3;border:1px solid rgba(22,32,43,.28);box-shadow:0 55px 110px -64px rgba(22,32,43,.75);transform:translate(-50%,-50%) scale(calc(.72 + var(--open)*.28));opacity:var(--open);will-change:transform,opacity}
+/* browser becomes the finished identity. Two height declarations, same
+   svh-then-dvh fallback as .moka-story__sticky above and for the same
+   reason: without the dvh one, this box stays pinned to the SMALL
+   viewport baseline while the sticky box it's centered in grows to the
+   real (taller) one the moment Safari's toolbar auto-hides mid-scroll —
+   the mismatch reads as a big gap opening up above/below the demo,
+   exactly the "why is there so much space here" this was reported as. */
+.moka-browser{--open:0;position:absolute;z-index:3;left:50%;top:50%;width:min(1180px,88vw);height:min(790px,78svh);height:min(790px,78dvh);background:#f3eee3;border:1px solid rgba(22,32,43,.28);box-shadow:0 55px 110px -64px rgba(22,32,43,.75);transform:translate(-50%,-50%) scale(calc(.72 + var(--open)*.28));opacity:var(--open);will-change:transform,opacity}
 .moka-browser__bar{height:44px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 16px;border-bottom:1px solid rgba(22,32,43,.16);background:#f3eee3;color:#132235}
 .moka-browser__mark{font-size:10px;font-weight:850;letter-spacing:.14em}
 .moka-browser__url{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:#69727b}
@@ -72,7 +82,7 @@
 .moka-page{position:relative;will-change:transform;background:#f2ebdf;color:#12243a}
 .moka-media,.moka-media img,.moka-page__hero-image,.moka-page__hero-image img{display:block;width:100%;height:100%}.moka-media img,.moka-page__hero-image img{object-fit:cover}
 
-.moka-page__hero{position:relative;height:calc(min(790px,78svh) - 44px);min-height:520px;overflow:hidden;background:#13243a;color:#f7f0e4}
+.moka-page__hero{position:relative;height:calc(min(790px,78svh) - 44px);height:calc(min(790px,78dvh) - 44px);min-height:520px;overflow:hidden;background:#13243a;color:#f7f0e4}
 .moka-page__hero-image{position:absolute;inset:0}.moka-page__hero-image img{filter:saturate(.95) contrast(1.02);transform:scale(1.025)}
 .moka-page__hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,31,50,.84) 0%,rgba(14,31,50,.54) 39%,rgba(14,31,50,.03) 70%)}
 .moka-page__hero-copy{position:absolute;left:clamp(28px,6vw,84px);bottom:clamp(32px,7vh,92px);max-width:620px;z-index:2}
@@ -115,7 +125,7 @@
   .moka-story__phase{left:24px;right:24px;top:103px;justify-content:center;text-align:center}
   .moka-story__phase-name{font-size:clamp(22px,6.4vw,32px)}
   .moka-story__phase-num{font-size:13px}
-  .moka-story__rail{left:17px;top:138px}.moka-browser{width:calc(100vw - 58px);height:75svh}.moka-browser__menu{display:none}.moka-browser__bar{grid-template-columns:1fr auto}.moka-browser__url{justify-self:end}.moka-page__hero{height:calc(75svh - 44px);min-height:470px}.moka-page__hero-copy{left:26px;right:26px;bottom:34px}.moka-page__hero-shade{background:linear-gradient(0deg,rgba(14,31,50,.86) 0%,rgba(14,31,50,.36) 55%,rgba(14,31,50,.03) 100%)}.moka-page__hero-side{display:none}.moka-page__statement{min-height:440px}.moka-page__statement h3{text-align:left;align-self:flex-start;margin-top:58px}.moka-page__gallery{grid-template-columns:1fr 1fr}.moka-page__gallery-main{grid-column:1/-1;grid-row:1;height:400px}.moka-page__gallery-copy{grid-column:1/-1;grid-row:2}.moka-page__gallery-small--coffee{grid-column:1;grid-row:3;height:230px}.moka-page__gallery-small--action{grid-column:2;grid-row:3;height:230px}.moka-page__material{grid-column:1/-1;grid-row:4;height:230px}.moka-page__useful{grid-template-columns:1fr}.moka-page__useful-copy{grid-column:1;grid-row:1;min-height:520px}.moka-page__pastries{grid-column:1;grid-row:2;height:300px}.moka-page__menu-photo{grid-column:1;grid-row:3;height:300px}.moka-page__qr-photo{grid-column:1;grid-row:4;height:300px}.moka-page__owned{min-height:520px}.moka-story__endcard{width:calc(100vw - 58px);left:calc(50% + 15px)}
+  .moka-story__rail{left:17px;top:138px}.moka-browser{width:calc(100vw - 58px);height:75svh;height:75dvh}.moka-browser__menu{display:none}.moka-browser__bar{grid-template-columns:1fr auto}.moka-browser__url{justify-self:end}.moka-page__hero{height:calc(75svh - 44px);height:calc(75dvh - 44px);min-height:470px}.moka-page__hero-copy{left:26px;right:26px;bottom:34px}.moka-page__hero-shade{background:linear-gradient(0deg,rgba(14,31,50,.86) 0%,rgba(14,31,50,.36) 55%,rgba(14,31,50,.03) 100%)}.moka-page__hero-side{display:none}.moka-page__statement{min-height:440px}.moka-page__statement h3{text-align:left;align-self:flex-start;margin-top:58px}.moka-page__gallery{grid-template-columns:1fr 1fr}.moka-page__gallery-main{grid-column:1/-1;grid-row:1;height:400px}.moka-page__gallery-copy{grid-column:1/-1;grid-row:2}.moka-page__gallery-small--coffee{grid-column:1;grid-row:3;height:230px}.moka-page__gallery-small--action{grid-column:2;grid-row:3;height:230px}.moka-page__material{grid-column:1/-1;grid-row:4;height:230px}.moka-page__useful{grid-template-columns:1fr}.moka-page__useful-copy{grid-column:1;grid-row:1;min-height:520px}.moka-page__pastries{grid-column:1;grid-row:2;height:300px}.moka-page__menu-photo{grid-column:1;grid-row:3;height:300px}.moka-page__qr-photo{grid-column:1;grid-row:4;height:300px}.moka-page__owned{min-height:520px}.moka-story__endcard{width:calc(100vw - 58px);left:calc(50% + 15px)}
   #selected-work .proj--lead,#selected-work .proj--dark{grid-template-columns:1fr;gap:28px}.proj--dark .proj__shot-wrap{order:2!important;padding:0!important}.proj--dark>div:not(.proj__shot-wrap){order:1!important}.proj--wide>div:first-child{max-width:none}
 }
 /* Phones: longer track (640svh vs 480svh above) than the tablet tier —
@@ -125,7 +135,7 @@
    story race ahead disproportionately to the gesture. More scroll runway
    here means the same flick now advances it noticeably less. */
 @media (max-width:580px){
-  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:640svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh}.moka-page__hero{height:calc(72svh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
+  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:640svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh;height:72dvh}.moka-page__hero{height:calc(72svh - 44px);height:calc(72dvh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
 }
 @media (prefers-reduced-motion:reduce){.moka-story__scrollcue i:after{animation:none}.moka-source,.moka-browser,.moka-story__endcard{will-change:auto}}
 
