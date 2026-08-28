@@ -223,7 +223,7 @@
    device (never both mounted at once), so there is no stacking conflict to
    resolve between them. */
 .era__sea{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
-.era__sea-canvas{position:absolute;top:0;left:0;display:block}
+.era__sea-canvas{position:absolute;top:0;left:0;display:block;will-change:transform}
 
 /* the scroll cue only means anything while the section is pinned */
 .era__cue{display:none}
