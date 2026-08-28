@@ -1520,17 +1520,22 @@
       var seaCtx = seaCanvas.getContext('2d');
 
       var NB_EDDIES = 5, NB_PARTICLES = 900, LIFETIME = 420;
-      /* ~2% dimmer per frame under a fresh stroke ⇒ roughly a half-life
-         of half a second at 60fps, several times slower than the earlier
-         9%/7.5% passes — this is the change that actually gets the dense,
-         almost-solid grooves the source pen shows, since it's overlap
-         between many strokes over time that fills a groove in, not any
-         one stroke's own length. Still a live fade, never a static
-         painting: --panel-fg/--panel-shadow-rgb below keep sampling the
-         real pixels each frame, so even a much fuller field never breaks
-         text contrast — it just adapts the text colour to whatever the
-         field actually looks like at that moment, same as before. */
-      var FADE = 'rgba(18,26,34,.02)';
+      /* Pulled back from an even slower first try (2%/frame): left running
+         a few seconds, that settled into exactly what the source pen's own
+         screenshot shows — two tight, saturated vortices on an otherwise
+         mostly BLACK canvas, because particles keep drifting off toward
+         the eddies and the fade is slow enough that everywhere else has
+         time to go fully dark before fresh particles (reborn at random
+         positions — see createParticle) refill it. ~4.5%/frame (~0.25s
+         half-life) is the middle point: still several times slower than
+         the original 9%/7.5% passes, so strokes still overlap into real
+         grooves instead of thin scattered lines, but fast enough that
+         emptier patches keep getting refreshed before they go black —
+         dense texture across the whole field, not two blobs on a void.
+         Still a live fade, never a static painting: --panel-fg/
+         --panel-shadow-rgb below keep sampling the real pixels each
+         frame, so text contrast keeps adapting regardless. */
+      var FADE = 'rgba(18,26,34,.045)';
       var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
 
       var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
