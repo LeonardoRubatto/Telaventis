@@ -894,14 +894,14 @@
          each — mobile only, and only for the 3-panel shape this section
          actually ships (falls back to even thirds otherwise, rather than
          guess at a weighting for a shape it was never tuned against).
-         Weights are the exact same 145/158/132 the mobile .era__track
-         height in telaventis-fx.css is built from (145+158+132=435svh),
+         Weights are the exact same 158/158/132 the mobile .era__track
+         height in telaventis-fx.css is built from (158+158+132=448svh),
          so a panel's share of scroll here always matches its share of
-         that total — first phrase +10% over the even baseline (132),
-         middle phrase +20%, last phrase unchanged. Desktop keeps plain
-         even thirds; its own track height was never split unevenly. */
+         that total — first and middle phrase both +20% over the even
+         baseline (132), last phrase unchanged. Desktop keeps plain even
+         thirds; its own track height was never split unevenly. */
       var segBounds = (function () {
-        var weights = (isMobileEra && n === 3) ? [145, 158, 132] : null;
+        var weights = (isMobileEra && n === 3) ? [158, 158, 132] : null;
         var b = [0], acc = 0, i, sum;
         if (weights) {
           sum = weights[0] + weights[1] + weights[2];
@@ -1685,6 +1685,21 @@
         seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
         seaCtx.fillRect(0, 0, worldW, worldH);
         if (!keepField) reseed();
+        /* Warm-start: run a burst of simulation frames right now, before
+           this canvas is ever shown. Reassigning .width/.height just above
+           always wipes the pixel buffer back to the flat fill colour —
+           unavoidable, canvases don't support resizing without it — so
+           without this, only the patch of world the visitor happens to be
+           looking at ever accumulates trails; panSea can then swipe the
+           camera onto a part of the world that hasn't been painted over
+           yet, showing a flat, untextured patch of the raw fill colour
+           instead of the field. Particles already spawn across the WHOLE
+           world (see createParticle), not just the visible patch, so
+           running moveSea() ahead of the first real frame textures all of
+           it at once — panning anywhere afterwards lands on a part of the
+           world that already has a field, not a blank corner still
+           waiting its turn. */
+        for (var warm = 0; warm < 80; warm++) moveSea();
         viewW = w; viewH = h; seaCanvasW = worldW; seaCanvasH = worldH;
         var cx = camX < 0 ? (worldW - w) / 2 : clamp(camX, 0, worldW - w);
         var cy = camY < 0 ? (worldH - h) / 2 : clamp(camY, 0, worldH - h);
