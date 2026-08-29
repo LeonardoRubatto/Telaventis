@@ -884,13 +884,37 @@
       var cue = era.querySelector('.era__cue');
       if (!track || !panels.length) return;
       var n = panels.length;
-      var seg = 1 / n;
       /* same breakpoint as this section's own CSS (max-width:759px in
          telaventis-fx.css) — the couple of mobile-only cuts below (the
          WebGPU jellyfish, the SVG text warp) both trade a purely
          decorative extra for real per-frame cost on exactly the class of
          device least able to absorb it. */
       var isMobileEra = mq('(max-width:759px)');
+      /* Panel boundaries as fractions of the whole track, not a flat 1/n
+         each — mobile only, and only for the 3-panel shape this section
+         actually ships (falls back to even thirds otherwise, rather than
+         guess at a weighting for a shape it was never tuned against).
+         Weights are the exact same 145/158/132 the mobile .era__track
+         height in telaventis-fx.css is built from (145+158+132=435svh),
+         so a panel's share of scroll here always matches its share of
+         that total — first phrase +10% over the even baseline (132),
+         middle phrase +20%, last phrase unchanged. Desktop keeps plain
+         even thirds; its own track height was never split unevenly. */
+      var segBounds = (function () {
+        var weights = (isMobileEra && n === 3) ? [145, 158, 132] : null;
+        var b = [0], acc = 0, i, sum;
+        if (weights) {
+          sum = weights[0] + weights[1] + weights[2];
+          for (i = 0; i < n; i++) { acc += weights[i]; b.push(acc / sum); }
+        } else {
+          for (i = 1; i <= n; i++) b.push(i / n);
+        }
+        return b;
+      }());
+      var panelAt = function (pp) {
+        for (var k = 0; k < n; k++) { if (pp < segBounds[k + 1] || k === n - 1) return k; }
+        return n - 1;
+      };
 
       var kinds = panels.map(function (p) { return p.getAttribute('data-fx-kind'); });
       /* Mobile drops the particle canvas entirely — not just its palette.
@@ -1950,9 +1974,10 @@
         if (cue) cue.style.opacity = (1 - range(p, 0.02, 0.12)).toFixed(2);
 
         /* which panel the trigger currently says is active — a plain
-           threshold, nudged by hysteresis at the exact crossing line so a
-           pixel of scroll jitter there cannot flip it back and forth */
-        var raw = clamp(Math.floor(p * n), 0, n - 1);
+           threshold read off segBounds (even thirds, or the weighted
+           split above), nudged by hysteresis at the exact crossing line
+           so a pixel of scroll jitter there cannot flip it back and forth */
+        var raw = panelAt(p);
         var next = target;
         if (target < 0) {
           /* first entry only: land directly on whatever panel is already
@@ -1961,7 +1986,7 @@
           next = raw;
         } else if (raw !== target && now - lastStepAt >= STEP_COOLDOWN_MS) {
           var dirStep = raw > target ? 1 : -1;
-          var boundary = (dirStep > 0 ? target + 1 : target) * seg;
+          var boundary = segBounds[dirStep > 0 ? target + 1 : target];
           next = Math.abs(p - boundary) < HYST ? target : target + dirStep;
         }
 
