@@ -37,7 +37,7 @@
 <link rel="manifest" href="site.webmanifest">
 <meta name="msapplication-TileColor" content="#16202B">
 
-<link rel="stylesheet" href="assets/telaventis.css?v=32">
+<link rel="stylesheet" href="assets/telaventis.css?v=33">
 <!-- MOKA experiment (scroll-driven Atelier Moka case study) — delete this
      <link>, the <section id="direction-lab">…</section> below, and the
      matching <script> near </body> to remove it with zero effect on the
@@ -309,7 +309,7 @@
       <article class="proj" data-reveal>
         <div style="min-width:0;">
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num">01</span>
+            <span class="proj__num" aria-hidden="true"></span>
             <span class="proj__tag">Qualamantis · 3 langues</span>
           </div>
           <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Entreprise de conseil en qualité industrielle</h3>
@@ -329,10 +329,10 @@
         </div>
       </article>
 
-      <article class="proj proj--invert-cols" data-reveal>
+      <article class="proj" data-reveal>
         <div style="min-width:0;">
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num">02</span>
+            <span class="proj__num" aria-hidden="true"></span>
             <span class="proj__tag">BDE Dauphine</span>
           </div>
           <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Plateforme événementielle</h3>
@@ -355,7 +355,7 @@
       <article class="proj" data-reveal>
         <div style="min-width:0;">
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num">03</span>
+            <span class="proj__num" aria-hidden="true"></span>
             <span class="proj__tag">wecalc.fr</span>
           </div>
           <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Outil en ligne</h3>
@@ -371,6 +371,52 @@
             <source type="image/avif" srcset="assets/shots/wecalc-960.avif 960w, assets/shots/wecalc-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
             <source type="image/webp" srcset="assets/shots/wecalc-960.webp 960w, assets/shots/wecalc-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
             <img class="proj__shot" src="assets/shots/wecalc.png" width="1600" height="892" alt="Page d'accueil du site wecalc.fr" loading="lazy" decoding="async">
+          </picture>
+        </div>
+      </article>
+
+      <article class="proj" data-reveal>
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <span class="proj__num" aria-hidden="true"></span>
+            <span class="proj__tag">Jeanne Randu · Portfolio</span>
+          </div>
+          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Portfolio de design d'espace</h3>
+          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : un travail spatial et sensoriel qu'une grille de vignettes aurait aplati.</p>
+          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : chaque projet a sa propre composition dessinée à la main, et Jeanne change ses textes et ses photos elle-même, sans ouvrir le HTML.</p>
+          <div class="btn-row" style="margin-top:20px;">
+            <a class="link" href="project-jeanne-randu.html">Voir l'étude de cas &rarr;</a>
+            <a class="link link--plain" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr &#8599;</a>
+          </div>
+        </div>
+        <div class="proj__shot-wrap">
+          <picture>
+            <source type="image/avif" srcset="assets/shots/jeanne-randu-960.avif 960w, assets/shots/jeanne-randu-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
+            <source type="image/webp" srcset="assets/shots/jeanne-randu-960.webp 960w, assets/shots/jeanne-randu-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
+            <img class="proj__shot" src="assets/shots/jeanne-randu.png" width="1600" height="820" alt="Page d'accueil du portfolio de Jeanne Randu" loading="lazy" decoding="async">
+          </picture>
+        </div>
+      </article>
+
+      <article class="proj" data-reveal>
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <span class="proj__num" aria-hidden="true"></span>
+            <span class="proj__tag">La Cave d'Antoine · Démonstration</span>
+          </div>
+          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Bar à vin, Druento (Turin)</h3>
+          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : un bar à vin de village visible seulement via Google et Instagram, sans adresse à lui.</p>
+          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : quatre pages en italien, écrites dans le registre du lieu, et une carte Google qui ne se charge qu'au clic.</p>
+          <div class="btn-row" style="margin-top:20px;">
+            <a class="link" href="project-cave-antoine.html">Voir l'étude de cas &rarr;</a>
+            <a class="link link--plain" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev &#8599;</a>
+          </div>
+        </div>
+        <div class="proj__shot-wrap">
+          <picture>
+            <source type="image/avif" srcset="assets/shots/cave-antoine-960.avif 960w, assets/shots/cave-antoine-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
+            <source type="image/webp" srcset="assets/shots/cave-antoine-960.webp 960w, assets/shots/cave-antoine-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
+            <img class="proj__shot" src="assets/shots/cave-antoine.png" width="1600" height="820" alt="Page d'accueil du site La Cave d'Antoine" loading="lazy" decoding="async">
           </picture>
         </div>
       </article>
@@ -556,6 +602,8 @@
       <a class="foot__mono" href="https://bdedauphine.com" target="_blank" rel="noopener">bdedauphine.com &#8599;</a>
       <a class="foot__mono" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com &#8599;</a>
       <a class="foot__mono" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr &#8599;</a>
+      <a class="foot__mono" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr &#8599;</a>
+      <a class="foot__mono" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev &#8599;</a>
     </div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
