@@ -350,11 +350,11 @@ html.js [data-reveal].in{opacity:1;transform:none}
 
 /* ---- pricing cards ---------------------------------------------------------*/
 .grid-cards{grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:clamp(16px,2vw,26px)}
-/* Variante réservée à la grille des travaux. En auto-fit pur, une largeur
-   d'écran confortable tient 4 colonnes : un 5e projet partait donc en 4+1
-   avec une tuile orpheline en bas. Trois colonnes fixes rangent 5 projets
-   en 3+2, 6 en 3+3, 7 en 3+3+1 — la grille encaisse les ajouts suivants
-   sans qu'on ait à y revenir. */
+/* Variant reserved for the work grid. With plain auto-fit, a comfortable
+   screen width fits 4 columns, so a 5th project fell into 4+1 with an
+   orphan tile below. Three fixed columns lay 5 projects out as 3+2, 6 as
+   3+3, 7 as 3+3+1 — the grid absorbs later additions without needing to
+   be revisited. */
 @media (min-width:900px){
   .grid-cards--tiles{grid-template-columns:repeat(3,1fr)}
 }
@@ -431,10 +431,10 @@ html.js [data-reveal].in{opacity:1;transform:none}
 /* ---- project rows (home + travaux) ---------------------------------------*/
 .proj{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(22px,4vw,64px);align-items:center;padding:clamp(26px,3vw,42px) 0;border-top:1px solid var(--line)}
 .proj:last-child{border-bottom:1px solid var(--line)}
-/* Numérotation automatique : le compteur est porté par la section, pas
-   écrit dans le HTML de chaque projet. Ajouter, retirer ou réordonner un
-   .proj renumérote toute la série sans toucher au balisage. Le numéro ne
-   dit rien de plus que l'ordre visuel, d'où aria-hidden sur le span. */
+/* Numbering is automatic: the counter lives on the section, not written
+   into each project's markup. Adding, removing or reordering a .proj
+   renumbers the whole series without touching the HTML. The number says
+   nothing the visual order doesn't, hence aria-hidden on the span. */
 #selected-work{counter-reset:proj}
 #selected-work .proj{counter-increment:proj}
 #selected-work .proj__num::before{content:counter(proj,decimal-leading-zero)}
@@ -443,13 +443,12 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .proj__shot{width:100%;height:auto;object-fit:contain;background:var(--cream-3);border:1px solid var(--line);box-shadow:0 32px 60px -32px rgba(22,32,43,.6);transition:transform .5s cubic-bezier(.22,.9,.24,1),box-shadow .5s cubic-bezier(.22,.9,.24,1)}
 .proj__shot-wrap{min-width:0;padding:clamp(10px,1.6vw,22px)}
 .proj__shot-wrap:hover .proj__shot{transform:translateY(-6px);box-shadow:0 46px 78px -34px rgba(22,32,43,.7)}
-/* Desktop uniquement : une ligne sur deux met la colonne image d'abord
-   (gauche) et le texte ensuite (droite). C'est l'alternance qui porte le
-   rythme, pas un projet en particulier — la série reste juste quel que
-   soit le nombre de projets, sans classe à repositionner à chaque ajout.
-   Sur mobile, et sur toutes les autres lignes, l'ordre du source est
-   conservé (texte avant image). .proj--invert-cols reste disponible pour
-   forcer l'inversion sur une ligne précise. */
+/* Desktop only: every other row puts the image column first (left) and
+   the text second (right). The alternation carries the rhythm, not any
+   one project — the series stays right whatever the project count, with
+   no class to reposition on each addition. On mobile, and on every other
+   row, source order is kept (text before image). .proj--invert-cols is
+   still available to force the swap on one specific row. */
 @media (min-width:760px){
   #selected-work .proj:nth-of-type(even) .proj__shot-wrap,
   #selected-work .proj--invert-cols .proj__shot-wrap{order:-1}

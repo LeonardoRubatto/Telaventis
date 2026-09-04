@@ -78,3 +78,17 @@
 # visits — a page-speed signal search engines do factor in.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The four abstract works in assets/art/ are not ours. They are used as
+# material in the layout and stay the property of their authors (see
+# mentions-legales.html). Credited, yes — but nothing justifies a search
+# engine indexing them and returning them as the image that represents
+# Telaventis: what illustrates the studio should be the studio's work.
+#
+# noindex rather than a robots.txt Disallow: Disallow stops the recrawl
+# but leaves whatever is already indexed in place, whereas noindex asks
+# for removal — which requires the file to stay crawlable, so robots.txt
+# must NOT block these. The images still display normally on the site;
+# only indexing changes.
+/assets/art/*
+  X-Robots-Tag: noindex
