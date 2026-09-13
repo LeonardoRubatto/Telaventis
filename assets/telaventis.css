@@ -468,6 +468,7 @@ html.js [data-reveal].in{opacity:1;transform:none}
   right:-13%;
   --tilt:6deg;
   border:2px solid var(--cream);
+  border-radius:11px;
   box-shadow:0 14px 26px -10px rgba(22,32,43,.55);
   transform:rotate(var(--tilt));
   transition:transform .5s cubic-bezier(.22,.9,.24,1),box-shadow .5s cubic-bezier(.22,.9,.24,1);
