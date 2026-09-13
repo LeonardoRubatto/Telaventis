@@ -441,7 +441,7 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .proj__num{font-size:clamp(44.5px,5vw,74px);font-weight:800;letter-spacing:-.05em;color:rgba(22,32,43,.16);line-height:1}
 .proj__tag{display:inline-block;transform:rotate(-4deg);border:1px solid var(--coral);color:var(--coral);font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;padding:5px 9px}
 .proj__shot{width:100%;height:auto;object-fit:contain;background:var(--cream-3);border:1px solid var(--line);box-shadow:0 32px 60px -32px rgba(22,32,43,.6);transition:transform .5s cubic-bezier(.22,.9,.24,1),box-shadow .5s cubic-bezier(.22,.9,.24,1)}
-.proj__shot-wrap{min-width:0;padding:clamp(10px,1.6vw,22px)}
+.proj__shot-wrap{min-width:0;padding:clamp(10px,1.6vw,22px);position:relative}
 .proj__shot-wrap:hover .proj__shot{transform:translateY(-6px);box-shadow:0 46px 78px -34px rgba(22,32,43,.7)}
 /* Desktop only: every other row puts the image column first (left) and
    the text second (right). The alternation carries the rhythm, not any
@@ -452,6 +452,44 @@ html.js [data-reveal].in{opacity:1;transform:none}
 @media (min-width:760px){
   #selected-work .proj:nth-of-type(even) .proj__shot-wrap,
   #selected-work .proj--invert-cols .proj__shot-wrap{order:-1}
+}
+
+/* Mobile screenshot, propped against the outer corner of the desktop one.
+   It follows the same even/odd (and .proj--invert-cols) rule as the column
+   swap above, so reordering or flipping a row moves the phone to match —
+   at every width, not just the >=760px breakpoint, since the phone's side
+   is a detail of the shot itself rather than the column layout. */
+.proj__shot-mobile{
+  position:absolute;
+  z-index:2;
+  width:clamp(50px,17%,112px);
+  height:auto;
+  bottom:8%;
+  right:4%;
+  --tilt:6deg;
+  border:2px solid var(--cream);
+  border-radius:11px;
+  box-shadow:0 14px 26px -10px rgba(22,32,43,.55);
+  transform:rotate(var(--tilt));
+  transition:transform .5s cubic-bezier(.22,.9,.24,1),box-shadow .5s cubic-bezier(.22,.9,.24,1);
+}
+#selected-work .proj:nth-of-type(even) .proj__shot-mobile,
+#selected-work .proj--invert-cols .proj__shot-mobile{
+  right:auto;
+  left:4%;
+  --tilt:-6deg;
+}
+.proj__shot-wrap:hover .proj__shot-mobile{transform:rotate(var(--tilt)) translateY(-4px);box-shadow:0 18px 32px -10px rgba(22,32,43,.6)}
+/* Below this, the row is a single full-width column with little gutter
+   either side, so the phone stays tucked inside the corner (right/left
+   above) instead of bleeding past the shot — bleeding past it here
+   bleeds past the screen edge itself and gets clipped by body's
+   overflow-x:hidden. Desktop has the room to let it hang out further,
+   and reads better a bit bigger once it does. */
+@media (min-width:760px){
+  .proj__shot-mobile{width:clamp(60px,20.4%,134px);right:-13%}
+  #selected-work .proj:nth-of-type(even) .proj__shot-mobile,
+  #selected-work .proj--invert-cols .proj__shot-mobile{left:-13%}
 }
 
 .tile{text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--cream-2);padding:clamp(20px,2.2vw,30px);display:flex;flex-direction:column;gap:18px;min-width:0;transition:border-color .3s ease,background .3s ease,transform .4s cubic-bezier(.22,.9,.24,1)}
