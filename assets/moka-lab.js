@@ -225,3 +225,127 @@
   window.addEventListener('resize',request,{passive:true});
   request();
 })();
+
+/* ==========================================================================
+   Noise to signal — the depth layer of the Moka story (phase 0 → 1)
+   The café's scattered presence was six text labels laid flat on the page.
+   Now the phase opens on the café's actual pictures, as the kind of debris a
+   business leaves online: low-resolution uploads, recompressed and blocky,
+   floating at different depths (the farther, the smaller, paler, blurrier —
+   atmospheric perspective), drifting on their own and leaning away from the
+   pointer. As the story advances, the camera travels forward THROUGH that
+   cloud (after design-memory's telescope-zoom, re-derived without GSAP /
+   ScrollSmoother: one perspective divide per fragment): each picture swells
+   as it nears, resolves in hard steps from mosaic to sharp (after
+   image-pixel-loading: redrawn into a canvas at 12 → 24 → 48 → 96 → 192 px
+   and shown with image-rendering:pixelated), and slides past the edge of
+   the screen just as the finished site opens in the middle. What was noise
+   has become signal — which is the whole argument of the section.
+   Reads the story's own progress (story._mokaP, set by the render above),
+   so it can never disagree with it. No JS / reduced motion: nothing here
+   exists and the story is exactly as before.
+   ========================================================================== */
+(function(){
+  var story=document.querySelector('[data-moka-story]');
+  var host=story&&story.querySelector('[data-moka-depth]');
+  if(!host)return;
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var mobile=window.matchMedia&&window.matchMedia('(max-width:759px)').matches;
+  var track=story.querySelector('.moka-story__track');
+  var imgs=Array.prototype.slice.call(story.querySelectorAll('.moka-page img'));
+  if(!imgs.length)return;
+  /* scatter: x/y in units of the stage's half-size, z = distance */
+  var LAYOUT=mobile?[
+    [-.62,-.55,2.1],[.58,-.34,1.6],[-.5,.42,1.35],[.62,.58,2.6],[.05,-.1,3.1]
+  ]:[
+    [-.78,-.52,1.9],[.7,-.62,2.5],[-.42,.46,1.45],[.82,.28,1.7],[.08,-.74,3.0],[-.95,.12,2.8],[.36,.7,2.2]
+  ];
+  var frags=[];
+  LAYOUT.forEach(function(L,i){
+    var src=imgs[(i*2+1)%imgs.length];
+    var el=document.createElement('div');
+    el.className='moka-depth__frag';
+    var cv=document.createElement('canvas');
+    el.appendChild(cv);
+    host.appendChild(el);
+    var f={el:el,cv:cv,ctx:cv.getContext('2d'),x:L[0],y:L[1],z:L[2],img:null,res:0,ph:i*1.7,rot:(i%2?1:-1)*(2+i%3*1.5)};
+    var load=function(){
+      var im=new Image();
+      im.decoding='async';
+      im.onload=function(){f.img=im;f.res=0;kick();};
+      im.src=src.currentSrc||src.src;
+    };
+    f.src=src; f.load=load;
+    frags.push(f);
+  });
+  /* the page images are lazy; the depth layer needs its pictures a little
+     before the story arrives, so once the story is within three screens it
+     asks for them itself (not at page load — they are not the hero's) */
+  var primed=false;
+  var prime=function(){
+    primed=true;
+    frags.forEach(function(f){
+      var s=f.src;
+      if(s.complete&&s.naturalWidth)f.load(); else { s.addEventListener('load',f.load,{once:true}); s.loading='eager'; }
+    });
+  };
+  var STEPS=[12,24,48,96,192,420];
+  var draw=function(f,res){
+    if(!f.img||!f.ctx)return;
+    var w=res, h=Math.round(res*f.img.naturalHeight/f.img.naturalWidth)||res;
+    f.cv.width=w; f.cv.height=h;
+    f.ctx.imageSmoothingEnabled=true;
+    f.ctx.drawImage(f.img,0,0,w,h);
+    f.res=res;
+  };
+  var ptr={x:0,y:0,tx:0,ty:0};
+  story.addEventListener('pointermove',function(e){ptr.tx=(e.clientX/window.innerWidth-.5);ptr.ty=(e.clientY/window.innerHeight-.5);kick();},{passive:true});
+  var clamp=function(n,a,b){return Math.max(a,Math.min(b,n));};
+  var ease=function(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+  var raf=0;
+  var frame=function(now){
+    raf=0;
+    var r=track.getBoundingClientRect();
+    var vh=window.innerHeight||800;
+    var p=story._mokaP;
+    if(p==null)p=clamp(-r.top/Math.max(1,track.offsetHeight-vh),0,1);
+    if(!primed&&r.top<vh*3)prime();
+    var onScreen=r.top<vh&&r.bottom>0;
+    if(!onScreen||p>.28){host.style.visibility='hidden';return;}
+    host.style.visibility='visible';
+    var W=host.clientWidth,H=host.clientHeight,cx=W/2,cy=H/2;
+    /* the dolly goes far enough (3.4 units) that even the farthest picture
+       (z 3.1) passes the camera, and everything fades out as the site takes
+       the stage — one picture used to linger, large, into the next phase */
+    var cam=ease(clamp(p/.26,0,1))*3.4;
+    var outro=1-clamp((p-.2)/.07,0,1);
+    var t=now/1000;
+    ptr.x+=(ptr.tx-ptr.x)*.06; ptr.y+=(ptr.ty-ptr.y)*.06;
+    var base=Math.min(W,H)*(mobile?.46:.4);
+    frags.forEach(function(f){
+      var d=f.z-cam;                              /* distance to the camera */
+      if(d<.18){f.el.style.opacity='0';return;}
+      var s=1/d;                                  /* perspective divide */
+      var fx=f.x+Math.sin(t*.35+f.ph)*.03-ptr.x*.12/f.z;
+      var fy=f.y+Math.cos(t*.3+f.ph)*.03-ptr.y*.1/f.z;
+      var X=cx+fx*(W*.5)*s*.9, Y=cy+fy*(H*.5)*s*.9;
+      var size=base*s;
+      /* atmospheric depth: far = pale and soft, near = full; very near = gone */
+      var alpha=clamp(1.25-d*.32,0,1)*clamp((d-.18)/.35,0,1)*outro;
+      var blur=clamp(Math.abs(d-1.05)*1.6,0,4.5);
+      /* resolution follows proximity, in hard steps */
+      var k=clamp(Math.floor((2.9-d)/.42),0,STEPS.length-1);
+      if(STEPS[k]!==f.res)draw(f,STEPS[k]);
+      f.el.style.width=size.toFixed(1)+'px';
+      f.el.style.transform='translate3d('+(X-size/2).toFixed(1)+'px,'+(Y-size*.33).toFixed(1)+'px,0) rotate('+(f.rot*(1-clamp(cam/2,0,1)*.6)).toFixed(2)+'deg)';
+      f.el.style.opacity=alpha.toFixed(3);
+      f.el.style.filter=blur>.2?'blur('+blur.toFixed(1)+'px)':'none';
+      f.el.style.zIndex=String(Math.round(100-d*20));
+    });
+    raf=requestAnimationFrame(frame);
+  };
+  var kick=function(){if(!raf)raf=requestAnimationFrame(frame);};
+  window.addEventListener('scroll',kick,{passive:true});
+  window.addEventListener('resize',kick,{passive:true});
+  kick();
+})();

@@ -139,7 +139,9 @@
        an image through background-clip:text on the heading itself, and
        transformed inline-block descendants do not reliably clip against a
        parent's text-clipped background. One effect per heading. */
-    var SEL = '.h-page, .h2, .band__big, [data-fx-split]';
+    /* page titles, plus the few headings that opt in — no longer every .h2:
+       one reveal on every section heading is a reflex, not a choice */
+    var SEL = '.h-page, [data-fx-split]';
     var nodes = [].slice.call(doc.querySelectorAll(SEL)).filter(function (el) {
       return !el.hasAttribute('data-ink') && !el.closest('[data-ink]');
     });
@@ -631,14 +633,14 @@
           /* left-to-right birth, so the phrase grows into being rather than
              popping — the demos stagger per instance too */
           born: (p[0] / cssW) * 0.5 + Math.random() * 0.35,
-          a: 0.78 + Math.random() * 0.22,
+          a: isFlower ? 0.78 + Math.random() * 0.22 : 0.92 + Math.random() * 0.08,
           /* drift is scaled to the grid, so it can never be large enough to
              pull a particle off its own letter */
           d: stepPx,
           /* bubbles: own swell-and-burst period, and the demo's ~6% that
              float away. Flowers: own breathing rate. */
           cyc: isFlower ? (2.2 + Math.random() * 2.6) : (2.6 + Math.random() * 4.2),
-          fly: !isFlower && Math.random() < 0.09,
+          fly: !isFlower && Math.random() < 0.03,
           /* how long this bubble hangs in the air before it respawns, once
              it is one of the ~9% that float away */
           lag: Math.pow(Math.random(), 1.4)
@@ -687,10 +689,15 @@
              to .70 (the demo resets scale straight to 0, which here would
              punch a hole in the letterform) and the burst is a sharp dip
              instead of a hard cut — same sawtooth, strokes stay solid. */
-          var cyc = phase - Math.floor(phase);
-          s *= (0.70 + 0.30 * cyc) * (1 - 0.40 * Math.pow(cyc, 14));
-          x += Math.sin(t * 0.55 + p.ph) * p.d * 0.36;
-          y += Math.sin(t * 0.42 + p.ph * 1.7) * p.d * 0.32;
+          /* Resting state = the packed state a metamorphosis lands in
+             (3c): bubbles held tight against their neighbours, so the word
+             reads as a word. The old swell-to-burst sawtooth (70-100% then a
+             sharp dip) left the letters half-empty at any given instant;
+             what survives of it is a slow ±3% breath and a drift of a tenth
+             of the grid — alive, never loose. */
+          s *= 1 + 0.03 * Math.sin(phase * 6.283);
+          x += Math.sin(t * 0.55 + p.ph) * p.d * 0.12;
+          y += Math.sin(t * 0.42 + p.ph * 1.7) * p.d * 0.10;
           /* the demo's isFlying 6%: these leave the word and float up,
              respawning at home once clear of it */
           if (p.fly) {
@@ -750,6 +757,7 @@
        flower/bubble, and — built the same way, just left unrevealed until
        3b says otherwise — the rest of the sentence, which converts in place
        later in the scroll. */
+    var mobileGlyphs = mq('(max-width:759px)');
     var makeKeyGlyph = function (el, kind) {
       var canvas = doc.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
@@ -787,7 +795,10 @@
            buildParticles sizes each bubble as a fixed fraction of this same
            step, so shrinking the grid shrinks the bubbles with it and they
            still meet their neighbours; nothing there needed to change. */
-        var stepPx = Math.max(1.8, fs * 0.032);
+        /* phones: the word is ~60px, not ~120px, and sits on a busy flow
+           field — a finer grid there dissolves into noise, so the grid (and
+           with it every bubble, sized off this step) is coarser */
+        var stepPx = mobileGlyphs ? Math.max(2.6, fs * 0.05) : Math.max(1.8, fs * 0.032);
         var st = Math.max(1, Math.round(stepPx * dpr));
         var pts = [];
         for (var y = 0; y < off.height; y += st) {
@@ -821,6 +832,12 @@
          so a word already fully grown from a previous visit doesn't just
          pop back in fully formed */
       inst.reset = function () { inst.t0 = 0; if (inst.built) inst.ctx.clearRect(0, 0, inst.w, inst.h); };
+
+      /* the opposite of reset(): jump the clock past every particle's birth
+         (born <= .85s, then .95s of growth) so the word shows fully formed.
+         Used when a metamorphosis (3c) has just delivered its particles to
+         exactly these positions and the word must take over seamlessly. */
+      inst.settle = function (now) { inst.t0 = now - 2600; inst.prev = now; };
 
       inst.render = function (now, opts) {
         if (!inst.built) return false;
@@ -925,7 +942,7 @@
          for what replaced both of them. Every word here just stays the
          plain DOM text it always was underneath the canvas. */
       var words = panels.map(function (p) {
-        if (!p.getAttribute('data-fx-kind') || isMobileEra) return [];
+        if (!p.getAttribute('data-fx-kind')) return [];
         return [].slice.call(p.querySelectorAll('.era__w')).map(function (el) {
           var glyph = fxType.makeKeyGlyph(el, p.getAttribute('data-fx-kind'));
           return glyph && { el: el, glyph: glyph, key: el.classList.contains('era__w--key') };
@@ -1401,10 +1418,46 @@
          instead of visibly rising into it from below. Camera height and
          distance are back up here; only the look-at target is sent deep
          to keep the downward tilt (and the contrast win) on its own. */
+      /* vantage points brought about a third closer together than first
+         tuned: the old 25-unit swing from the second to the third one read
+         as a lurch, not a glide */
+      /* ---- the camera as a critically damped spring ----------------------
+         The module's own setView() tweens each move over a fixed time with
+         an ease-in-out: every phrase change restarted the camera from a
+         standstill, accelerated hard and braked hard — "un peu brusque".
+         Now the module is only ever told where the camera IS this frame
+         (setView with a 1ms duration), and where it is comes from a
+         second-order spring chasing the current goal: gentle departure, no
+         overshoot, about two seconds to settle, and if the goal changes
+         mid-flight the camera simply bends toward the new one without its
+         velocity ever jumping. */
+      var cam = null, camGoal = null;
+      var CAM_W = 2.1;   /* rad/s — critically damped, settles in ~2.2s */
+      var stepCam = function (now) {
+        if (!gpu || !gpu.setView || !camGoal) return false;
+        if (!cam) {
+          cam = { p: camGoal[0].slice(), v: [0, 0, 0], l: camGoal[1].slice(), lv: [0, 0, 0], t: now };
+          gpu.setView(cam.p, cam.l, 1);
+          return false;
+        }
+        var dt = Math.min(0.05, Math.max(0, (now - cam.t) / 1000));
+        cam.t = now;
+        var moving = false;
+        for (var k = 0; k < 3; k++) {
+          cam.v[k] += (CAM_W * CAM_W * (camGoal[0][k] - cam.p[k]) - 2 * CAM_W * cam.v[k]) * dt;
+          cam.p[k] += cam.v[k] * dt;
+          cam.lv[k] += (CAM_W * CAM_W * (camGoal[1][k] - cam.l[k]) - 2 * CAM_W * cam.lv[k]) * dt;
+          cam.l[k] += cam.lv[k] * dt;
+          if (Math.abs(cam.v[k]) + Math.abs(cam.lv[k]) > 0.002) moving = true;
+        }
+        gpu.setView(cam.p, cam.l, 1);
+        return moving;
+      };
+
       var GPU_SCENES = [
         [[0, 3, 20], [0, -12, 0]],
-        [[13, 1, 12], [0, -15, 0]],
-        [[-12, 4, 14], [0, -10, 0]]
+        [[8, 1.5, 15], [0, -14, 0]],
+        [[-7, 3.5, 16], [0, -11, 0]]
       ];
 
       /* reduced-motion is already handled: this whole module returned at
@@ -1454,7 +1507,8 @@
                one ever throws mid-flight, dispose() below falls straight
                back to a fully intact fallback with nothing to rebuild */
             auroraCanvas.style.opacity = '0';
-            if (gpu.setView) gpu.setView(GPU_SCENES[Math.max(0, target)][0], GPU_SCENES[Math.max(0, target)][1], 1);
+            camGoal = GPU_SCENES[Math.max(0, target) % GPU_SCENES.length];
+            cam = null;   /* the spring (below) starts from rest at this vantage */
           }).catch(function (err) {
             /* console.error, not .warn — a fetch 404, a syntax error in the
                built module, a thrown exception inside init: whatever it is,
@@ -1870,6 +1924,448 @@
          this is still real time, not scroll-scrubbed, so it always plays
          out at this same pace regardless of how fast the visitor scrolled
          to trigger it; only the pace itself changed. */
+      /* ---- 3c. one field of bubbles --------------------------------------
+         Every bubble word in this section lives on ONE canvas over the
+         stage, as one population of particles that never changes state.
+         At rest they sit packed tight inside their letters, breathing a
+         little on a global clock. When the phrase changes, the very same
+         particles lift off and fly (each on its own arc and delay, left to
+         right like a gust) to places in the letters of the next phrase's
+         words, and simply come to rest there; on the last phrase they fly
+         into the serif heading, which rises out of them as they fade.
+         Scrolling back plays it the other way. On first arrival they rise
+         from the bottom of the screen, bubbles coming up from the deep.
+         There is no hand-over anywhere: an earlier version flew the
+         particles on a separate canvas and then passed the word back to
+         its own per-word canvas, and that swap was a visible flash. The
+         per-word canvases now only serve as samplers (their pixels are
+         never shown), and the key words' own letters are never painted
+         while the section is live (telaventis-fx.css), so nothing but the
+         bubbles ever stands for those words.
+         Pairing is deliberately simple: both clouds sorted along a shallow
+         diagonal and matched by rank, so letters travel to letters in
+         reading order instead of crossing in a tangle. */
+      var sticky = era.querySelector('.era__sticky');
+      var morphCanvas = doc.createElement('canvas');
+      morphCanvas.className = 'era__morph';
+      morphCanvas.setAttribute('aria-hidden', 'true');
+      sticky.appendChild(morphCanvas);
+      var morphCtx = morphCanvas.getContext('2d');
+      var bubblePal = fxType.getSprites().bubbles;
+      var MORPH_MS = 1250;
+      var MORPH_CAP = isMobileEra ? 1500 : 2800;
+      var morph = null;          /* the flight in progress, or null at rest */
+      var live = [];             /* the particles at rest (stage coordinates) */
+      var liveOf = -1;           /* which panel `live` spells */
+      var headingTimer = 0;
+
+      /* the breath every particle shares, on the global clock — applied in
+         full at rest and faded in along a flight, so a landing is exactly
+         the resting position at that instant (no step, ever) */
+      var breathX = function (q, t) { return Math.sin(t * 0.55 + q.ph) * q.s * 0.12; };
+      var breathY = function (q, t) { return Math.sin(t * 0.42 + q.ph * 1.7) * q.s * 0.10; };
+      var breathS = function (q, t) { return 1 + 0.03 * Math.sin(t * 1.9 + q.ph); };
+
+      var sampleHeading = function (el, box) {
+        var cs = getComputedStyle(el);
+        var fs = parseFloat(cs.fontSize) || 60;
+        var lines = el.querySelectorAll('.fx-line');
+        if (!lines.length) lines = [el];
+        var step = Math.max(2.4, fs * 0.052);
+        var out = [];
+        var off = doc.createElement('canvas');
+        var octx = off.getContext('2d', { willReadFrequently: true });
+        [].forEach.call(lines, function (ln) {
+          var r = ln.getBoundingClientRect();
+          var text = ln.textContent.replace(/\s+/g, ' ').trim();
+          if (!text || r.width < 4 || r.height < 4) return;
+          off.width = Math.ceil(r.width); off.height = Math.ceil(r.height);
+          octx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + fs + 'px ' + cs.fontFamily;
+          if ('letterSpacing' in octx) octx.letterSpacing = cs.letterSpacing;
+          octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.fillStyle = '#fff';
+          octx.fillText(text, off.width / 2, off.height / 2 + fs * 0.03);
+          var d = octx.getImageData(0, 0, off.width, off.height).data;
+          for (var y = 0; y < off.height; y += step) {
+            for (var x = 0; x < off.width; x += step) {
+              if (d[((y | 0) * off.width + (x | 0)) * 4 + 3] > 128) {
+                out.push({ x: r.left - box.left + x, y: r.top - box.top + y, s: step * 1.05, sp: bubblePal[(Math.random() * bubblePal.length) | 0] });
+              }
+            }
+          }
+        });
+        return out;
+      };
+
+      /* where panel i's bubbles belong, in stage coordinates. Key words are
+         measured from the WORD's box (their own canvases are display:none
+         now and would measure 0). */
+      var cloudOf = function (i) {
+        var box = sticky.getBoundingClientRect();
+        var out = [];
+        if (i < 0) return out;
+        if (kinds[i] && words[i].length) {
+          words[i].forEach(function (w) {
+            if (!w.key || !w.glyph.ensure()) return;
+            var r = w.el.getBoundingClientRect();
+            w.glyph.particles.forEach(function (pt) {
+              out.push({ x: r.left - box.left + pt.x, y: r.top - box.top + pt.y, s: pt.s, sp: pt.sp });
+            });
+          });
+          return out;
+        }
+        return headings[i] ? sampleHeading(headings[i], box) : out;
+      };
+
+      var restAt = function (cloud, i) {
+        live = cloud.map(function (c) { return { x: c.x, y: c.y, s: c.s, sp: c.sp, ph: c.ph != null ? c.ph : Math.random() * 6.283 }; });
+        liveOf = i;
+      };
+
+      var startMorph = function (from, to, now) {
+        if (!morphCtx || from === to) return false;
+        var t = now / 1000;
+        var H = sticky.clientHeight || 800, W = sticky.clientWidth || 1;
+        var dst = kinds[to] ? cloudOf(to) : (headings[to] ? cloudOf(to) : []);
+        if (!dst.length) { live = []; liveOf = -1; return false; }
+        var src, rising = false;
+        if (live.length && liveOf === from) {
+          /* take off from exactly where each resting bubble is right now */
+          src = live.map(function (q) { return { x: q.x + breathX(q, t), y: q.y + breathY(q, t), s: q.s * breathS(q, t), sp: q.sp, ph: q.ph }; });
+        } else if (from >= 0 && !kinds[from]) {
+          src = cloudOf(from);                      /* out of the heading */
+        } else {
+          /* first arrival: up from below the screen, spread wide */
+          rising = true;
+          src = dst.map(function (d) {
+            return { x: d.x + (Math.random() - 0.5) * W * 0.9, y: H + 20 + Math.random() * H * 0.35, s: d.s * (0.4 + Math.random() * 0.5), sp: d.sp };
+          });
+        }
+        if (!src.length) return false;
+        var rank = function (u, v) { return (u.x + u.y * 0.35) - (v.x + v.y * 0.35); };
+        src.sort(rank); dst.sort(rank);
+        var N = Math.min(MORPH_CAP, Math.max(src.length, dst.length));
+        var parts = new Array(N);
+        for (var k = 0; k < N; k++) {
+          var a = src[Math.floor(k * src.length / N)];
+          var b = dst[Math.floor(k * dst.length / N)];
+          var dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+          /* each flight bends to one side of its straight line, mostly
+             upward, the way a gust lifts before it sets things down */
+          var bend = (Math.random() - 0.3) * Math.min(300, len * 0.5);
+          parts[k] = {
+            ax: a.x, ay: a.y, as: a.s, x: b.x, y: b.y, s: b.s,
+            cx: (a.x + b.x) / 2 - dy / len * bend,
+            cy: (a.y + b.y) / 2 + dx / len * bend - Math.min(160, len * 0.18),
+            sp: Math.random() < 0.5 ? a.sp : b.sp,
+            delay: (a.x / W) * 0.24 + Math.random() * 0.14,
+            ph: a.ph != null ? a.ph : Math.random() * 6.283
+          };
+        }
+        live = []; liveOf = -1;
+        morph = { parts: parts, t0: now, to: to, toHeading: !kinds[to], dur: rising ? MORPH_MS * 1.3 : MORPH_MS };
+        return true;
+      };
+
+      /* land whatever is in flight, instantly and in place */
+      var endMorph = function () {
+        if (!morph) return;
+        if (!morph.toHeading) restAt(morph.parts, morph.to);
+        morph = null;
+      };
+
+      var renderField = function (now) {
+        if (!morphCtx) return false;
+        var w = morphCanvas.clientWidth, h = morphCanvas.clientHeight;
+        if (!w || !h) return false;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var pw = Math.round(w * dpr), ph = Math.round(h * dpr);
+        if (morphCanvas.width !== pw || morphCanvas.height !== ph) { morphCanvas.width = pw; morphCanvas.height = ph; }
+        morphCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        morphCtx.clearRect(0, 0, w, h);
+        var t = now / 1000, k, q;
+        if (morph) {
+          var T = (now - morph.t0) / morph.dur;
+          /* into the heading: the bubbles give way to the real letters as
+             they rise (the heading's own fx-split, triggered at ~55%) */
+          var fade = morph.toHeading ? 1 - clamp((T - 0.62) / 0.34, 0, 1) : 1;
+          for (k = 0; k < morph.parts.length; k++) {
+            q = morph.parts[k];
+            var u = clamp((T - q.delay) / 0.62, 0, 1);
+            var e = easeInOutCubic(u), ie = 1 - e;
+            var sw = Math.sin(Math.PI * e);
+            var x = ie * ie * q.ax + 2 * ie * e * q.cx + e * e * q.x + breathX(q, t) * e;
+            var y = ie * ie * q.ay + 2 * ie * e * q.cy + e * e * q.y + breathY(q, t) * e;
+            x += Math.sin(q.ph + t * 9) * 3 * sw;
+            var sz = (q.as + (q.s - q.as) * e) * (1 + 0.45 * sw) * (1 + (breathS(q, t) - 1) * e);
+            morphCtx.globalAlpha = (0.72 + 0.28 * (1 - sw)) * fade;
+            morphCtx.drawImage(q.sp, x - sz / 2, y - sz / 2, sz, sz);
+          }
+          morphCtx.globalAlpha = 1;
+          if (T >= 1) endMorph();
+          return true;
+        }
+        if (!live.length) return false;
+        /* at rest: the same particles, the same breath, plus the pointer's
+           soft push (distance-decayed, no memory) */
+        var box = sticky.getBoundingClientRect();
+        var px = ptr.active ? ptr.x - box.left : -1e5, py = ptr.active ? ptr.y - box.top : -1e5;
+        var R = isMobileEra ? 54 : 78;
+        for (k = 0; k < live.length; k++) {
+          q = live[k];
+          var rx = q.x + breathX(q, t), ry = q.y + breathY(q, t);
+          var ddx = rx - px, ddy = ry - py, dd = Math.sqrt(ddx * ddx + ddy * ddy);
+          if (dd < R && dd > 0.01) { var push = (1 - dd / R) * R * 0.5; rx += ddx / dd * push; ry += ddy / dd * push; }
+          var ss = q.s * breathS(q, t);
+          morphCtx.drawImage(q.sp, rx - ss / 2, ry - ss / 2, ss, ss);
+        }
+        return true;
+      };
+
+      /* ---- 3d. the exit: the canvas is cut open onto the next section -----
+         The last phrase ends on "...si l'on pousse la porte." — and then the
+         door opens. After the three phrases the track runs on for one more
+         screen (TAIL_VH): over that stretch a spindle-shaped slit, the same
+         diagonal as the wordmark cut and Fontana's "tagli", opens across the
+         whole pinned scene, from a hairline to the full screen; the scene
+         behind it pushes a little closer as it opens, the way a room seems
+         to come at you as you step through a door; and inside the slit is
+         the next section's own world: the cream page and the Moka story's
+         title, lifted out of #direction-lab so it is the thing the cut
+         reveals. When the slit has covered everything, the pinned scene
+         scrolls away and the Moka story continues below exactly where the
+         cream already is — no seam at all.
+         No JS / reduced motion: none of this exists, the title stays in its
+         own section and the two sections simply follow each other. */
+      /* the tail after the last phrase: its first ~55% is a pause (the last
+         sentence stays on screen, readable, a full screen of scroll longer),
+         then the door opens */
+      var TAIL_VH = 1.8;
+      var CUT_AT = 0.55;
+      var cut = null, cutIn = null, cutQ = -1;
+      var mokaIntro = doc.querySelector('#direction-lab .moka-story__intro');
+      if (mokaIntro && era.nextElementSibling && era.nextElementSibling.id === 'direction-lab') {
+        cut = doc.createElement('div');
+        cut.className = 'era__cut';
+        cut.setAttribute('aria-hidden', 'true');
+        cutIn = doc.createElement('div');
+        cutIn.className = 'era__cut-in';
+        var introClone = mokaIntro.cloneNode(true);
+        [].forEach.call(introClone.querySelectorAll('[data-reveal],[data-ink]'), function (n) { n.removeAttribute('data-reveal'); n.removeAttribute('data-ink'); });
+        /* the title arrives like the home headline once the door is open
+           (letters settling from thin and wide to heavy): split it into
+           words and letters now, lock its lines at the moment it plays */
+        var cutTitle = introClone.querySelector('.moka-story__title');
+        if (cutTitle) {
+          var ci = 0;
+          var parts = cutTitle.textContent.split(/( +)/);
+          cutTitle.textContent = '';
+          parts.forEach(function (tok) {
+            if (!tok) return;
+            if (/^ +$/.test(tok)) { cutTitle.appendChild(doc.createTextNode(' ')); return; }
+            var w = doc.createElement('span'); w.className = 'wt-w';
+            Array.prototype.forEach.call(tok, function (ch) {
+              var c = doc.createElement('span'); c.className = 'wt-c'; c.textContent = ch;
+              c.style.setProperty('--i', ci++); w.appendChild(c);
+            });
+            cutTitle.appendChild(w);
+          });
+        }
+        cutIn.appendChild(introClone);
+        cut.appendChild(cutIn);
+        sticky.appendChild(cut);
+        /* the original stays in the DOM for the accessibility tree and for
+           any path where this never runs; visually it has moved into the cut */
+        mokaIntro.parentNode.classList.add('is-hoisted');
+      }
+      /* The slit is not tied to the scroll position at all. Scroll only
+         crosses a line — a few percent into the tail it opens, back above
+         it it closes — and the opening then plays whole, on its own clock:
+         1.1s, eased in and out, the same every time whatever the scroll
+         speed (it follows nothing, so nothing can make it stutter). Only if
+         the visitor has already scrolled the pinned scene away before it
+         finished does it hurry (0.35s), so a half-open door never slides
+         off the screen. At the moment it opens, the last phrase comes apart
+         into bubbles that are drawn into the slit (the same particle field
+         as §3c, flying to points along the cut's axis and fading as they
+         reach it), so the sentence about pushing the door literally goes
+         through it. The slit's edges are slightly irregular — cut canvas,
+         not a vector wedge. */
+      var cutOpen = 0, cutGoal = 0, cutPainted = -1, cutTw = null;
+      var CUT_MS = 1100;
+      var axisOf = function (W, H) {
+        var ax = -0.55 * W, ay = 0.66 * H, bx = 1.55 * W, by = 0.34 * H;
+        var dx = bx - ax, dy = by - ay, L = Math.sqrt(dx * dx + dy * dy);
+        return { ax: ax, ay: ay, dx: dx, dy: dy, L: L, nx: -dy / L, ny: dx / L };
+      };
+      var paintCut = function (e) {
+        if (Math.abs(e - cutPainted) < 0.0005) return;
+        cutPainted = e;
+        sticky.style.setProperty('--cut', e.toFixed(4));
+        if (e <= 0.0005) { cut.style.visibility = 'hidden'; return; }
+        cut.style.visibility = 'visible';
+        /* the spring only approaches 1; past 98.5% the door is simply open */
+        if (e >= 0.985) { cutIn.style.clipPath = 'none'; return; }
+        var W = sticky.clientWidth, H = sticky.clientHeight, g = axisOf(W, H);
+        /* open exactly as wide as this screen needs: the half-width at which
+           the last corner is covered, from each corner's distance to the
+           axis and the spindle's profile there */
+        var need = 0;
+        [[0, 0], [W, 0], [0, H], [W, H]].forEach(function (c) {
+          var t = ((c[0] - g.ax) * g.dx + (c[1] - g.ay) * g.dy) / (g.L * g.L);
+          var dist = Math.abs((c[0] - g.ax) * g.nx + (c[1] - g.ay) * g.ny);
+          need = Math.max(need, dist / Math.max(0.05, Math.pow(Math.sin(Math.PI * t), 0.75)));
+        });
+        var half = need * 1.1 * e;
+        var N = 30, top = [], bot = [];
+        for (var k = 0; k <= N; k++) {
+          var t = k / N, px = g.ax + g.dx * t, py = g.ay + g.dy * t;
+          var w = half * Math.pow(Math.sin(Math.PI * t), 0.75);
+          /* torn edges: a fixed, position-based irregularity (never animated,
+             so the tear holds its shape), different on each lip */
+          var tear = Math.min(w * 0.035, 7);
+          var wt = w + tear * (Math.sin(t * 23 + 1.3) * 0.65 + Math.sin(t * 47) * 0.35);
+          var wb = w + tear * (Math.sin(t * 29 + 4.1) * 0.65 + Math.sin(t * 53 + 2) * 0.35);
+          top.push((px + g.nx * wt).toFixed(1) + 'px ' + (py + g.ny * wt).toFixed(1) + 'px');
+          bot.push((px - g.nx * wb).toFixed(1) + 'px ' + (py - g.ny * wb).toFixed(1) + 'px');
+        }
+        cutIn.style.clipPath = 'polygon(' + top.concat(bot.reverse()).join(',') + ')';
+      };
+      /* the last phrase dissolves into the slit */
+      var lastHeading = headings[n - 1];
+      var intoCut = function (now) {
+        clearTimeout(headingTimer);
+        if (!lastHeading || !lastHeading.classList.contains('is-in') || !morphCtx) return;
+        endMorph();
+        var box = sticky.getBoundingClientRect();
+        var src = sampleHeading(lastHeading, box);
+        lastHeading.classList.remove('is-in');
+        if (!src.length) return;
+        var W = sticky.clientWidth, H = sticky.clientHeight, g = axisOf(W, H);
+        var tMin = 0.55 / 2.1, tMax = 1.55 / 2.1;   /* the on-screen stretch of the axis */
+        var N = Math.min(MORPH_CAP, src.length), parts = new Array(N);
+        for (var k = 0; k < N; k++) {
+          var a = src[Math.floor(k * src.length / N)];
+          var t = tMin + (tMax - tMin) * ((a.x / W) * 0.8 + Math.random() * 0.2);
+          var jit = (Math.random() - 0.5) * 18;
+          var bx = g.ax + g.dx * t + g.nx * jit, by = g.ay + g.dy * t + g.ny * jit;
+          parts[k] = { ax: a.x, ay: a.y, as: a.s, x: bx, y: by, s: a.s * 0.5,
+            cx: (a.x + bx) / 2 + (Math.random() - 0.5) * 120, cy: Math.min(a.y, by) - 40 - Math.random() * 80,
+            sp: a.sp, delay: Math.random() * 0.25, ph: Math.random() * 6.283 };
+        }
+        live = []; liveOf = -1;
+        morph = { parts: parts, t0: now, to: n - 1, toHeading: true, dur: 1150 };
+      };
+      /* ---- no speedrun: the door and the title play out whole ----------
+         Once the slit starts to open, scroll is held — wheel, touch and the
+         scrolling keys are ignored and the position pinned — until the Moka
+         title and its line have finished arriving (~2.5s), then released.
+         A fling that already carried past the trigger is brought back to it
+         first, so the sequence is always seen from the start. Never engaged
+         by a jump (an anchor link skips the section entirely: this only
+         runs while the section is on screen), and a 4s safety net releases
+         it whatever happens. The hold itself is overflow:hidden on the page
+         (telaventis-fx.css): the only thing that stops a wheel gesture or an
+         iOS momentum fling already under way; the listeners below catch the
+         rest (keys, the first wheel/touch event). */
+      var lockY = null, lockTimer = 0;
+      var SCROLL_KEYS = { ' ': 1, Spacebar: 1, PageDown: 1, PageUp: 1, ArrowDown: 1, ArrowUp: 1, End: 1, Home: 1 };
+      var stopIt = function (e) { if (lockY !== null && e.cancelable) e.preventDefault(); };
+      window.addEventListener('wheel', stopIt, { passive: false });
+      window.addEventListener('touchmove', stopIt, { passive: false });
+      window.addEventListener('keydown', function (e) {
+        if (lockY !== null && SCROLL_KEYS[e.key] && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) e.preventDefault();
+      });
+      window.addEventListener('scroll', function () {
+        if (lockY !== null && Math.abs(window.scrollY - lockY) > 1) window.scrollTo({ top: lockY, behavior: 'instant' });
+      }, { passive: true });
+      /* a jump through an in-page link (smooth-scrolled by the site's CSS)
+         passes through this section on its way: it is travel, not reading,
+         so the hold stays off for the length of the trip */
+      var jumpUntil = 0;
+      doc.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[href*="#"]');
+        if (a && a.pathname === location.pathname && a.hash) jumpUntil = performance.now() + 2500;
+      });
+      window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
+      var unlockScroll = function () {
+        lockY = null;
+        clearTimeout(lockTimer);
+        html.classList.remove('fx-scroll-held');
+      };
+      var lockScroll = function (y) {
+        lockY = Math.round(y);
+        window.scrollTo({ top: lockY, behavior: 'instant' });
+        html.classList.add('fx-scroll-held');
+        clearTimeout(lockTimer);
+        lockTimer = setTimeout(unlockScroll, 4000);
+      };
+
+      var cutArrived = false;
+      var arriveCut = function () {
+        if (cutArrived) return;
+        cutArrived = true;
+        var t = cutIn.querySelector('.moka-story__title');
+        if (t && !t.querySelector('.wt-line')) {
+          /* lock each rendered line (the letters change width as they settle) */
+          var lines = [], last = null;
+          Array.prototype.forEach.call(t.querySelectorAll('.wt-w'), function (w) {
+            if (last === null || Math.abs(w.offsetTop - last) > 4) { lines.push([]); last = w.offsetTop; }
+            lines[lines.length - 1].push(w);
+          });
+          t.textContent = '';
+          lines.forEach(function (ws) {
+            var ln = doc.createElement('span'); ln.className = 'wt-line';
+            ws.forEach(function (w, k) { if (k) ln.appendChild(doc.createTextNode(' ')); ln.appendChild(w); });
+            t.appendChild(ln);
+          });
+        }
+        cutIn.classList.add('is-arrived');
+        /* release once the last letter has landed and the line has risen */
+        var letters = cutIn.querySelectorAll('.wt-c').length;
+        clearTimeout(lockTimer);
+        lockTimer = setTimeout(unlockScroll, Math.max(letters * 16 + 1000, 1350) + 150);
+      };
+      var tweenCut = function (goal, now, ms) {
+        if (goal === 0) { cutArrived = false; cutIn.classList.remove('is-arrived'); }
+        cutGoal = goal;
+        cutTw = { from: cutOpen, to: goal, t0: now, dur: Math.max(120, ms * Math.abs(goal - cutOpen)) };
+      };
+      var updateCut = function (q, now, yAt) {
+        if (!cut) return;
+        if (!cutGoal && q > CUT_AT) {
+          /* bring an overshooting fling back to just past the line (not
+             during an in-page jump) */
+          if (performance.now() > jumpUntil) lockScroll(q > CUT_AT + 0.12 ? yAt(CUT_AT + 0.04) : window.scrollY);
+          tweenCut(1, now, CUT_MS); intoCut(now);
+        }
+        else if (cutGoal && q < CUT_AT - 0.06) {
+          tweenCut(0, now, CUT_MS * 0.8);
+          if (lastHeading && bodyState[n - 1] === 'active') { lastHeading.style.setProperty('--fx-dir', '-1'); lastHeading.classList.add('is-in'); }
+        }
+        /* the pinned scene is already leaving and the door is not open yet:
+           finish quickly rather than scroll a half-open slit off the screen */
+        if (cutGoal && q >= 1 && cutTw && cutTw.dur > 400 && cutOpen < 1) tweenCut(1, now, 350);
+        if (cutTw) {
+          var u = clamp((now - cutTw.t0) / cutTw.dur, 0, 1);
+          cutOpen = cutTw.from + (cutTw.to - cutTw.from) * easeInOutCubic(u);
+          if (u >= 1) { cutTw = null; if (cutGoal === 1) arriveCut(); }
+        }
+        paintCut(cutOpen);
+      };
+
+      /* sample every key word now, before any panel is shown, and mark it
+         as drawn by its canvas: from here on its letters are never the
+         thing on screen. A word that cannot be sampled keeps its text. */
+      var prebuild = function () {
+        words.forEach(function (list) {
+          list.forEach(function (w) {
+            if (!w.key) return;
+            if (w.glyph.ensure()) { w.glyph.reveal(true); w.el.classList.remove('fx-type-fail'); }
+            else w.el.classList.add('fx-type-fail');
+          });
+        });
+      };
+
       var EXIT_MS = 850;
       var exitT0 = panels.map(function () { return 0; });
 
@@ -1900,7 +2396,7 @@
              plain text the whole time this panel is being read. */
           words[i].forEach(function (w) { w.glyph.reveal(w.key); w.glyph.reset(); });
           exitT0[i] = 0;
-        } else if (kinds[i] && wasActive) {
+        } else if (kinds[i] && wasActive && !morph) {
           /* just left 'active': the couple of bubble words keep rendering
              for EXIT_MS past this point (see the render loop below) with
              an evap value climbing from 0 to 1 — drifting up, shrinking,
@@ -1911,7 +2407,13 @@
         if (headings[i]) {
           if (state === 'active') {
             headings[i].style.setProperty('--fx-dir', String(dir || 1));
-            headings[i].classList.add('is-in');
+            var hd = headings[i];
+            clearTimeout(headingTimer);
+            if (morph && morph.to === i) {
+              headingTimer = setTimeout(function () { if (bodyState[i] === 'active') hd.classList.add('is-in'); }, MORPH_MS * 0.55);
+            } else {
+              hd.classList.add('is-in');
+            }
           } else {
             headings[i].classList.remove('is-in');
           }
@@ -1921,6 +2423,8 @@
       /* Only now does the CSS switch from the plain stacked resting state to
          the pinned one — a throw anywhere above leaves the section readable. */
       era.setAttribute('data-era-live', '');
+      prebuild();
+      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { prebuild(); kick(); });
 
       /* Seed the mobile field NOW, while the visitor is still up on the
          hero, rather than lazily on the first frame the section is actually
@@ -1968,7 +2472,7 @@
          code that runs regardless of which of the two branches above
          actually mounted, and whichever one did NOT run never assigned
          its constant — see the comment where the two branches split. */
-      var STEP_COOLDOWN_MS = 1000;
+      var STEP_COOLDOWN_MS = 1300;   /* >= MORPH_MS (3c): a new step never cuts a flight short */
       var lastStepAt = 0;
 
       var render = function (now) {
@@ -1985,7 +2489,11 @@
         if (!onScreen || doc.hidden) return false;
 
         var scrollable = Math.max(1, track.offsetHeight - vh);
-        var p = clamp(-rect.top / scrollable, 0, 1);
+        var tailPx = cut ? vh * TAIL_VH : 0;
+        var p = clamp(-rect.top / Math.max(1, scrollable - tailPx), 0, 1);
+        if (cut) updateCut(clamp((-rect.top - (scrollable - tailPx)) / tailPx, 0, 1), now, function (qq) {
+          return window.scrollY + rect.top + (scrollable - tailPx) + tailPx * qq;
+        });
         if (cue) cue.style.opacity = (1 - range(p, 0.02, 0.12)).toFixed(2);
 
         /* which panel the trigger currently says is active — a plain
@@ -2007,6 +2515,7 @@
 
         if (next !== target) {
           var dir = target < 0 ? 1 : (next > target ? 1 : -1);
+          endMorph(); startMorph(target, next, now);
           target = next;
           lastStepAt = now;
           if (!isMobileEra) {
@@ -2016,8 +2525,8 @@
                setAuroraScene above, just driven by a real perspective
                camera instead of a 2D x/y/scale interpolation */
             if (gpu && gpu.setView) {
-              var gscene = GPU_SCENES[target % GPU_SCENES.length];
-              gpu.setView(gscene[0], gscene[1], 1000);
+              /* only the GOAL changes here; stepCam() glides there */
+              camGoal = GPU_SCENES[target % GPU_SCENES.length];
             }
           }
           for (var i = 0; i < n; i++) {
@@ -2025,7 +2534,8 @@
           }
         }
         if (isMobileEra) { if (renderSea) renderSea(now); }
-        else { renderAurora(now); renderRipple(now); }
+        else { renderAurora(now); renderRipple(now); stepCam(now); }
+        renderField(now);
 
         /* the same live cursor already tracked for the word-glyph canvases
            (ptr, above) also nudges any medusa it passes near — the sim
@@ -2036,40 +2546,6 @@
            WebGPU module is actually loaded). */
         if (gpu && gpu.setPointer) gpu.setPointer(ptr.active ? ptr.x : -99999, ptr.active ? ptr.y : -99999);
 
-        /* the active panel's words need frames throughout, same as always;
-           a just-departed panel's two bubble words additionally get
-           EXIT_MS of extra frames with evap climbing 0→1, so they keep
-           rising and dissolving after the crossfade has already started
-           rather than just fading flat in place. Every other panel — not
-           active, not still within its own EXIT_MS window — gets none,
-           same as before. */
-        for (var pi = 0; pi < n; pi++) {
-          if (!kinds[pi]) continue;
-          var isActivePanel = pi === target && bodyState[pi] === 'active';
-          var exitAge = exitT0[pi] ? now - exitT0[pi] : -1;
-          var isExiting = exitAge >= 0 && exitAge < EXIT_MS;
-          if (!isActivePanel && !isExiting) continue;
-          var list = words[pi];
-          for (var k = 0; k < list.length; k++) {
-            var wobj = list[k];
-            if (isExiting && !wobj.key) continue; /* only the two bubble words dissolve; the rest already left with the panel's own fade */
-            var built = wobj.glyph.ensure();
-            if (!built) continue;
-            /* reveal is a one-shot set inside applyState — except right
-               there, the very first time a panel becomes active, its words
-               have not been built yet, so reveal() on an unbuilt glyph
-               silently no-ops. Re-asserting it here, once built, is what
-               actually shows a key word the moment it exists. Harmless to
-               repeat every frame — it is a plain class toggle. Skipped
-               during the exit pass: reveal() only knows on/off, and off
-               would cut the dissolve short instead of letting it play. */
-            if (isActivePanel) wobj.glyph.reveal(wobj.key);
-            var opts = { ptr: ptrFor(wobj.glyph.canvas) };
-            if (isExiting) opts.evap = clamp(exitAge / EXIT_MS, 0, 1);
-            wobj.glyph.render(now, opts);
-          }
-          if (isExiting && exitAge >= EXIT_MS) exitT0[pi] = 0;
-        }
 
         return true;
       };
@@ -2077,6 +2553,7 @@
       addJob(render);
       onResize(function () {
         words.forEach(function (list) { list.forEach(function (w) { w.glyph.remeasure(); }); });
+        if (!morph && liveOf >= 0) restAt(cloudOf(liveOf), liveOf);
       });
     });
   }());

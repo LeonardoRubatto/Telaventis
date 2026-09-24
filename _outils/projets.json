@@ -1,0 +1,372 @@
+{
+  "_lisez_moi": "Source unique des projets affichés (vitrine de l'accueil, page Travaux, pied de page). Après toute modification : python _outils/projets.py generer — voir PROJETS.md.",
+  "projets": [
+    {
+      "cle": "qualamantis",
+      "nom": "Qualamantis",
+      "nom_html": null,
+      "site": "https://qualamantis.com",
+      "site_libelle": "qualamantis.com",
+      "couleurs": {
+        "fond": "#FAF6EF",
+        "texte": "#221E18",
+        "accent": "#BC4827",
+        "doux": "#564F44"
+      },
+      "nuancier": [
+        "#FAF6EF",
+        "#221E18",
+        "#BC4827",
+        "#4E6B3C"
+      ],
+      "typos": "Newsreader · Hanken Grotesk",
+      "logo_barre": null,
+      "logo_titre": null,
+      "textes": {
+        "fr": {
+          "categorie": "Entreprise de conseil",
+          "probleme": "une expertise technique difficile à comprendre pour un public non spécialiste, à décliner en trois langues.",
+          "reponse": "une hiérarchie éditoriale qui pose l'enjeu avant le jargon, sans dupliquer la mise en page par langue.",
+          "resume": "Conseil, expertise, trois langues.",
+          "legendes": [
+            "Le programme",
+            "Les services",
+            "À propos, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Consulting firm",
+          "probleme": "technical expertise that's hard for a non-specialist audience to follow, across three languages.",
+          "reponse": "an editorial hierarchy that states the stakes before the jargon, without duplicating the layout per language.",
+          "resume": "Consulting, expertise, three languages.",
+          "legendes": [
+            "The programme",
+            "Services",
+            "About, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Azienda di consulenza",
+          "probleme": "una competenza tecnica difficile da capire per un pubblico non specialista, da declinare in tre lingue.",
+          "reponse": "una gerarchia editoriale che pone la posta in gioco prima del gergo, senza duplicare l'impaginazione per lingua.",
+          "resume": "Consulenza, competenza, tre lingue.",
+          "legendes": [
+            "Il programma",
+            "I servizi",
+            "Chi siamo, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Newsreader TV",
+        "fichier": "newsreader-name.woff2",
+        "graisse": "300",
+        "style": "normal",
+        "repli": "var(--serif)",
+        "reglages": "--nw:300;--nls:-.03em"
+      },
+      "css_en_plus": null,
+      "captures": {
+        "ordinateur": [
+          "https://qualamantis.com/program",
+          "https://qualamantis.com/services"
+        ],
+        "telephone": "https://qualamantis.com/about"
+      }
+    },
+    {
+      "cle": "bde",
+      "nom": "BDE Dauphine",
+      "nom_html": "BDE <span class=\"name-outline\">Dauphine</span>",
+      "site": "https://bdedauphine.fr",
+      "site_libelle": "bdedauphine.fr",
+      "couleurs": {
+        "fond": "#080808",
+        "texte": "#F4F2EE",
+        "accent": "#C8102E",
+        "doux": "#A8A6A2"
+      },
+      "nuancier": [
+        "#080808",
+        "#F4F2EE",
+        "#C8102E"
+      ],
+      "typos": "Unbounded · DM Sans",
+      "logo_barre": "bde-dark.webp",
+      "logo_titre": "bde.webp",
+      "textes": {
+        "fr": {
+          "categorie": "Plateforme événementielle",
+          "probleme": "une billetterie et un programme d'événements que personne ne retrouvait sur l'ancien site.",
+          "reponse": "un accès direct à la billetterie dès l'écran d'accueil, pensé d'abord pour le téléphone.",
+          "resume": "Vie associative, événements, billetterie.",
+          "legendes": [
+            "Les événements",
+            "Le label Les Nuits Dauphine",
+            "How We Dau, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Event platform",
+          "probleme": "ticketing and an events programme nobody could find on the old site.",
+          "reponse": "direct access to ticketing from the home screen, designed for the phone first.",
+          "resume": "Student life, events, ticketing.",
+          "legendes": [
+            "Events",
+            "The Nuits Dauphine label",
+            "How We Dau, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Piattaforma eventi",
+          "probleme": "una biglietteria e un programma di eventi che nessuno trovava sul vecchio sito.",
+          "reponse": "un accesso diretto alla biglietteria fin dalla schermata iniziale, pensato prima di tutto per il telefono.",
+          "resume": "Vita associativa, eventi, biglietteria.",
+          "legendes": [
+            "Gli eventi",
+            "Il marchio Les Nuits Dauphine",
+            "How We Dau, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Unbounded TV",
+        "fichier": "unbounded-name.woff2",
+        "graisse": "900",
+        "style": "normal",
+        "repli": "var(--sans)",
+        "reglages": "--nw:900;--ntt:uppercase;--nls:-.01em;--nsize:clamp(32px,3.9vw,66px)"
+      },
+      "css_en_plus": "@media (max-width:999px){.scene--bde .scene__name{font-size:clamp(30px,8.4vw,52px)}}\n.scene--bde .scene__name .name-outline,.scene--bde .scene__ghost .name-outline{-webkit-text-stroke-color:var(--fg)}\n.scene--bde .scene__name .fx-char{color:inherit}\n.work-bar__item.scene--bde > span{font-size:15px}\n.cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}\n.cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}",
+      "captures": {
+        "ordinateur": [
+          "https://bdedauphine.fr/evenements.html",
+          "https://bdedauphine.fr/nuits.html"
+        ],
+        "telephone": "https://bdedauphine.fr/howwedau.html"
+      }
+    },
+    {
+      "cle": "wecalc",
+      "nom": "wecalc.fr",
+      "nom_html": null,
+      "site": "https://www.wecalc.fr",
+      "site_libelle": "wecalc.fr",
+      "couleurs": {
+        "fond": "#1E3A5F",
+        "texte": "#F5F5F2",
+        "accent": "#C8B27D",
+        "doux": "#B9C3D0"
+      },
+      "nuancier": [
+        "#1E3A5F",
+        "#C8B27D",
+        "#F5F5F2",
+        "#111827"
+      ],
+      "typos": "Plus Jakarta Sans",
+      "logo_barre": null,
+      "logo_titre": null,
+      "textes": {
+        "fr": {
+          "categorie": "Outil en ligne",
+          "probleme": "des calculateurs disponibles en ligne, mais saturés de publicité et de traceurs.",
+          "reponse": "un résultat qui apparaît au fil de la frappe, sans compte à créer et sans script tiers.",
+          "resume": "Calculateurs, simulateurs, outils métier.",
+          "legendes": [
+            "Calculateur de TVA",
+            "Coût salarié",
+            "Calculateur d’IMC, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Online tool",
+          "probleme": "plenty of online calculators, but crammed with ads and trackers.",
+          "reponse": "a result that appears as you type, with no account to create and no third-party script.",
+          "resume": "Calculators, simulators, business tools.",
+          "legendes": [
+            "VAT calculator",
+            "Employee cost",
+            "BMI calculator, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Strumento online",
+          "probleme": "calcolatrici disponibili online, ma sature di pubblicità e tracker.",
+          "reponse": "un risultato che appare mentre si digita, senza account da creare e senza script di terze parti.",
+          "resume": "Calcolatrici, simulatori, strumenti di settore.",
+          "legendes": [
+            "Calcolatore IVA",
+            "Costo del lavoro",
+            "Calcolatore IMC, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Jakarta TV",
+        "fichier": "plus-jakarta-sans-name.woff2",
+        "graisse": "800",
+        "style": "normal",
+        "repli": "var(--sans)",
+        "reglages": "--nw:800;--nls:-.04em"
+      },
+      "css_en_plus": null,
+      "captures": {
+        "ordinateur": [
+          "https://tva.wecalc.fr/",
+          "https://salaire.wecalc.fr/"
+        ],
+        "telephone": "https://imc.wecalc.fr/"
+      }
+    },
+    {
+      "cle": "jeanne-randu",
+      "nom": "Jeanne Randu",
+      "nom_html": null,
+      "site": "https://jeanne-randu.fr",
+      "site_libelle": "jeanne-randu.fr",
+      "couleurs": {
+        "fond": "#3E493B",
+        "texte": "#F5F1E9",
+        "accent": "#C9BDA9",
+        "doux": "#C7C9BC"
+      },
+      "nuancier": [
+        "#ECE7DD",
+        "#171813",
+        "#3E493B",
+        "#4B2925",
+        "#C9BDA9"
+      ],
+      "typos": "Instrument Serif · Instrument Sans",
+      "logo_barre": null,
+      "logo_titre": null,
+      "textes": {
+        "fr": {
+          "categorie": "Portfolio",
+          "probleme": "un travail visuel qu'une grille de vignettes toutes identiques aurait aplati.",
+          "reponse": "chaque projet a sa propre composition dessinée à la main, et Jeanne change ses textes et ses photos elle-même, sans ouvrir le HTML.",
+          "resume": "Portfolio, galerie, mise à jour autonome.",
+          "legendes": [
+            "Projet — La Cave",
+            "À propos",
+            "Projet — La Véranda, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Portfolio",
+          "probleme": "visual work that a grid of identical thumbnails would have flattened.",
+          "reponse": "every project gets its own hand-drawn composition, and Jeanne changes her own text and photos without opening the HTML.",
+          "resume": "Portfolio, gallery, self-serve updates.",
+          "legendes": [
+            "Project — La Cave",
+            "About",
+            "Project — La Véranda, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Portfolio",
+          "probleme": "un lavoro visivo che una griglia di miniature tutte uguali avrebbe appiattito.",
+          "reponse": "ogni progetto ha la sua composizione disegnata a mano, e Jeanne cambia da sola testi e foto, senza aprire l'HTML.",
+          "resume": "Portfolio, galleria, aggiornamenti autonomi.",
+          "legendes": [
+            "Progetto — La Cave",
+            "Chi sono",
+            "Progetto — La Véranda, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Instrument Serif TV",
+        "fichier": "instrument-serif-name.woff2",
+        "graisse": "400",
+        "style": "normal",
+        "repli": "var(--serif)",
+        "reglages": "--nw:400;--nls:-.02em;--nsize:clamp(52px,6.6vw,112px)"
+      },
+      "css_en_plus": null,
+      "captures": {
+        "ordinateur": [
+          "https://jeanne-randu.fr/#cabane",
+          "https://jeanne-randu.fr/#a-propos"
+        ],
+        "telephone": "https://jeanne-randu.fr/#veranda",
+        "telephone_decalage": 3750
+      }
+    },
+    {
+      "cle": "cave-antoine",
+      "nom": "La Cave d’Antoine",
+      "nom_html": null,
+      "site": "https://caveantoine.pages.dev",
+      "site_libelle": "caveantoine.pages.dev",
+      "couleurs": {
+        "fond": "#6F272F",
+        "texte": "#FFFAF0",
+        "accent": "#E4C780",
+        "doux": "#E3CFC6"
+      },
+      "nuancier": [
+        "#F6F3EA",
+        "#302A25",
+        "#6F272F",
+        "#E4C780",
+        "#515B46"
+      ],
+      "typos": "Cormorant Garamond · DM Sans",
+      "logo_barre": null,
+      "logo_titre": null,
+      "textes": {
+        "fr": {
+          "categorie": "Restaurant & bar",
+          "probleme": "un établissement visible seulement via Google et Instagram, sans adresse à lui.",
+          "reponse": "quatre pages en italien, écrites dans le registre du lieu, et une carte Google qui ne se charge qu'au clic.",
+          "resume": "Restaurant, bar, café. Projet de démonstration.",
+          "legendes": [
+            "La Cave",
+            "Passa a trovarci — le contact",
+            "La Cave, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Restaurant & bar",
+          "probleme": "a venue visible only through Google and Instagram, with no address of its own.",
+          "reponse": "four pages in Italian, written in the venue's own register, and a Google map that only loads on click.",
+          "resume": "Restaurant, bar, café. Demonstration project.",
+          "legendes": [
+            "La Cave",
+            "Passa a trovarci — contact",
+            "La Cave, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Ristorante & bar",
+          "probleme": "un locale visibile solo tramite Google e Instagram, senza un indirizzo proprio.",
+          "reponse": "quattro pagine in italiano, scritte nel registro del locale, e una mappa Google che si carica solo al clic.",
+          "resume": "Ristorante, bar, caffè. Progetto dimostrativo.",
+          "legendes": [
+            "La Cave",
+            "Passa a trovarci — contatti",
+            "La Cave, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Cormorant TV",
+        "fichier": "cormorant-garamond-italic-name.woff2",
+        "graisse": "300 700",
+        "style": "italic",
+        "repli": "var(--serif)",
+        "reglages": "--nw:500;--nst:italic;--nls:-.01em;--nsize:clamp(48px,6.2vw,104px)"
+      },
+      "css_en_plus": null,
+      "captures": {
+        "ordinateur": [
+          "https://caveantoine.pages.dev/la-cave.html",
+          "https://caveantoine.pages.dev/contatti.html"
+        ],
+        "telephone": "https://caveantoine.pages.dev/la-cave.html"
+      }
+    }
+  ]
+}

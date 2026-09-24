@@ -129,9 +129,9 @@
    orange/pink gradients would have introduced here. */
 .pcard{--fx-wave-a:rgba(180,68,28,.06);--fx-wave-b:rgba(22,32,43,.045)}
 .pcard--outline{--fx-wave-a:rgba(180,68,28,.085);--fx-wave-b:rgba(22,32,43,.05)}
-.tier-row--cream{--fx-wave-a:rgba(180,68,28,.07);--fx-wave-b:rgba(22,32,43,.05)}
-.tier-row--ink{--fx-wave-a:rgba(224,116,47,.13);--fx-wave-b:rgba(237,233,226,.06)}
-.tier-row--coral{--fx-wave-a:rgba(237,233,226,.13);--fx-wave-b:rgba(138,54,22,.3)}
+.tier-row--cream{--fx-wave-a:rgba(180,68,28,.035);--fx-wave-b:rgba(22,32,43,.028)}
+.tier-row--ink{--fx-wave-a:rgba(224,116,47,.07);--fx-wave-b:rgba(237,233,226,.03)}
+.tier-row--coral{--fx-wave-a:rgba(237,233,226,.08);--fx-wave-b:rgba(138,54,22,.16)}
 
 /* .tier-row rows are full-bleed and already paint their own background; the
    wave sits between that background and the text. */
@@ -154,7 +154,7 @@
    a momentum fling) could cross two thresholds before the visitor meant
    to, skipping a whole phrase — more track per panel is what buys back
    the room for a deliberate, one-panel-at-a-time scroll instead */
-.era[data-era-live] .era__track{height:660svh}
+.era[data-era-live] .era__track{height:740svh}   /* 560 for the phrases + 180 for the pause and the cut (TAIL_VH) */
 /* height:100svh alone left a flat, undecorated sliver of the plain .era
    background exposed under the pinned scene on iOS Safari: svh is fixed to
    the shortest possible viewport (toolbars expanded), so the moment the
@@ -224,6 +224,50 @@
    resolve between them. */
 .era__sea{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
 .era__sea-canvas{position:absolute;top:0;left:0;display:block;will-change:transform}
+
+/* ---- the cut (3d in telaventis-fx.js) ------------------------------------
+   A cream layer over the whole pinned scene, clipped to a spindle-shaped
+   slit the script opens with scroll; inside it, the Moka story's title.
+   Everything behind it leans in as it opens (--cut, 0→1). */
+.era__cut{position:absolute;inset:0;z-index:7;visibility:hidden;pointer-events:none}
+/* (no glow filter around the slit: a full-screen drop-shadow repainted
+   every frame of the opening was the main cause of its stutter) */
+.era__cut-in{position:absolute;inset:0;background:var(--cream);color:var(--ink);display:flex;align-items:center;will-change:clip-path}
+/* the Moka title waits for the door: hidden while the slit opens (nothing
+   to repaint under the moving clip), then its letters arrive the way the
+   home headline's do — thin and wide settling into heavy — and the line
+   under it rises in */
+.era__cut-in .wt-c{display:inline-block;--wg:800;--wd:100;font-variation-settings:"wght" var(--wg),"wdth" var(--wd);opacity:0}
+.era__cut-in .wt-w{display:inline-block;white-space:nowrap}
+.era__cut-in .wt-line{display:block;white-space:nowrap}
+.era__cut-in .moka-story__lede{opacity:0}
+.era__cut-in.is-arrived .wt-c{animation:cut-arrive 1s var(--ease) both;animation-delay:calc(var(--i) * 16ms)}
+.era__cut-in.is-arrived .moka-story__lede{animation:cut-lede .9s var(--ease) .45s both}
+@keyframes cut-arrive{from{opacity:0;--wg:340;--wd:125;transform:translateY(.16em)}60%{opacity:1}to{opacity:1;--wg:800;--wd:100;transform:none}}
+/* the hold while the door opens and the title arrives (3d, "no speedrun") */
+/* overflow:hidden is what really stops a wheel gesture already under way
+   (Chrome only lets a page cancel the FIRST wheel event of a gesture); the
+   stable gutter keeps the scrollbar's width reserved, so nothing shifts */
+html{scrollbar-gutter:stable}
+html.fx-scroll-held{overflow:hidden;overscroll-behavior:none}
+html.fx-scroll-held body{touch-action:none}
+/* a root with overflow:hidden no longer honours position:sticky (the scene
+   fell back to the top of its track). The scroll position does not move
+   during the hold, so the scene is simply fixed in the very place it was
+   stuck, and returns to sticky when the hold ends — no visible change */
+html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0;width:100%}
+@keyframes cut-lede{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.era__cut-in .moka-story__intro{min-height:0;width:100%;padding-top:0;padding-bottom:0;
+  transform:translateY(calc((1 - var(--cut,0)) * 6vh)) scale(calc(.94 + var(--cut,0) * .06));transform-origin:30% 50%}
+.era[data-era-live] .era__stage,
+.era[data-era-live] .era__aurora,
+.era[data-era-live] .era__ripple,
+.era[data-era-live] .era__sea,
+.era[data-era-live] .era__morph{transform:scale(calc(1 + var(--cut,0) * .16));transform-origin:50% 55%}
+.era[data-era-live] .era__cue{opacity:calc(1 - var(--cut,0) * 4)}
+/* the section the cut hands over to: its title now lives in the cut */
+.moka-story.is-hoisted{border-top:0}
+.moka-story.is-hoisted > .moka-story__intro{display:none}
 
 /* the scroll cue only means anything while the section is pinned */
 .era__cue{display:none}
@@ -324,6 +368,19 @@
    the shadow that's actually meant for them. */
 .era__w.fx-type-on{color:transparent;text-shadow:none}
 .era__w.fx-type-on canvas{opacity:1}
+/* While the section is live a key word is never shown as letters: it is
+   either its bubbles, or bubbles in flight (the morph, below). Its text
+   stays in the DOM for screen readers and for the no-JS resting state;
+   only a word whose canvas could not be sampled (.fx-type-fail) keeps
+   painting its glyphs. This is what removes the old flash of solid letters
+   before the bubbles formed. */
+.era[data-era-live] .era__w--key:not(.fx-type-fail){color:transparent !important;text-shadow:none !important;transition:none}
+/* the metamorphosis canvas: one layer over the whole stage, above the text,
+   carrying every bubble from one phrase's words to the next's; the per-word
+   canvases step aside for the length of the flight */
+.era__morph{position:absolute;inset:0;z-index:4;width:100%;height:100%;display:block;pointer-events:none}
+/* the per-word canvases are samplers only while live — the field draws */
+.era[data-era-live] .era__w canvas{display:none}
 /* the couple of words that are flower/bubble from the very start — sized
    proportionally to .era__mix (em, not its own clamp) so the two scale
    together as one system: whatever .era__mix's font-size ends up being,
@@ -369,7 +426,7 @@
      segBounds falls back to even thirds automatically; update this total
      to roughly panels × 132svh in that case, or restore an even split
      here too. */
-  .era[data-era-live] .era__track{height:448svh}
+  .era[data-era-live] .era__track{height:628svh}   /* 448 + 180 for the pause and the cut */
   .era__body{padding:clamp(74px,12vh,98px) 22px clamp(58px,10vh,76px)}
   /* Nothing here is fx-type any more — no particle canvas exists on mobile
      at all (see the isMobileEra branch in telaventis-fx.js §3b), so every
@@ -397,11 +454,19 @@
      closer to the desktop treatment and reads as more deliberate. */
   .era__w--key{
     font-family:var(--sans);font-weight:800;letter-spacing:-.02em;
-    font-size:1.5em;line-height:1;
+    font-size:1.72em;line-height:1;
     color:var(--panel-fg,var(--cream));
     text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 14px rgba(var(--panel-shadow-rgb,10,16,22),.6);
     display:inline-block;
   }
+  /* the flow field is bright and busy right where the phrase sits: a soft
+     dark pool under the text (between the field and the words) keeps the
+     bubble words legible without dimming the rest of the scene */
+  .era[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(75% 34% at 50% 46%,rgba(8,11,16,.72),rgba(8,11,16,.35) 55%,transparent 80%)}
+  /* bubbles on the flow field: a soft dark halo keeps the word legible
+     over the brightest streaks */
+  .era__w canvas{filter:drop-shadow(0 0 5px rgba(10,16,22,.85))}
   .era__note{
     font-size:15.5px;
     color:rgba(var(--panel-fg-rgb,237,233,226),.76);

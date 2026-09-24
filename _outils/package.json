@@ -1,0 +1,8 @@
+{
+  "name": "telaventis-outils",
+  "private": true,
+  "description": "Outils de préparation du site (captures des projets clients). Rien ici n'est servi ni chargé par les pages.",
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

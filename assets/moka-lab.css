@@ -177,3 +177,15 @@ html:not(.js) .moka-story__endcard{position:static !important;transform:none !im
   .moka-page__hero{height:auto !important;min-height:60vh}
   .moka-story__endcard{position:static !important;transform:none !important;opacity:1 !important;width:100%;max-width:1100px;margin:24px auto 0;padding:0 clamp(18px,4vw,40px) clamp(40px,6vw,64px)}
 }
+
+/* ---- noise to signal (depth layer, moka-lab.js last block) ----------------
+   The café's pictures as floating low-res debris, resolving as the camera
+   passes through them. Absolutely placed and sized by the script; the
+   canvas is drawn at a deliberately tiny size and scaled up without
+   smoothing, which is what makes the mosaic. */
+.moka-depth{position:absolute;inset:-6% -4%;z-index:3;pointer-events:none;visibility:hidden;overflow:visible}
+.moka-depth__frag{position:absolute;left:0;top:0;will-change:transform,opacity,filter;border-radius:4px;overflow:hidden;
+  box-shadow:0 30px 60px -30px rgba(22,32,43,.55),0 0 0 1px rgba(22,32,43,.12);background:#d8d0c3}
+.moka-depth__frag canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+html:not(.js) .moka-depth{display:none}
+@media (prefers-reduced-motion: reduce){.moka-depth{display:none}}
