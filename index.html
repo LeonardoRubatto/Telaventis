@@ -20,30 +20,32 @@
 <meta property="og:url" content="https://telaventis.fr/">
 <meta property="og:title" content="Telaventis — un site qui rend votre activité évidente">
 <meta property="og:description" content="Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.">
-<meta property="og:image" content="https://telaventis.fr/assets/og.png">
+<meta property="og:image" content="https://telaventis.fr/assets/share/telaventis-og.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Telaventis — website builder for you.">
+<meta property="og:image:alt" content="Logo Telaventis : un T coupé en diagonale, mi-encre, mi-marbre bleu">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Telaventis — un site qui rend votre activité évidente">
 <meta name="twitter:description" content="Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.">
-<meta name="twitter:image" content="https://telaventis.fr/assets/og.png">
+<meta name="twitter:image" content="https://telaventis.fr/assets/share/telaventis-og.jpg">
+<meta name="twitter:image:alt" content="Logo Telaventis : un T coupé en diagonale, mi-encre, mi-marbre bleu">
 
-<link rel="icon" href="assets/favicon.svg?v=4" type="image/svg+xml">
-<link rel="icon" href="assets/favicon-32x32.png?v=3" sizes="32x32" type="image/png">
-<link rel="icon" href="assets/favicon-16x16.png?v=3" sizes="16x16" type="image/png">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=2">
-<link rel="mask-icon" href="assets/mask-icon.svg?v=3" color="#16202B">
+<link rel="icon" href="assets/favicon.svg?v=5" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32x32.png?v=4" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/favicon-16x16.png?v=4" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=3">
+<link rel="mask-icon" href="assets/mask-icon.svg?v=4" color="#16202B">
 <link rel="manifest" href="site.webmanifest">
 <meta name="msapplication-TileColor" content="#16202B">
 
-<link rel="stylesheet" href="assets/telaventis.css?v=34">
+<link rel="stylesheet" href="assets/telaventis.css?v=42">
 <!-- MOKA experiment (scroll-driven Atelier Moka case study) — delete this
      <link>, the <section id="direction-lab">…</section> below, and the
      matching <script> near </body> to remove it with zero effect on the
      rest of the site. -->
-<link rel="stylesheet" href="assets/moka-lab.css?v=9">
-<link rel="stylesheet" href="assets/telaventis-fx.css?v=24">
+<link rel="stylesheet" href="assets/moka-lab.css?v=13">
+<link rel="stylesheet" href="assets/telaventis-fx.css?v=32">
 
 <!-- TODO Leonardo: ajouter SIRET / adresse / téléphone dès que ces informations
      sont arrêtées — volontairement omis plutôt qu'inventé (voir mentions-legales.html). -->
@@ -51,6 +53,8 @@
 {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
+  "logo": "https://telaventis.fr/assets/share/telaventis-logo.png",
+  "image": ["https://telaventis.fr/assets/share/telaventis-1x1.jpg", "https://telaventis.fr/assets/share/telaventis-4x3.jpg", "https://telaventis.fr/assets/share/telaventis-16x9.jpg"],
   "name": "Telaventis",
   "description": "Studio web indépendant : transforme des idées, des textes et des canaux dispersés en une présence en ligne claire, distinctive et entièrement possédée par le client.",
   "url": "https://telaventis.fr/",
@@ -98,7 +102,7 @@
       <a class="nav__link" href="work.html">Travaux</a>
       <a class="nav__link" href="studio.html">Studio</a>
       <a class="nav__link" href="tarifs.html">Tarifs</a>
-      <a class="nav__link" href="contact.html">Contact</a>
+      <a class="nav__link nav__link--cta" href="contact.html">Contact</a>
       <details class="nav__lang-wrap">
         <summary class="nav__lang-toggle" aria-label="Langue"><svg class="nav__lang-toggle-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.2"/><ellipse cx="8" cy="8" rx="2.6" ry="6.25" stroke="currentColor" stroke-width="1.2"/><line x1="1.75" y1="8" x2="14.25" y2="8" stroke="currentColor" stroke-width="1.2"/></svg><span>FR</span></summary>
       </details>
@@ -117,17 +121,19 @@
   <!-- Hero ------------------------------------------------------------- -->
   <section class="hero">
     <div class="wrap hero__in">
-      <div class="hero__copy" data-reveal>
+      <div class="hero__copy">
         <h1 class="h-hero" data-ink>Un site qui rend votre activité évidente&nbsp;? On vous le crée.</h1>
-        <p class="hero__lead">Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.</p>
+        <div class="hero__foot">
+          <p class="hero__lead">Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.</p>
+          <div class="hero__aside">
+            <p class="hero__status"><i aria-hidden="true"></i>Ouvert à de nouveaux projets · réponse sous un jour ouvré</p>
+          </div>
+        </div>
       </div>
     </div>
     <div class="hero__band" aria-hidden="true" data-band>
-      <div class="hero__band-bottom hero__band-bottom--fill">
-        <img src="assets/art/cumulus03.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.42;mix-blend-mode:screen;filter:grayscale(.3) contrast(1.1);">
-      </div>
-      <div class="hero__band-top"><span class="hero__band-word">TELA<wbr>VENTIS</span></div>
-      <div class="hero__band-bottom"><span class="hero__band-word">TELA<wbr>VENTIS</span></div>
+      <span class="hero__band-word hero__band-top">TELA<wbr>VENTIS</span>
+      <span class="hero__band-word hero__band-bottom">TELA<wbr>VENTIS</span>
     </div>
   </section>
 
@@ -184,6 +190,7 @@
         </div>
 
         <div class="moka-story__canvas" data-moka-canvas aria-hidden="true">
+          <div class="moka-depth" data-moka-depth aria-hidden="true"></div>
           <div class="moka-source-cloud" data-moka-sources>
             <div class="moka-source moka-source--instagram" data-moka-fragment data-x="-330" data-y="-165" data-r="-5"><b>Instagram</b><span>Café de quartier · photos · stories</span></div>
             <div class="moka-source moka-source--address" data-moka-fragment data-x="265" data-y="-205" data-r="4"><b>Adresse</b><span>18 rue des Lilas, Lyon</span></div>
@@ -286,167 +293,177 @@
     </div>
   </section>
 
-  <!-- Clarify: Atelier Moka is a fictional example, not the only kind of client -->
-  <section class="section--tight section--sunk">
-    <div class="wrap center">
-      <p class="small" style="font-family:var(--mono);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--coral);margin:0 0 10px;">Exemple fictif</p>
-      <p class="small" style="max-width:62ch;margin:0 auto;line-height:1.75;">Atelier Moka montre une transformation de bout en bout, mais Telaventis ne travaille pas exclusivement avec des bars, cafés ou commerces : la même méthode s'applique aussi bien à une entreprise qu'à un outil en ligne simplifié — comme les projets ci-dessous.</p>
-    </div>
-  </section>
-
   <!-- 01 Selected work ------------------------------------------------------ -->
   <section class="section" id="selected-work">
     <div class="wrap">
-      <div class="head-row" data-reveal>
-        <h2 class="h2">Quelques projets, expliqués clairement.</h2>
+      <div class="proj-head" data-reveal>
+        <h2 class="h2" id="showcase-title" data-fx-split>Quelques projets, expliqués clairement.</h2>
+        <p class="proj-head__note"><span>Exemple fictif</span> Atelier Moka montre une transformation de bout en bout, mais Telaventis ne travaille pas exclusivement avec des bars, cafés ou commerces : la même méthode s'applique aussi bien à une entreprise qu'à un outil en ligne simplifié — comme les projets ci-dessous.</p>
       </div>
+    </div>
+  </section>
 
-      <article class="proj" data-reveal>
-        <div style="min-width:0;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num" aria-hidden="true"></span>
-            <span class="proj__tag">Qualamantis · 3 langues</span>
-          </div>
-          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Entreprise de conseil</h3>
-          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : une expertise technique difficile à comprendre pour un public non spécialiste, à décliner en trois langues.</p>
-          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : une hiérarchie éditoriale qui pose l'enjeu avant le jargon, sans dupliquer la mise en page par langue.</p>
-          <div class="btn-row" style="margin-top:20px;">
-            <a class="link" href="project-qualamantis.html">Voir l'étude de cas</a>
-            <a class="link link--plain" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com</a>
-          </div>
-        </div>
-        <div class="proj__shot-wrap">
-          <picture>
-            <source type="image/avif" srcset="assets/shots/qualamantis-960.avif 960w, assets/shots/qualamantis-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <source type="image/webp" srcset="assets/shots/qualamantis-960.webp 960w, assets/shots/qualamantis-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <img class="proj__shot" src="assets/shots/qualamantis.png" width="1600" height="826" alt="Page d'accueil du site Qualamantis" loading="lazy" decoding="async">
-          </picture>
-          <picture>
-            <source type="image/avif" srcset="assets/shots/qualamantis-mobile.avif">
-            <source type="image/webp" srcset="assets/shots/qualamantis-mobile.webp">
-            <img class="proj__shot-mobile" src="assets/shots/qualamantis-mobile.png" width="640" height="1214" alt="Qualamantis sur mobile" loading="lazy" decoding="async">
-          </picture>
-        </div>
-      </article>
+  <!-- Showcase: one full screen per project, each in its client's own
+       colours and type; scenes hand over with the "continuous sections"
+       wipe (telaventis.js §6). Without JS or with reduced motion the
+       scenes are simply stacked, one after the other. -->
+  <section class="showcase" data-showcase aria-labelledby="showcase-title">
+    <div class="showcase__track">
+      <div class="showcase__sticky"><!-- projets:vitrine -->
+          <article class="scene scene--qualamantis" data-scene style="--bg:#FAF6EF;--fg:#221E18;--ac:#BC4827;--mu:#564F44" aria-labelledby="scene-qualamantis">
+            <div class="scene__outer"><div class="scene__inner">
+              <div class="scene__bg">
+                <span class="scene__ghost" aria-hidden="true">Qualamantis</span>
+                <a class="scene__shots" href="project-qualamantis.html" tabindex="-1" aria-hidden="true">
+                  <div class="scene__desk">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-desk.mp4" type="video/mp4"></video>
+                  </div>
+                  <div class="scene__phone">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="assets/video/qualamantis-phone-poster.webp"><source src="assets/video/qualamantis-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-phone.mp4" type="video/mp4"></video>
+                  </div>
+                </a>
+              </div>
+              <div class="scene__copy">
+                <h3 class="scene__name" id="scene-qualamantis" data-fx-split data-fx-manual>Qualamantis</h3>
+                <p class="scene__text"><b>Le problème&nbsp;:</b> une expertise technique difficile à comprendre pour un public non spécialiste, à décliner en trois langues.</p>
+                <p class="scene__text"><b>La réponse&nbsp;:</b> une hiérarchie éditoriale qui pose l'enjeu avant le jargon, sans dupliquer la mise en page par langue.</p>
+                <dl class="scene__spec">
+                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#FAF6EF" title="#FAF6EF"></i><i style="--c:#221E18" title="#221E18"></i><i style="--c:#BC4827" title="#BC4827"></i><i style="--c:#4E6B3C" title="#4E6B3C"></i></span><span class="scene__hex">#FAF6EF #221E18 #BC4827 #4E6B3C</span></dd></div>
+                  <div><dt>Typographies</dt><dd>Newsreader · Hanken Grotesk</dd></div>
+                </dl>
+                <div class="scene__links">
+                  <a class="link" href="project-qualamantis.html">Voir l’étude de cas</a>
+                  <a class="link link--plain" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com</a>
+                </div>
+              </div>
+            </div></div>
+          </article>
+          <article class="scene scene--bde" data-scene style="--bg:#080808;--fg:#F4F2EE;--ac:#C8102E;--mu:#A8A6A2" aria-labelledby="scene-bde">
+            <div class="scene__outer"><div class="scene__inner">
+              <div class="scene__bg">
+                <span class="scene__ghost" aria-hidden="true">BDE <span class="name-outline">Dauphine</span></span>
+                <a class="scene__shots" href="project-bde.html" tabindex="-1" aria-hidden="true">
+                  <div class="scene__desk">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-desk.mp4" type="video/mp4"></video>
+                  </div>
+                  <div class="scene__phone">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="assets/video/bde-phone-poster.webp"><source src="assets/video/bde-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-phone.mp4" type="video/mp4"></video>
+                  </div>
+                </a>
+              </div>
+              <div class="scene__copy">
+                <h3 class="scene__name" id="scene-bde" data-fx-split data-fx-manual>BDE <span class="name-outline">Dauphine</span></h3>
+                <p class="scene__text"><b>Le problème&nbsp;:</b> une billetterie et un programme d'événements que personne ne retrouvait sur l'ancien site.</p>
+                <p class="scene__text"><b>La réponse&nbsp;:</b> un accès direct à la billetterie dès l'écran d'accueil, pensé d'abord pour le téléphone.</p>
+                <dl class="scene__spec">
+                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#080808" title="#080808"></i><i style="--c:#F4F2EE" title="#F4F2EE"></i><i style="--c:#C8102E" title="#C8102E"></i></span><span class="scene__hex">#080808 #F4F2EE #C8102E</span></dd></div>
+                  <div><dt>Typographies</dt><dd>Unbounded · DM Sans</dd></div>
+                </dl>
+                <div class="scene__links">
+                  <a class="link" href="project-bde.html">Voir l’étude de cas</a>
+                  <a class="link link--plain" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr</a>
+                </div>
+              </div>
+            </div></div>
+          </article>
+          <article class="scene scene--wecalc" data-scene style="--bg:#1E3A5F;--fg:#F5F5F2;--ac:#C8B27D;--mu:#B9C3D0" aria-labelledby="scene-wecalc">
+            <div class="scene__outer"><div class="scene__inner">
+              <div class="scene__bg">
+                <span class="scene__ghost" aria-hidden="true">wecalc.fr</span>
+                <a class="scene__shots" href="project-wecalc.html" tabindex="-1" aria-hidden="true">
+                  <div class="scene__desk">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-desk.mp4" type="video/mp4"></video>
+                  </div>
+                  <div class="scene__phone">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="assets/video/wecalc-phone-poster.webp"><source src="assets/video/wecalc-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-phone.mp4" type="video/mp4"></video>
+                  </div>
+                </a>
+              </div>
+              <div class="scene__copy">
+                <h3 class="scene__name" id="scene-wecalc" data-fx-split data-fx-manual>wecalc.fr</h3>
+                <p class="scene__text"><b>Le problème&nbsp;:</b> des calculateurs disponibles en ligne, mais saturés de publicité et de traceurs.</p>
+                <p class="scene__text"><b>La réponse&nbsp;:</b> un résultat qui apparaît au fil de la frappe, sans compte à créer et sans script tiers.</p>
+                <dl class="scene__spec">
+                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#1E3A5F" title="#1E3A5F"></i><i style="--c:#C8B27D" title="#C8B27D"></i><i style="--c:#F5F5F2" title="#F5F5F2"></i><i style="--c:#111827" title="#111827"></i></span><span class="scene__hex">#1E3A5F #C8B27D #F5F5F2 #111827</span></dd></div>
+                  <div><dt>Typographies</dt><dd>Plus Jakarta Sans</dd></div>
+                </dl>
+                <div class="scene__links">
+                  <a class="link" href="project-wecalc.html">Voir l’étude de cas</a>
+                  <a class="link link--plain" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr</a>
+                </div>
+              </div>
+            </div></div>
+          </article>
+          <article class="scene scene--jeanne-randu" data-scene style="--bg:#3E493B;--fg:#F5F1E9;--ac:#C9BDA9;--mu:#C7C9BC" aria-labelledby="scene-jeanne-randu">
+            <div class="scene__outer"><div class="scene__inner">
+              <div class="scene__bg">
+                <span class="scene__ghost" aria-hidden="true">Jeanne Randu</span>
+                <a class="scene__shots" href="project-jeanne-randu.html" tabindex="-1" aria-hidden="true">
+                  <div class="scene__desk">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video>
+                  </div>
+                  <div class="scene__phone">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="assets/video/jeanne-randu-phone-poster.webp"><source src="assets/video/jeanne-randu-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-phone.mp4" type="video/mp4"></video>
+                  </div>
+                </a>
+              </div>
+              <div class="scene__copy">
+                <h3 class="scene__name" id="scene-jeanne-randu" data-fx-split data-fx-manual>Jeanne Randu</h3>
+                <p class="scene__text"><b>Le problème&nbsp;:</b> un travail visuel qu'une grille de vignettes toutes identiques aurait aplati.</p>
+                <p class="scene__text"><b>La réponse&nbsp;:</b> chaque projet a sa propre composition dessinée à la main, et Jeanne change ses textes et ses photos elle-même, sans ouvrir le HTML.</p>
+                <dl class="scene__spec">
+                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#ECE7DD" title="#ECE7DD"></i><i style="--c:#171813" title="#171813"></i><i style="--c:#3E493B" title="#3E493B"></i><i style="--c:#4B2925" title="#4B2925"></i><i style="--c:#C9BDA9" title="#C9BDA9"></i></span><span class="scene__hex">#ECE7DD #171813 #3E493B #4B2925 #C9BDA9</span></dd></div>
+                  <div><dt>Typographies</dt><dd>Instrument Serif · Instrument Sans</dd></div>
+                </dl>
+                <div class="scene__links">
+                  <a class="link" href="project-jeanne-randu.html">Voir l’étude de cas</a>
+                  <a class="link link--plain" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr</a>
+                </div>
+              </div>
+            </div></div>
+          </article>
+          <article class="scene scene--cave-antoine" data-scene style="--bg:#6F272F;--fg:#FFFAF0;--ac:#E4C780;--mu:#E3CFC6" aria-labelledby="scene-cave-antoine">
+            <div class="scene__outer"><div class="scene__inner">
+              <div class="scene__bg">
+                <span class="scene__ghost" aria-hidden="true">La Cave d’Antoine</span>
+                <a class="scene__shots" href="project-cave-antoine.html" tabindex="-1" aria-hidden="true">
+                  <div class="scene__desk">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-desk.mp4" type="video/mp4"></video>
+                  </div>
+                  <div class="scene__phone">
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="assets/video/cave-antoine-phone-poster.webp"><source src="assets/video/cave-antoine-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-phone.mp4" type="video/mp4"></video>
+                  </div>
+                </a>
+              </div>
+              <div class="scene__copy">
+                <h3 class="scene__name" id="scene-cave-antoine" data-fx-split data-fx-manual>La Cave d’Antoine</h3>
+                <p class="scene__text"><b>Le problème&nbsp;:</b> un établissement visible seulement via Google et Instagram, sans adresse à lui.</p>
+                <p class="scene__text"><b>La réponse&nbsp;:</b> quatre pages en italien, écrites dans le registre du lieu, et une carte Google qui ne se charge qu'au clic.</p>
+                <dl class="scene__spec">
+                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#F6F3EA" title="#F6F3EA"></i><i style="--c:#302A25" title="#302A25"></i><i style="--c:#6F272F" title="#6F272F"></i><i style="--c:#E4C780" title="#E4C780"></i><i style="--c:#515B46" title="#515B46"></i></span><span class="scene__hex">#F6F3EA #302A25 #6F272F #E4C780 #515B46</span></dd></div>
+                  <div><dt>Typographies</dt><dd>Cormorant Garamond · DM Sans</dd></div>
+                </dl>
+                <div class="scene__links">
+                  <a class="link" href="project-cave-antoine.html">Voir l’étude de cas</a>
+                  <a class="link link--plain" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev</a>
+                </div>
+              </div>
+            </div></div>
+          </article>
+        <ol class="showcase__rail" aria-hidden="true"><li style="--ac:#BC4827">Entreprise de conseil</li><li style="--ac:#C8102E">Plateforme événementielle</li><li style="--ac:#C8B27D">Outil en ligne</li><li style="--ac:#C9BDA9">Portfolio</li><li style="--ac:#E4C780">Restaurant &amp; bar</li></ol>
+        <!-- /projets:vitrine --></div>
+    </div>
+  </section>
 
-      <article class="proj" data-reveal>
-        <div style="min-width:0;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num" aria-hidden="true"></span>
-            <span class="proj__tag">BDE Dauphine</span>
-          </div>
-          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Plateforme événementielle</h3>
-          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : une billetterie et un programme d'événements que personne ne retrouvait sur l'ancien site.</p>
-          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : un accès direct à la billetterie dès l'écran d'accueil, pensé d'abord pour le téléphone.</p>
-          <div class="btn-row" style="margin-top:20px;">
-            <a class="link" href="project-bde.html">Voir l'étude de cas</a>
-            <a class="link link--plain" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr</a>
-          </div>
-        </div>
-        <div class="proj__shot-wrap">
-          <picture>
-            <source type="image/avif" srcset="assets/shots/bde-960.avif 960w, assets/shots/bde-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <source type="image/webp" srcset="assets/shots/bde-960.webp 960w, assets/shots/bde-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <img class="proj__shot" src="assets/shots/bde.png" width="1600" height="820" alt="Page d'accueil du site BDE Dauphine" loading="lazy" decoding="async">
-          </picture>
-          <picture>
-            <source type="image/avif" srcset="assets/shots/bde-mobile.avif">
-            <source type="image/webp" srcset="assets/shots/bde-mobile.webp">
-            <img class="proj__shot-mobile" src="assets/shots/bde-mobile.png" width="640" height="1225" alt="BDE Dauphine sur mobile" loading="lazy" decoding="async">
-          </picture>
-        </div>
-      </article>
+  <section class="section section--tight showcase-after">
+    <div class="wrap">
 
-      <article class="proj" data-reveal>
-        <div style="min-width:0;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num" aria-hidden="true"></span>
-            <span class="proj__tag">wecalc.fr</span>
-          </div>
-          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Outil en ligne</h3>
-          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : des calculateurs disponibles en ligne, mais saturés de publicité et de traceurs.</p>
-          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : un résultat qui apparaît au fil de la frappe, sans compte à créer et sans script tiers.</p>
-          <div class="btn-row" style="margin-top:20px;">
-            <a class="link" href="project-wecalc.html">Voir l'étude de cas</a>
-            <a class="link link--plain" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr</a>
-          </div>
-        </div>
-        <div class="proj__shot-wrap">
-          <picture>
-            <source type="image/avif" srcset="assets/shots/wecalc-960.avif 960w, assets/shots/wecalc-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <source type="image/webp" srcset="assets/shots/wecalc-960.webp 960w, assets/shots/wecalc-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <img class="proj__shot" src="assets/shots/wecalc.png" width="1600" height="892" alt="Page d'accueil du site wecalc.fr" loading="lazy" decoding="async">
-          </picture>
-          <picture>
-            <source type="image/avif" srcset="assets/shots/wecalc-mobile.avif">
-            <source type="image/webp" srcset="assets/shots/wecalc-mobile.webp">
-            <img class="proj__shot-mobile" src="assets/shots/wecalc-mobile.png" width="640" height="1230" alt="wecalc.fr sur mobile" loading="lazy" decoding="async">
-          </picture>
-        </div>
-      </article>
-
-      <article class="proj" data-reveal>
-        <div style="min-width:0;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num" aria-hidden="true"></span>
-            <span class="proj__tag">Jeanne Randu · Portfolio</span>
-          </div>
-          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Portfolio</h3>
-          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : un travail visuel qu'une grille de vignettes toutes identiques aurait aplati.</p>
-          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : chaque projet a sa propre composition dessinée à la main, et Jeanne change ses textes et ses photos elle-même, sans ouvrir le HTML.</p>
-          <div class="btn-row" style="margin-top:20px;">
-            <a class="link" href="project-jeanne-randu.html">Voir l'étude de cas</a>
-            <a class="link link--plain" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr</a>
-          </div>
-        </div>
-        <div class="proj__shot-wrap">
-          <picture>
-            <source type="image/avif" srcset="assets/shots/jeanne-randu-960.avif 960w, assets/shots/jeanne-randu-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <source type="image/webp" srcset="assets/shots/jeanne-randu-960.webp 960w, assets/shots/jeanne-randu-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <img class="proj__shot" src="assets/shots/jeanne-randu.png" width="1600" height="820" alt="Page d'accueil du portfolio de Jeanne Randu" loading="lazy" decoding="async">
-          </picture>
-          <picture>
-            <source type="image/avif" srcset="assets/shots/jeanne-randu-mobile.avif">
-            <source type="image/webp" srcset="assets/shots/jeanne-randu-mobile.webp">
-            <img class="proj__shot-mobile" src="assets/shots/jeanne-randu-mobile.png" width="640" height="1197" alt="Portfolio de Jeanne Randu sur mobile" loading="lazy" decoding="async">
-          </picture>
-        </div>
-      </article>
-
-      <article class="proj" data-reveal>
-        <div style="min-width:0;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <span class="proj__num" aria-hidden="true"></span>
-            <span class="proj__tag">La Cave d'Antoine · Démonstration</span>
-          </div>
-          <h3 class="h2" style="font-size:clamp(23px,2.5vw,33px);">Restaurant &amp; bar</h3>
-          <p class="body-serif" style="margin-top:14px;max-width:440px;font-size:16.5px;">Le problème : un établissement visible seulement via Google et Instagram, sans adresse à lui.</p>
-          <p class="body-serif" style="margin-top:8px;max-width:440px;font-size:16.5px;">La réponse : quatre pages en italien, écrites dans le registre du lieu, et une carte Google qui ne se charge qu'au clic.</p>
-          <div class="btn-row" style="margin-top:20px;">
-            <a class="link" href="project-cave-antoine.html">Voir l'étude de cas</a>
-            <a class="link link--plain" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev</a>
-          </div>
-        </div>
-        <div class="proj__shot-wrap">
-          <picture>
-            <source type="image/avif" srcset="assets/shots/cave-antoine-960.avif 960w, assets/shots/cave-antoine-1600.avif 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <source type="image/webp" srcset="assets/shots/cave-antoine-960.webp 960w, assets/shots/cave-antoine-1600.webp 1600w" sizes="(min-width:760px) 46vw, 92vw">
-            <img class="proj__shot" src="assets/shots/cave-antoine.png" width="1600" height="820" alt="Page d'accueil du site La Cave d'Antoine" loading="lazy" decoding="async">
-          </picture>
-          <picture>
-            <source type="image/avif" srcset="assets/shots/cave-antoine-mobile.avif">
-            <source type="image/webp" srcset="assets/shots/cave-antoine-mobile.webp">
-            <img class="proj__shot-mobile" src="assets/shots/cave-antoine-mobile.png" width="640" height="1233" alt="La Cave d'Antoine sur mobile" loading="lazy" decoding="async">
-          </picture>
-        </div>
-      </article>
-
-      <p style="margin-top:clamp(30px,4vw,48px);"><a class="link" href="work.html">Voir tous les travaux</a></p>
+      <p class="proj-more"><a class="link" href="work.html">Voir tous les travaux</a></p>
     </div>
   </section>
 
   <!-- 02 Services & pricing -------------------------------------------------- -->
-  <section class="section section--tight section--panel">
+  <section class="section section--tight section--panel seam">
     <div class="wrap">
       <div class="head-row" data-reveal>
         <h2 class="h2">Trois façons de travailler ensemble</h2>
@@ -455,42 +472,45 @@
       <div class="grid grid-cards" data-reveal>
         <div class="pcard">
           <h3 class="h3">Créer une présence claire</h3>
-          <p class="body-serif" style="margin-top:8px;">Un nouveau site pour expliquer votre activité, structurer votre offre et orienter le visiteur vers la bonne action.</p>
-          <ul class="pcard__list" style="margin-top:20px;">
+          <p class="pcard__price">À partir de 900&nbsp;€</p>
+          <p class="body-serif pcard__lead">Un nouveau site pour expliquer votre activité, structurer votre offre et orienter le visiteur vers la bonne action.</p>
+          <ul class="pcard__list">
             <li>Structure et contenu du site organisés avec vous</li>
             <li>Design sur mesure, jamais un template</li>
             <li>Pensé mobile d'abord — aussi lisible sur téléphone que sur ordinateur</li>
             <li>Site codé à la main — pas de mise à jour technique à gérer, plus léger et plus rapide</li>
             <li>Hébergement pris en charge</li>
           </ul>
-          <a class="link" href="contact.html">Demander un devis &rarr;</a>
+          <a class="link" href="contact.html">Demander un devis</a>
         </div>
         <div class="pcard pcard--outline">
           <h3 class="h3">Repenser l'existant</h3>
-          <p class="body-serif" style="margin-top:8px;">Conserver ce qui fonctionne, supprimer ce qui brouille le message et reconstruire une expérience plus claire.</p>
-          <ul class="pcard__list" style="margin-top:20px;">
+          <p class="pcard__price">À partir de 2&nbsp;400&nbsp;€</p>
+          <p class="body-serif pcard__lead">Conserver ce qui fonctionne, supprimer ce qui brouille le message et reconstruire une expérience plus claire.</p>
+          <ul class="pcard__list">
             <li>Analyse de votre site actuel : contenu, structure, code</li>
             <li>Réécriture en code sur mesure — plus rien à mettre à jour techniquement</li>
             <li>Contenu et adresses de page conservés — pas de perte de référencement Google</li>
             <li>Mise en ligne sans coupure : votre site actuel reste visible jusqu'au bout</li>
           </ul>
-          <a class="link" href="contact.html">Faire estimer mon site &rarr;</a>
+          <a class="link" href="contact.html">Faire estimer mon site</a>
         </div>
         <div class="pcard">
           <h3 class="h3">Faire vivre le site</h3>
-          <p class="body-serif" style="margin-top:8px;">Mettre à jour les contenus, surveiller la mise en ligne et faire évoluer le site sans engagement de durée.</p>
-          <ul class="pcard__list" style="margin-top:20px;">
+          <p class="pcard__price">26&nbsp;€ / mois, sans engagement</p>
+          <p class="body-serif pcard__lead">Mettre à jour les contenus, surveiller la mise en ligne et faire évoluer le site sans engagement de durée.</p>
+          <ul class="pcard__list">
             <li>Modifications de contenu et de pages existantes</li>
             <li>Site surveillé en continu, alerte en cas de problème</li>
             <li>Sauvegardes régulières, avec restauration possible</li>
             <li>Sans engagement de durée</li>
           </ul>
-          <a class="link" href="contact.html">En parler &rarr;</a>
+          <a class="link" href="contact.html">En parler</a>
         </div>
       </div>
-      <div style="margin-top:clamp(28px,4vw,40px);padding-top:18px;border-top:1px solid var(--line-soft);display:flex;flex-wrap:wrap;gap:16px 28px;align-items:baseline;justify-content:space-between;">
-        <p class="small" style="max-width:52ch;line-height:1.7;margin:0;">Le périmètre est toujours fixé par écrit avant de commencer — le prix suit le nombre réel de pages, de langues et de fonctionnalités.</p>
-        <a class="link" href="tarifs.html">Voir les tarifs &rarr;</a>
+      <div class="offers-foot">
+        <p class="small">Le périmètre est toujours fixé par écrit avant de commencer — le prix suit le nombre réel de pages, de langues et de fonctionnalités.</p>
+        <a class="link" href="tarifs.html">Voir les tarifs</a>
       </div>
     </div>
   </section>
@@ -499,11 +519,10 @@
   <section class="section--tight section--sunk">
     <div class="wrap menu-cta" data-reveal>
       <div class="menu-cta__copy">
-        <span class="eyebrow">Aussi pour la restauration</span>
-        <h2 class="h3" style="margin:10px 0 0;">Un menu numérique, affiché via un QR code sur chaque table.</h2>
+        <h2 class="h3" style="margin:0;">Un menu numérique, affiché via un QR code sur chaque table.</h2>
         <p class="body-serif" style="margin-top:8px;max-width:52ch;">Même principe qu'un site une page, appliqué à la carte d'un restaurant, café ou bar : toujours à jour, sans application à installer.</p>
       </div>
-      <a class="btn" href="menu-numerique.html">Voir la solution &rarr;</a>
+      <a class="btn" href="menu-numerique.html">Voir la solution</a>
       <picture class="menu-cta__media">
         <source type="image/webp" srcset="assets/menu-qr/menu-qr-transparent-640.webp 640w, assets/menu-qr/menu-qr-transparent-960.webp 960w, assets/menu-qr/menu-qr-transparent-1536.webp 1536w" sizes="(min-width:760px) 640px, 100vw">
         <img src="assets/menu-qr/menu-qr-transparent-960.webp" width="1536" height="1024" alt="Menu en ligne consulté via un QR code" loading="lazy" decoding="async">
@@ -515,24 +534,23 @@
   <section class="section section--panel">
     <div class="wrap split split--wide-right" style="--split-right:1.2fr;">
       <div data-reveal>
-        <span class="eyebrow">LE STUDIO</span>
-        <h2 class="h2" style="margin:16px 0 0;max-width:460px;">Un seul interlocuteur, du premier message à la mise en ligne.</h2>
+        <h2 class="h2" style="margin:0;max-width:460px;">Un seul interlocuteur, du premier message à la mise en ligne.</h2>
       </div>
       <div data-reveal>
-        <p class="lede" style="max-width:560px;padding-left:20px;border-left:2px solid var(--coral);">Vous travaillez directement avec la personne qui définit, conçoit et construit votre site.</p>
-        <div class="grid steps" style="margin-top:26px;">
-          <div class="step"><span class="step__n">01</span><span class="step__t" style="margin:8px 0 0;font-size:15px;">Comprendre</span></div>
-          <div class="step"><span class="step__n">02</span><span class="step__t" style="margin:8px 0 0;font-size:15px;">Structurer</span></div>
-          <div class="step"><span class="step__n">03</span><span class="step__t" style="margin:8px 0 0;font-size:15px;">Concevoir</span></div>
-          <div class="step"><span class="step__n">04</span><span class="step__t" style="margin:8px 0 0;font-size:15px;">Mettre en ligne</span></div>
-        </div>
-        <a class="link" style="display:inline-block;margin-top:26px;" href="studio.html">La façon de travailler &rarr;</a>
+        <p class="lede studio-lede">Vous travaillez directement avec la personne qui définit, conçoit et construit votre site.</p>
+        <ol class="stages">
+          <li class="stages__item">Comprendre</li>
+          <li class="stages__item">Structurer</li>
+          <li class="stages__item">Concevoir</li>
+          <li class="stages__item">Mettre en ligne</li>
+        </ol>
+        <a class="link stages__more" href="studio.html">La façon de travailler</a>
       </div>
     </div>
   </section>
 
   <!-- 04 Technical reassurance ------------------------------------------------- -->
-  <section class="section section--dark">
+  <section class="section section--dark seam">
     <div class="wrap">
       <div class="head-row" data-reveal>
         <h2 class="h2" style="color:var(--cream);">Ce que ça change concrètement</h2>
@@ -554,12 +572,22 @@
           <p class="benefit__text">Votre domaine, vos contenus et le code complet.</p>
         </div>
       </div>
-      <p class="small" style="margin-top:24px;color:rgba(237,233,226,.6);">Un site bien construit demande, comme tout logiciel, un entretien occasionnel — ce suivi est justement l'objet de l'offre « Faire vivre le site ».</p>
+      <p class="small benefits-note">Un site bien construit demande, comme tout logiciel, un entretien occasionnel — ce suivi est justement l'objet de l'offre « Faire vivre le site ».</p>
+      <div class="proof" data-proof hidden>
+        <p class="proof__label">Cette page, mesurée par votre navigateur à l’instant</p>
+        <dl class="proof__grid">
+          <div class="proof__item"><dt>Affichée en</dt><dd data-proof-v="fcp">—</dd></div>
+          <div class="proof__item"><dt>Code transféré (HTML, CSS, JS)</dt><dd data-proof-v="code">—</dd></div>
+          <div class="proof__item"><dt>Requêtes vers des tiers</dt><dd data-proof-v="third">—</dd></div>
+          <div class="proof__item"><dt>Cookies déposés</dt><dd data-proof-v="cookies">—</dd></div>
+        </dl>
+        <p class="proof__note">Valeurs lues en direct dans l’API Performance de votre navigateur — rien n’est saisi à la main.</p>
+      </div>
     </div>
   </section>
 
   <!-- FAQ ----------------------------------------------------------------- -->
-  <section class="section section--tight section--sunk">
+  <section class="section section--tight section--sunk seam">
     <div class="wrap split split--wide-right" style="--split-right:1.6fr;">
       <h2 class="h2" data-reveal>Questions<br>fréquentes</h2>
       <div class="faq" data-reveal>
@@ -587,16 +615,19 @@
     </div>
   </section>
 
-  <!-- Contact banner --------------------------------------------------------- -->
-  <section class="section--dark" style="position:relative;overflow:hidden;">
-    <img src="assets/art/cafe-delight.jpg" alt="" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;opacity:.4;">
-    <div style="position:absolute;inset:0;background:linear-gradient(102deg,rgba(22,32,43,.95) 15%,rgba(22,32,43,.85) 58%,rgba(22,32,43,.77) 100%);"></div>
-    <div class="wrap" style="position:relative;z-index:2;padding-top:clamp(60px,8vw,110px);padding-bottom:clamp(60px,8vw,110px);">
-      <p class="eyebrow" style="color:var(--coral-2);">CONTACT</p>
-      <h2 class="h-page" data-reveal style="margin-top:20px;font-size:clamp(32px,5.8vw,72px);color:var(--cream);max-width:900px;">Dites ce que votre site doit faire.</h2>
-      <p class="body-serif" style="margin-top:22px;max-width:540px;color:rgba(237,233,226,.84);">Quelques lignes suffisent pour commencer : votre activité, ce que vous vendez, et à qui. Réponse écrite sous un jour ouvré.</p>
-      <div class="btn-row" style="margin-top:32px;">
-        <a class="btn" href="contact.html">Prendre contact &rarr;</a>
+  <!-- Contact finale ---------------------------------------------------------- -->
+  <section class="finale seam">
+    <picture class="finale__art" aria-hidden="true">
+      <source type="image/avif" srcset="assets/art/cafe-delight.avif">
+      <source type="image/webp" srcset="assets/art/cafe-delight.webp">
+      <img src="assets/art/cafe-delight.jpg" width="1295" height="774" alt="" loading="lazy" decoding="async">
+    </picture>
+    <div class="wrap finale__in">
+      <h2 class="h-page finale__title" data-reveal>Dites ce que votre site doit faire.</h2>
+      <p class="finale__text">Quelques lignes suffisent pour commencer : votre activité, ce que vous vendez, et à qui. Réponse écrite sous un jour ouvré.</p>
+      <div class="finale__actions">
+        <a class="btn btn--on-dark" href="contact.html">Prendre contact</a>
+        <p class="finale__mail">ou écrivez directement à <a href="mailto:hello@telaventis.fr">hello@telaventis.fr</a></p>
       </div>
     </div>
   </section>
@@ -606,7 +637,7 @@
 <footer class="foot">
   <div class="wrap foot__grid">
     <div>
-      <div class="foot__brand">TELAVENTIS</div>
+      <a class="foot__mail" href="mailto:hello@telaventis.fr">hello@telaventis.fr</a>
       <p class="foot__desc">Studio web indépendant. Des sites écrits à la main, en France.</p>
     </div>
     <div class="foot__col">
@@ -616,24 +647,28 @@
       <a href="contact.html">Contact</a>
       <a href="menu-numerique.html">Menu numérique</a>
     </div>
-    <div class="foot__col">
-      <a class="foot__mono" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr &#8599;</a>
-      <a class="foot__mono" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com &#8599;</a>
-      <a class="foot__mono" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr &#8599;</a>
-      <a class="foot__mono" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr &#8599;</a>
-      <a class="foot__mono" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev &#8599;</a>
-    </div>
+    <div class="foot__col"><!-- projets:pied -->
+      <a class="foot__mono" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com</a>
+      <a class="foot__mono" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr</a>
+      <a class="foot__mono" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr</a>
+      <a class="foot__mono" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr</a>
+      <a class="foot__mono" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev</a>
+    <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Mentions légales &amp; crédits</a>
     </div>
   </div>
+  <div class="foot__band" aria-hidden="true">
+    <span class="foot__word foot__word--top">TELAVENTIS</span>
+    <span class="foot__word foot__word--bottom">TELAVENTIS</span>
+  </div>
 </footer>
 
-<script src="assets/telaventis.js?v=7" defer></script>
-<script src="assets/telaventis-fx.js?v=29" defer></script>
+<script src="assets/telaventis.js?v=22" defer></script>
+<script src="assets/telaventis-fx.js?v=43" defer></script>
 <!-- MOKA experiment — remove this line together with the CSS <link> and
      the #direction-lab section to deactivate it. -->
-<script src="assets/moka-lab.js?v=13" defer></script>
+<script src="assets/moka-lab.js?v=17" defer></script>
 </body>
 </html>

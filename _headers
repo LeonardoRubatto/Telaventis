@@ -20,19 +20,14 @@
 #                            'unsafe-inline': the single
 #                              document.documentElement.classList.add('js')
 #                            line every page opens with. No 'unsafe-eval'
-#                            on purpose — the one thing on this site that
-#                            wants it is the optional WebGPU jellyfish in
-#                            assets/aurelia/aurelia.js (Three.js's shader
-#                            node system calls `new Function` internally);
-#                            that whole load is already wrapped in a
-#                            .catch() that falls back to the plain 2D
-#                            canvas version (see telaventis-fx.js), so
-#                            blocking it here just means every visitor
-#                            quietly gets the 2D fallback instead of a
-#                            script-level escape hatch staying open
-#                            site-wide. Re-add 'unsafe-eval' here if you'd
-#                            rather keep the WebGPU version and accept that
-#                            trade-off.
+#                            either, and none is needed: the WebGPU
+#                            jellyfish (assets/aurelia/aurelia.js) runs
+#                            under this policy as is. The bundle's only
+#                            `new Function` sits in Three.js' ScriptableNode
+#                            (user-scripted shader nodes), which the
+#                            simulation never calls — an earlier note here
+#                            said otherwise; checked 2026-09-24 against the
+#                            live site.
 #   style-src 'unsafe-inline' the one deliberate exception: the page design
 #                            leans on inline style="" attributes throughout
 #                            (not a CSS file to swap in). CSS injection is

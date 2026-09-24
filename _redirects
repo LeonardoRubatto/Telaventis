@@ -9,3 +9,10 @@
 # gives a spoofer one more look-alike surface to register a lookalike TLS
 # cert against and phish from.
 https://www.telaventis.fr/* https://telaventis.fr/:splat 301!
+
+# The authoring tools and their inputs (_outils/: identity generator, project
+# data, capture scripts, source images) live in the repository so the site
+# can be rebuilt from them, but they are not part of the site: never served.
+/_outils/* /404.html 404
+/_outils /404.html 404
+/.claude/* /404.html 404
