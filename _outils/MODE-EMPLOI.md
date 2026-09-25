@@ -149,7 +149,11 @@ l'arrivée du titre Moka ; **pendant ces ~2,5 s le défilement est retenu**
 interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 
 `assets/moka-lab.js` — l'histoire Atelier Moka, et à la fin « du bruit au
-signal » (les photos pixelisées que la caméra traverse).
+signal » (les photos pixelisées que la caméra traverse). L'ouverture de
+l'histoire (photos qui traversent l'écran, fragments rassemblés, navigateur
+qui s'ouvre : les 30 premiers % du défilement) se **joue en entier à son
+rythme (~2,6 s)** dès qu'on commence à défiler, défilement retenu, puis
+rendu une fois le geste arrêté ; à l'envers de même en remontant.
 
 Les hauteurs de défilement des sections épinglées sont en CSS
 (`.era__track`, `.moka-story__track`, `.showcase__track` — 110svh par scène,

@@ -25,6 +25,51 @@
     });
   };
 
+  /* ---- the opening act plays whole (no speedrun) ------------------------
+     The story's opening — the pictures flying past the camera (the depth
+     layer below), the fragments gathering, the browser opening — is scrubbed
+     over the first ACT_END of the track, a little over one screen of scroll:
+     a quick scroll crossed it in a fraction of a second and the effect was
+     lost. So, as for the Moka door (telaventis-fx.js §3d) and the project
+     showcase (telaventis.js §6): the first bit of scroll into the story
+     TRIGGERS the act, which then plays on its own clock (ACT_MS) while the
+     scroll is held at the point where it ends; it is released once the act
+     is over AND the gesture that started it has stopped (no wheel, touch or
+     key for QUIET ms — a trackpad's inertia is still the same gesture).
+     Scrolling back up into it plays it backwards the same way. Never during
+     a jump (an in-page link, Home/End); HOLD_MAX releases it whatever
+     happens. The hold is html.moka-held (moka-lab.css). */
+  var ACT_END=.30, ACT_MS=2600, QUIET=180, HOLD_MAX=ACT_MS+2000;
+  var root=document.documentElement;
+  var heldY=null, heldSince=0, lastInput=0, jumpUntil=0;
+  var hold=function(y){
+    heldY=Math.round(y); heldSince=performance.now();
+    window.scrollTo({top:heldY,behavior:'instant'});
+    root.classList.add('moka-held');
+  };
+  var release=function(){heldY=null;root.classList.remove('moka-held');};
+  var gesture=function(e){lastInput=performance.now();if(heldY!==null&&e.cancelable)e.preventDefault();};
+  var jumping=function(){return performance.now()<jumpUntil;};
+  if(!reduce){
+    window.addEventListener('wheel',gesture,{passive:false});
+    window.addEventListener('touchmove',gesture,{passive:false});
+    var SCROLL_KEYS={' ':1,Spacebar:1,PageDown:1,PageUp:1,ArrowDown:1,ArrowUp:1};
+    window.addEventListener('keydown',function(e){
+      if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable)return;
+      if(e.key==='Home'||e.key==='End'){jumpUntil=performance.now()+2500;release();return;}
+      if(SCROLL_KEYS[e.key]){lastInput=performance.now();if(heldY!==null)e.preventDefault();}
+    });
+    window.addEventListener('scroll',function(){
+      if(heldY!==null&&Math.abs(window.scrollY-heldY)>1)window.scrollTo({top:heldY,behavior:'instant'});
+    },{passive:true});
+    document.addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('a[href*="#"]');
+      if(a&&a.pathname===location.pathname&&a.hash)jumpUntil=performance.now()+2500;
+    });
+    window.addEventListener('hashchange',function(){jumpUntil=performance.now()+2500;});
+    document.addEventListener('visibilitychange',function(){if(document.hidden)release();});
+  }
+
   stories.forEach(function(story){
     var track=story.querySelector('.moka-story__track');
     var browser=story.querySelector('[data-moka-browser]');
@@ -78,10 +123,37 @@
     measure();
     if('ResizeObserver' in window)new ResizeObserver(measure).observe(viewport);
 
+    var act=null, actPast=null;
     var render=function(dt){
       var rect=track.getBoundingClientRect();
       var scrollable=Math.max(1,track.offsetHeight-window.innerHeight);
       var target=clamp(-rect.top/scrollable,0,1);
+      var now=performance.now();
+      var posOf=function(pp){return window.scrollY+rect.top+pp*scrollable;};
+      /* the opening act (see the hold above): past it or not is decided
+         once from where the page opens, then only by the act itself */
+      if(actPast===null)actPast=target>=ACT_END;
+      var onScreen=rect.top<window.innerHeight&&rect.bottom>0;
+      if(!act&&heldY===null){
+        if(target<=0||!onScreen||jumping())actPast=target>=ACT_END;
+        else if(!actPast&&target>.01){
+          act={from:story._mokaP==null?0:story._mokaP,to:ACT_END,t0:now};
+          actPast=true;hold(posOf(ACT_END));
+        }else if(actPast&&target<ACT_END-.01){
+          act={from:story._mokaP==null?ACT_END:story._mokaP,to:0,t0:now};
+          actPast=false;hold(posOf(0));
+        }
+        if(act)act.dur=Math.max(450,ACT_MS*Math.abs(act.to-act.from)/ACT_END);
+      }
+      if(act){
+        var ka=clamp((now-act.t0)/act.dur,0,1);
+        /* the act's own pieces carry their eases; time drives p evenly,
+           as if scrolled at a steady pace */
+        target=act.from+(act.to-act.from)*ka;
+        story._mokaP=target;
+        if(ka>=1)act=null;
+      }
+      if(heldY!==null&&!act&&(now-lastInput>=QUIET||now-heldSince>=HOLD_MAX))release();
       /* Mobile only, by design: this whole smoothing mechanism exists to
          fix touch-flick jerkiness (native momentum scroll delivering
          position in uneven steps). Desktop scrolling (wheel/trackpad,
@@ -197,7 +269,7 @@
         else swapPhase(phase);
       }
 
-      return p!==target;
+      return p!==target||!!act||heldY!==null;
     };
     story._mokaRender=render;
     if(reduce){
@@ -311,7 +383,9 @@
     if(p==null)p=clamp(-r.top/Math.max(1,track.offsetHeight-vh),0,1);
     if(!primed&&r.top<vh*3)prime();
     var onScreen=r.top<vh&&r.bottom>0;
-    if(!onScreen||p>.28){host.style.visibility='hidden';return;}
+    /* while the opening act plays on its own clock (the hold, above),
+       nothing scrolls, so keep watching: played backwards, it comes back */
+    if(!onScreen||p>.28){host.style.visibility='hidden';if(document.documentElement.classList.contains('moka-held'))raf=requestAnimationFrame(frame);return;}
     host.style.visibility='visible';
     var W=host.clientWidth,H=host.clientHeight,cx=W/2,cy=H/2;
     /* the dolly goes far enough (3.4 units) that even the farthest picture
