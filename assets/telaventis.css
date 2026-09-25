@@ -935,10 +935,10 @@ a.proj__shot-wrap{display:block;cursor:pointer}
    Observer — the incoming scene's outer mask travels in while its inner
    layer travels the opposite way, so the scene is uncovered in place
    rather than pushed; the backdrops drift 15% against the motion; the
-   name's letters rise out of their masks in random order. On desktop,
-   native scroll is never taken over. On phones only, one swipe plays one
-   scene, the fling is held while it hands over, and the recordings start
-   after 3s on a project (see §6). No JS / reduced motion: the
+   name's letters rise out of their masks in random order. One gesture
+   (wheel, trackpad, swipe, key) plays one scene: the scroll is held while
+   it hands over (see §6). On phones only, the recordings start after 3s on
+   a project. No JS / reduced motion: the
    scenes simply stack.
    ========================================================================== */
 
@@ -995,22 +995,26 @@ a.proj__shot-wrap{display:block;cursor:pointer}
 .showcase__rail{display:none}
 
 /* ---- live (pinned) ---- */
-.showcase[data-showcase-live] .showcase__track{height:calc(var(--scenes,5) * 100svh + 30svh)}
+/* SEG = 110svh of scroll per scene; each scene rests in the middle of its
+   stretch, so the next one is 55svh away either way (telaventis.js §6: one
+   gesture, one scene). The extra 100svh is the pinned screen itself:
+   pinned stretch = scenes × SEG. */
+.showcase[data-showcase-live] .showcase__track{height:calc(var(--scenes,5) * 110svh + 100svh)}
 .showcase[data-showcase-live] .showcase__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden}
 .showcase[data-showcase-live] .scene{position:absolute;inset:0;visibility:hidden}
 .showcase[data-showcase-live] .scene.is-current,.showcase[data-showcase-live] .scene.is-leaving{visibility:visible}
 .showcase[data-showcase-live] .scene.is-current{z-index:2}
 .showcase[data-showcase-live] .scene.is-leaving{z-index:1}
 .showcase[data-showcase-live] .scene__inner{min-height:0}
-/* phones only (phone layout + touch screen): one swipe, one scene (telaventis.js §6). Each scene gets
-   SEG_SVH = 140svh of scroll and rests in the middle of it, so the next
-   scene is 70svh away either way — one deliberate swipe, not a light touch.
-   The extra 100svh is the pinned screen itself: pinned stretch = scenes × 140. */
+/* phones (phone layout + touch screen): SEG = 140svh, so the next scene is
+   70svh away — a finger's swipe travels further than a wheel's notch, and
+   it must take a real swipe, not a light touch */
 @media (max-width:999px) and (hover:none) and (pointer:coarse){
   .showcase[data-showcase-live] .showcase__track{height:calc(var(--scenes,5) * 140svh + 100svh)}
 }
-/* the hold while a scene hands over (phones only): overflow:hidden is what
-   drops an iOS fling already under way. A root with overflow:hidden no
+/* the hold while a scene hands over: overflow:hidden is what drops an iOS
+   fling or a wheel gesture already under way (Chrome only lets a page
+   cancel the first wheel event of a gesture). A root with overflow:hidden no
    longer honours sticky, so the pinned screen is fixed in the very place it
    was stuck (the scroll does not move during the hold) — no visible change */
 html.sc-held{overflow:hidden;overscroll-behavior:none}

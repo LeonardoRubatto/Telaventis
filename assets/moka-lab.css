@@ -30,6 +30,13 @@
    can fall short of the real viewport once iOS Safari's toolbar auto-hides
    mid-scroll, leaving an uncovered sliver below the pinned box. */
 .moka-story__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden;background:var(--cream);isolation:isolate}
+/* the hold while the opening act plays (moka-lab.js): overflow:hidden is
+   what drops a wheel gesture or an iOS fling already under way. A root with
+   overflow:hidden no longer honours sticky, so the pinned stage is fixed in
+   the very place it was stuck (the scroll does not move during the hold) */
+html.moka-held{overflow:hidden;overscroll-behavior:none}
+html.moka-held body{touch-action:none}
+html.moka-held .moka-story__sticky{position:fixed;top:0;left:0;width:100%}
 /* top inset nudged +8px from the phase label above (was flush against
    it, ~0 breathing room, once the label was sized up) — small on
    purpose, this is a demo box wanting to sit close under its label, not
