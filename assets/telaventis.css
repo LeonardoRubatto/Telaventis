@@ -937,9 +937,7 @@ a.proj__shot-wrap{display:block;cursor:pointer}
    rather than pushed; the backdrops drift 15% against the motion; the
    name's letters rise out of their masks in random order. One gesture
    (wheel, trackpad, swipe, key) plays one scene: the scroll is held while
-   it hands over (see §6). On phones only, the recordings start after 3s on
-   a project. No JS / reduced motion: the
-   scenes simply stack.
+   it hands over (see §6). No JS / reduced motion: the scenes simply stack.
    ========================================================================== */
 
 .showcase{position:relative;background:var(--ink)}

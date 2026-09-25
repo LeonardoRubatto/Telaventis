@@ -472,40 +472,17 @@
     scenes.forEach(function (sc) { sc.setAttribute('inert', ''); });
 
     var nameOf = function (sc) { return sc.querySelector('.scene__name'); };
-    /* phones only (the showcase's phone layout, telaventis.css, on a touch
-       screen): the 3s wait below. On desktop the recordings start at once. */
-    var mobile = !!(window.matchMedia && window.matchMedia('(max-width: 999px) and (hover: none) and (pointer: coarse)').matches);
-    /* each scene's screens are recordings of the live site. On phones they
-       start only once the visitor has stayed on a project for PLAY_AFTER
-       (asked by Leonardo: the scene is read first, as a still, then it comes
-       alive; on desktop, at once) — and only the current scene's, only
-       while the showcase is on screen and the tab is visible. On phones, leaving a scene also rewinds its
-       recordings to their first frame (= the poster), so a scene always
-       opens on the same still; the current and next scenes buffer during
-       the wait. */
-    var PLAY_AFTER = mobile ? 3000 : 0;
+    /* each scene's screens are recordings of the live site; only the current
+       scene's play, only while the showcase is on screen and the tab is
+       visible, and the next scene's are asked to buffer ahead of time */
     var vidsOf = function (sc) { return sc ? Array.prototype.slice.call(sc.querySelectorAll('video')) : []; };
-    var showOn = false, playAt = -1, playTimer = 0, watched = -1;
+    var showOn = false;
     var syncVideos = function () {
-      var live = showOn && !document.hidden && cur >= 0;
-      /* the wait restarts whenever the scene changes or the showcase is
-         left (scrolled away, tab hidden) — it counts time spent ON a project */
-      if (!live || cur !== watched) { clearTimeout(playTimer); playTimer = 0; playAt = -1; }
-      if (live && playAt < 0) {
-        watched = cur;
-        playAt = performance.now() + PLAY_AFTER;
-        if (PLAY_AFTER) playTimer = setTimeout(function () { playTimer = 0; syncVideos(); }, PLAY_AFTER);
-      }
-      if (!live) watched = -1;
-      var due = live && playAt >= 0 && performance.now() >= playAt - 20;
       scenes.forEach(function (sc, i) {
         vidsOf(sc).forEach(function (v) {
-          if (i === cur && due) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
-          else {
-            if (!v.paused) v.pause();
-            if (mobile && i !== cur && v.currentTime > 0) { try { v.currentTime = 0; } catch (e) {} }
-          }
-          if ((i === cur + 1 || (mobile && i === cur)) && v.preload === 'none') v.preload = 'auto';
+          if (i === cur && showOn && !document.hidden) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+          else if (!v.paused) v.pause();
+          if (i === cur + 1 && v.preload === 'none') v.preload = 'auto';
         });
       });
     };
