@@ -456,8 +456,8 @@
    * place, not pushed), both backdrops drift 15% against the motion, and
    * the name rises letter by letter out of its mask (fx-split's manual
    * mode, telaventis-fx.js §1). Scroll only ever TRIGGERS a change — the
-   * wipe runs on its own clock — and changes are one scene at a time with
-   * a cooldown, so a fast flick plays every scene instead of skipping any.
+   * wipe runs on its own clock — and one gesture plays one scene, never
+   * two (the hold, below).
    * Hidden scenes are `inert`: nothing in them can be focused or read. */
   var show = document.querySelector('[data-showcase]');
   if (show && !reduce && 'animate' in Element.prototype) {
@@ -466,15 +466,14 @@
     var sticky = show.querySelector('.showcase__sticky');
     var railItems = Array.prototype.slice.call(show.querySelectorAll('.showcase__rail li'));
     var N = scenes.length;
-    var cur = -1, lastStep = 0, WIPE = 1150, EASE = 'cubic-bezier(.65,0,.35,1)';
+    var cur = -1, WIPE = 1150, EASE = 'cubic-bezier(.65,0,.35,1)';
     show.style.setProperty('--scenes', N);
     show.setAttribute('data-showcase-live', '');
     scenes.forEach(function (sc) { sc.setAttribute('inert', ''); });
 
     var nameOf = function (sc) { return sc.querySelector('.scene__name'); };
     /* phones only (the showcase's phone layout, telaventis.css, on a touch
-       screen): the 3s wait below and the one-swipe-one-scene scroll further
-       down. Desktop keeps its behaviour untouched. */
+       screen): the 3s wait below. On desktop the recordings start at once. */
     var mobile = !!(window.matchMedia && window.matchMedia('(max-width: 999px) and (hover: none) and (pointer: coarse)').matches);
     /* each scene's screens are recordings of the live site. On phones they
        start only once the visitor has stayed on a project for PLAY_AFTER
@@ -554,88 +553,90 @@
       }
     };
 
-    var pick = function () {
-      var r = track.getBoundingClientRect();
-      var vh = window.innerHeight || 800;
-      var scrollable = Math.max(1, track.offsetHeight - vh);
-      var p = Math.max(0, Math.min(0.9999, -r.top / scrollable));
-      return Math.min(N - 1, Math.floor(p * N));
-    };
-    var scTick = 0;
-    var step = function () {
-      scTick = 0;
-      var want = pick();
-      var now = performance.now();
-      if (cur < 0) { go(want, 1, true); lastStep = now; return; }
-      if (want === cur) return;
-      if (now - lastStep < WIPE + 60) { scTick = requestAnimationFrame(step); return; }
-      lastStep = now;
-      go(cur + (want > cur ? 1 : -1), want > cur ? 1 : -1, false);
-      if (pick() !== cur) scTick = requestAnimationFrame(step);
-    };
-    /* phones: one swipe, one scene. With a finger, a flick carries on
-       by itself (momentum) over two or three screens, so the desktop rule
-       above — a threshold every screen, changes queued one after another —
-       played scenes the visitor had not asked for, often after the finger
-       had lifted, and a strong flick left the section before they had
-       played. Here, as for the Moka door (telaventis-fx.js §3d, "no
+    /* one gesture, one scene. A wheel, a trackpad or a finger all carry on
+       by themselves (momentum / inertia) over two or three screens, so a
+       plain threshold every screen played scenes the visitor had not asked
+       for — "a scroll a bit long and it goes down two projects" — often
+       after the gesture had ended, and a strong one left the section before
+       they had played. Here, as for the Moka door (telaventis-fx.js §3d, "no
        speedrun"): each scene has a resting point in the middle of its own
-       stretch of scroll (the track is taller on phones, telaventis.css:
-       SEG_SVH per scene), half a stretch either way from the next one — one
-       deliberate swipe, never a light touch. Crossing into another scene's
-       stretch plays exactly one hand-over, brings the scroll back to that
-       scene's resting point and holds it (the fling is dropped) until the
-       wipe has finished; the section arriving on screen does the same, on
-       its first or last scene, so a fling from above or below lands on it
-       instead of flying through. Never during a jump through an in-page
-       link; the hold always ends on its own timer. */
-    var follow = step;
-    if (mobile) {
-      var HOLD_ARRIVE = 500;
-      var root = document.documentElement;
-      var heldY = null, heldTimer = 0, inside = false, jumpUntil = 0;
-      var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); };
-      var hold = function (y, ms) {
-        heldY = Math.round(y);
-        window.scrollTo({ top: heldY, behavior: 'instant' });
-        root.classList.add('sc-held');
-        clearTimeout(heldTimer);
-        heldTimer = setTimeout(release, ms);
-      };
-      window.addEventListener('touchmove', function (e) { if (heldY !== null && e.cancelable) e.preventDefault(); }, { passive: false });
-      document.addEventListener('click', function (e) {
-        var a = e.target.closest && e.target.closest('a[href*="#"]');
-        if (a && a.pathname === location.pathname && a.hash) jumpUntil = performance.now() + 2500;
-      });
-      window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
-      document.addEventListener('visibilitychange', function () { if (document.hidden) release(); });
-      follow = function () {
-        scTick = 0;
-        if (heldY !== null) {
-          if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
-          return;
-        }
-        var r = track.getBoundingClientRect();
-        var seg = Math.max(1, track.offsetHeight - (window.innerHeight || 800)) / N;
-        var t = -r.top, top = window.scrollY + r.top;
-        var rest = function (k) { return top + (k + 0.5) * seg; };
-        /* outside the pinned stretch: the scene seen on the way in is the
-           first one from above, the last one from below */
-        if (t < 0 || t > seg * N) {
-          inside = false;
-          var edge = t < 0 ? 0 : N - 1;
-          if (cur !== edge) go(edge, 1, true);
-          return;
-        }
-        var want = Math.min(N - 1, Math.floor(t / seg));
-        if (cur < 0 || performance.now() < jumpUntil) { inside = true; if (want !== cur) go(want, 1, true); return; }
-        if (!inside) { inside = true; hold(rest(cur), HOLD_ARRIVE); return; }
-        if (want === cur) return;
-        var d = want > cur ? 1 : -1;
-        go(cur + d, d, false);
-        hold(rest(cur), WIPE);
-      };
-    }
+       stretch of scroll (telaventis.css: SEG per scene), half a stretch
+       either way from the next one — a deliberate gesture, never a nudge.
+       Crossing into another scene's stretch plays exactly one hand-over,
+       brings the scroll back to that scene's resting point and holds it
+       until the wipe has finished AND the gesture has stopped (no wheel or
+       touch for QUIET ms — the tail of a trackpad's inertia is still the
+       same gesture, not a new one); the section arriving on screen does the
+       same on its first or last scene, so a scroll from above or below
+       lands on it instead of flying through. Never during a jump (an
+       in-page link, Home/End); the hold always ends by HOLD_MAX. */
+    var HOLD_ARRIVE = 500, QUIET = 180, HOLD_MAX = 3000;
+    var root = document.documentElement;
+    var scTick = 0, heldY = null, heldUntil = 0, heldSince = 0, heldTimer = 0, lastInput = 0, inside = false, jumpUntil = 0;
+    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); };
+    /* released once the wipe is done and the gesture has been quiet for
+       QUIET ms, re-checked until then */
+    var tryRelease = function () {
+      var now = performance.now();
+      if (heldY === null) return;
+      if (now - heldSince >= HOLD_MAX || (now >= heldUntil && now - lastInput >= QUIET)) { release(); return; }
+      heldTimer = setTimeout(tryRelease, Math.max(40, Math.max(heldUntil, lastInput + QUIET) - now));
+    };
+    var hold = function (y, ms) {
+      heldY = Math.round(y);
+      heldSince = performance.now();
+      heldUntil = heldSince + ms;
+      window.scrollTo({ top: heldY, behavior: 'instant' });
+      root.classList.add('sc-held');
+      clearTimeout(heldTimer);
+      heldTimer = setTimeout(tryRelease, ms);
+    };
+    var gesture = function (e) {
+      lastInput = performance.now();
+      if (heldY !== null && e.cancelable) e.preventDefault();
+    };
+    window.addEventListener('wheel', gesture, { passive: false });
+    window.addEventListener('touchmove', gesture, { passive: false });
+    var SCROLL_KEYS = { ' ': 1, Spacebar: 1, PageDown: 1, PageUp: 1, ArrowDown: 1, ArrowUp: 1 };
+    window.addEventListener('keydown', function (e) {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      if (e.key === 'Home' || e.key === 'End') { jumpUntil = performance.now() + 2500; release(); return; }
+      if (SCROLL_KEYS[e.key]) { lastInput = performance.now(); if (heldY !== null) e.preventDefault(); }
+    });
+    /* a jump through an in-page link passes through the section on its
+       way: it is travel, not reading, so the hold stays off for the trip */
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="#"]');
+      if (a && a.pathname === location.pathname && a.hash) jumpUntil = performance.now() + 2500;
+    });
+    window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) release(); });
+    var follow = function () {
+      scTick = 0;
+      if (heldY !== null) {
+        if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
+        return;
+      }
+      var r = track.getBoundingClientRect();
+      var seg = Math.max(1, track.offsetHeight - (window.innerHeight || 800)) / N;
+      var t = -r.top, top = window.scrollY + r.top;
+      var rest = function (k) { return top + (k + 0.5) * seg; };
+      /* outside the pinned stretch: the scene seen on the way in is the
+         first one from above, the last one from below */
+      if (t < 0 || t > seg * N) {
+        inside = false;
+        var edge = t < 0 ? 0 : N - 1;
+        if (cur !== edge) go(edge, 1, true);
+        return;
+      }
+      var want = Math.min(N - 1, Math.floor(t / seg));
+      if (cur < 0 || performance.now() < jumpUntil) { inside = true; if (want !== cur) go(want, 1, true); return; }
+      if (!inside) { inside = true; hold(rest(cur), HOLD_ARRIVE); return; }
+      if (want === cur) return;
+      var d = want > cur ? 1 : -1;
+      go(cur + d, d, false);
+      hold(rest(cur), WIPE);
+    };
     window.addEventListener('scroll', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
     window.addEventListener('resize', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
     follow();

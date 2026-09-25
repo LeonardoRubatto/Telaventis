@@ -135,9 +135,9 @@ la Search Console permet de demander une nouvelle exploration.
 survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre) ·
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
-« Continuous Sections » ; **sur téléphone seulement** : un swipe = une scène,
-l'élan du doigt est retenu pendant le passage, et les vidéos ne démarrent
-qu'après 3 s sur un projet) · 7 page Travaux (vidéos en vue, index qui suit) ·
+« Continuous Sections » ; un geste — molette, pavé tactile, swipe, touche —
+= une scène : l'élan est retenu pendant le passage ; **sur téléphone
+seulement**, les vidéos ne démarrent qu'après 3 s sur un projet) · 7 page Travaux (vidéos en vue, index qui suit) ·
 4 formulaire de contact.
 
 `assets/telaventis-fx.js` — 1 titres révélés lettre par lettre · 2 vagues des
@@ -152,8 +152,8 @@ interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 signal » (les photos pixelisées que la caméra traverse).
 
 Les hauteurs de défilement des sections épinglées sont en CSS
-(`.era__track`, `.moka-story__track`, `.showcase__track` — 140svh par scène
-sur téléphone) et doivent rester
+(`.era__track`, `.moka-story__track`, `.showcase__track` — 110svh par scène,
+140svh sur téléphone) et doivent rester
 cohérentes avec les constantes du JS qui les commentent (ex. `TAIL_VH`).
 
 Chaque effet respecte la même règle : sans JavaScript, avec « réduire les
