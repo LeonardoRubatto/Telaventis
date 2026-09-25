@@ -136,8 +136,8 @@ survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
 « Continuous Sections » ; un geste — molette, pavé tactile, swipe, touche —
-= une scène : l'élan est retenu pendant le passage ; **sur téléphone
-seulement**, les vidéos ne démarrent qu'après 3 s sur un projet) · 7 page Travaux (vidéos en vue, index qui suit) ·
+= une scène : l'élan est retenu pendant le passage) · 7 page Travaux
+(vidéos en vue, index qui suit) ·
 4 formulaire de contact.
 
 `assets/telaventis-fx.js` — 1 titres révélés lettre par lettre · 2 vagues des
