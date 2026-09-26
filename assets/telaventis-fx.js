@@ -1504,37 +1504,65 @@
           try { url = new URL('aurelia/aurelia.js', SELF_SRC).href; }
           catch (e) { gpuLoading = false; return; }
 
-          var container = doc.createElement('div');
-          container.className = 'era__aurora era__aurora--gpu';
-          era.querySelector('.era__sticky').insertBefore(container, era.querySelector('.era__stage'));
-
-          /* Console only — never a visible element on the page. A visitor
-             has nothing to gain from a status badge; whoever is diagnosing
-             this has devtools open already, which is what console.error
-             below is actually for. */
-          import(/* @vite-ignore */ url).then(function (mod) {
-            return mod.createAurelia(container);
-          }).then(function (inst) {
-            if (!inst) {
-              console.error('[aurelia] createAurelia(container) returned null — module loaded but init declined (no WebGPU backend, or app.init() failed inside it). Falling back to the 2D canvas.');
-              container.remove();
+          /* navigator.gpu existing is not the same as a working WebGPU
+             backend behind it — the comment above already excludes mobile
+             for exactly this gap. It reaches just as often on desktop (a
+             Linux box with no GPU passthrough, a locked-down or virtualised
+             browser, WebGPU disabled by policy…), and without this check
+             the only place that finds out is INSIDE createAurelia() — after
+             aurelia.js has downloaded and its physics bake (a real "tens of
+             thousands of springs" mesh build, done in JS before any GPU
+             call) has already run to completion, several seconds of the
+             main thread blocked for a jellyfish that was never going to
+             mount. requestAdapter() alone answers the same question near-
+             instantly, so a missing backend is now found out before any of
+             that cost is paid, not after. */
+          if (!navigator.gpu.requestAdapter) return;   /* same non-transient case as above */
+          navigator.gpu.requestAdapter().then(function (adapter) {
+            if (!adapter) {
+              /* not transient like a fetch error below — asking again on
+                 the next frame this is called from would just get the same
+                 answer, so gpuLoading is left true: one try, then settled,
+                 same as createAurelia() itself resolving null below. */
+              console.info('[aurelia] no WebGPU adapter available — 2D fallback stays active.');
               return;
             }
-            gpu = inst;
-            console.info('[aurelia] live: WebGPU jellyfish mounted from ' + url);
-            /* the 2D canvas is not removed, only covered — if the WebGPU
-               one ever throws mid-flight, dispose() below falls straight
-               back to a fully intact fallback with nothing to rebuild */
-            auroraCanvas.style.opacity = '0';
-            camGoal = GPU_SCENES[Math.max(0, target) % GPU_SCENES.length];
-            cam = null;   /* the spring (below) starts from rest at this vantage */
-          }).catch(function (err) {
-            /* console.error, not .warn — a fetch 404, a syntax error in the
-               built module, a thrown exception inside init: whatever it is,
-               it belongs in the same place every other bug on this page
-               would show up, unmissably, not filed away as a warning */
-            console.error('[aurelia] failed to load ' + url + ' — 2D fallback stays active. Cause:', err);
-            container.remove();
+
+            var container = doc.createElement('div');
+            container.className = 'era__aurora era__aurora--gpu';
+            era.querySelector('.era__sticky').insertBefore(container, era.querySelector('.era__stage'));
+
+            /* Console only — never a visible element on the page. A visitor
+               has nothing to gain from a status badge; whoever is diagnosing
+               this has devtools open already, which is what console.error
+               below is actually for. */
+            import(/* @vite-ignore */ url).then(function (mod) {
+              return mod.createAurelia(container);
+            }).then(function (inst) {
+              if (!inst) {
+                console.error('[aurelia] createAurelia(container) returned null — module loaded but init declined (app.init() failed inside it, despite an adapter). Falling back to the 2D canvas.');
+                container.remove();
+                return;
+              }
+              gpu = inst;
+              console.info('[aurelia] live: WebGPU jellyfish mounted from ' + url);
+              /* the 2D canvas is not removed, only covered — if the WebGPU
+                 one ever throws mid-flight, dispose() below falls straight
+                 back to a fully intact fallback with nothing to rebuild */
+              auroraCanvas.style.opacity = '0';
+              camGoal = GPU_SCENES[Math.max(0, target) % GPU_SCENES.length];
+              cam = null;   /* the spring (below) starts from rest at this vantage */
+            }).catch(function (err) {
+              /* console.error, not .warn — a fetch 404, a syntax error in the
+                 built module, a thrown exception inside init: whatever it is,
+                 it belongs in the same place every other bug on this page
+                 would show up, unmissably, not filed away as a warning */
+              console.error('[aurelia] failed to load ' + url + ' — 2D fallback stays active. Cause:', err);
+              container.remove();
+              gpuLoading = false;
+            });
+          }, function (err) {
+            console.info('[aurelia] requestAdapter() rejected — 2D fallback stays active.', err);
             gpuLoading = false;
           });
         };
@@ -1741,9 +1769,34 @@
          as always; it just now needs to happen far less often, since most
          of what used to force a rebuild (needing a "different view") is
          handled by moving the window instead. */
+      /* Warm-start, run in slices instead of one synchronous burst: 80
+         iterations of moveSea() over 1700 particles × 7 eddies measured at
+         500ms+ of unbroken main-thread work on ordinary hardware — run
+         inline, that single task blocked the thread for the length of a
+         page load, which on a real phone (slower CPU than this) is long
+         enough to freeze whatever else is trying to render at the same
+         moment, the cross-document view-transition's own sweep included
+         (a clip-path animation needs the main thread free to advance a
+         frame; blocked, it just holds its last frame — the "flash" that
+         was reported). Each slice spends WARM_BUDGET_MS of wall-clock
+         time (not a fixed count), so it adapts to the device instead of
+         assuming this machine's speed: a fast one finishes in a couple of
+         frames, a slow one takes more frames of the same short bite, but
+         neither ever blocks longer than that bite. A rebuild (resize)
+         cancels whatever slice was still pending, so it never keeps
+         warming a canvas that no longer exists at those dimensions. */
+      var WARM_BUDGET_MS = 4, warmRaf = 0;
+      var stopWarm = function () { if (warmRaf) { cancelAnimationFrame(warmRaf); warmRaf = 0; } };
+      var warmSlice = function (remaining) {
+        warmRaf = 0;
+        var t0 = performance.now();
+        while (remaining > 0 && performance.now() - t0 < WARM_BUDGET_MS) { moveSea(); remaining--; }
+        if (remaining > 0) warmRaf = requestAnimationFrame(function () { warmSlice(remaining); });
+      };
       var buildSea = function (keepField) {
         var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
         if (!w || !h) return false;
+        stopWarm();
         var worldW = Math.round(w * (1 + PAN_MARGIN_X));
         var worldH = Math.round(Math.max(h * SEA_HEADROOM * (1 + PAN_MARGIN_Y), seaCanvasH));
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -1759,20 +1812,24 @@
         seaCtx.fillRect(0, 0, worldW, worldH);
         if (!keepField) reseed();
         /* Warm-start: run a burst of simulation frames right now, before
-           this canvas is ever shown. Reassigning .width/.height just above
-           always wipes the pixel buffer back to the flat fill colour —
-           unavoidable, canvases don't support resizing without it — so
-           without this, only the patch of world the visitor happens to be
-           looking at ever accumulates trails; panSea can then swipe the
-           camera onto a part of the world that hasn't been painted over
-           yet, showing a flat, untextured patch of the raw fill colour
-           instead of the field. Particles already spawn across the WHOLE
-           world (see createParticle), not just the visible patch, so
-           running moveSea() ahead of the first real frame textures all of
-           it at once — panning anywhere afterwards lands on a part of the
-           world that already has a field, not a blank corner still
-           waiting its turn. */
-        for (var warm = 0; warm < 80; warm++) moveSea();
+           this canvas is ever shown (sliced, see above). Reassigning
+           .width/.height just above always wipes the pixel buffer back to
+           the flat fill colour — unavoidable, canvases don't support
+           resizing without it — so without this, only the patch of world
+           the visitor happens to be looking at ever accumulates trails;
+           panSea can then swipe the camera onto a part of the world that
+           hasn't been painted over yet, showing a flat, untextured patch
+           of the raw fill colour instead of the field. Particles already
+           spawn across the WHOLE world (see createParticle), not just the
+           visible patch, so running moveSea() ahead of the first real
+           frame textures all of it at once — panning anywhere afterwards
+           lands on a part of the world that already has a field, not a
+           blank corner still waiting its turn. Sliced across frames, a
+           scroll that reaches this section before the warm-up has finished
+           simply finds a field that is still filling in — every real
+           frame calls moveSea() too (renderSea, below), so it keeps
+           catching up on its own regardless. */
+        warmSlice(80);
         viewW = w; viewH = h; seaCanvasW = worldW; seaCanvasH = worldH;
         var cx = camX < 0 ? (worldW - w) / 2 : clamp(camX, 0, worldW - w);
         var cy = camY < 0 ? (worldH - h) / 2 : clamp(camY, 0, worldH - h);
