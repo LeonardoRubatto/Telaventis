@@ -775,21 +775,6 @@
         var cs = getComputedStyle(el);
         var fs = parseFloat(cs.fontSize) || 32;
 
-        var off = doc.createElement('canvas');
-        off.width = Math.round(cssW * dpr);
-        off.height = Math.round(cssH * dpr);
-        var octx = off.getContext('2d');
-        octx.scale(dpr, dpr);
-        octx.font = cs.fontWeight + ' ' + fs + 'px ' + cs.fontFamily;
-        octx.textAlign = 'center';
-        octx.textBaseline = 'middle';
-        octx.fillStyle = '#fff';
-        octx.fillText(text, cssW / 2, cssH / 2 + fs * 0.03);
-
-        var data;
-        try { data = octx.getImageData(0, 0, off.width, off.height).data; }
-        catch (err) { return false; }
-
         /* tighter still — a denser field of smaller bubbles reads as compact
            texture instead of a scatter of individually obvious circles.
            buildParticles sizes each bubble as a fixed fraction of this same
@@ -799,6 +784,37 @@
            field — a finer grid there dissolves into noise, so the grid (and
            with it every bubble, sized off this step) is coarser */
         var stepPx = mobileGlyphs ? Math.max(2.6, fs * 0.05) : Math.max(1.8, fs * 0.032);
+
+        var off = doc.createElement('canvas');
+        off.width = Math.round(cssW * dpr);
+        off.height = Math.round(cssH * dpr);
+        var octx = off.getContext('2d');
+        octx.scale(dpr, dpr);
+        octx.font = cs.fontWeight + ' ' + fs + 'px ' + cs.fontFamily;
+        /* the word's own letter-spacing (tight, negative): without it the
+           canvas drew the word wider than the box it stands for, and the
+           bubbles spilled onto the neighbouring words */
+        if ('letterSpacing' in octx) octx.letterSpacing = cs.letterSpacing;
+        octx.textAlign = 'center';
+        octx.textBaseline = 'middle';
+        octx.fillStyle = '#fff';
+        /* never wider than the box, whatever the browser does with the
+           font: the ink is measured and, if it would reach closer than a
+           bubble's width to either edge, the word is scaled down to fit
+           (evenly, so the letters keep their shape) and centred on its ink */
+        var mt = octx.measureText(text);
+        var inkL = mt.actualBoundingBoxLeft, inkR = mt.actualBoundingBoxRight;
+        if (!(inkL >= 0 || inkR >= 0) || isNaN(inkL + inkR)) { inkL = mt.width / 2; inkR = mt.width / 2; }
+        var pad = stepPx * 1.2;
+        var fit = Math.min(1, Math.max(1, cssW - 2 * pad) / Math.max(1, inkL + inkR));
+        octx.translate(cssW / 2 - (inkR - inkL) / 2 * fit, cssH / 2 + fs * 0.03);
+        octx.scale(fit, fit);
+        octx.fillText(text, 0, 0);
+
+        var data;
+        try { data = octx.getImageData(0, 0, off.width, off.height).data; }
+        catch (err) { return false; }
+
         var st = Math.max(1, Math.round(stepPx * dpr));
         var pts = [];
         for (var y = 0; y < off.height; y += st) {
@@ -849,9 +865,12 @@
         return true;
       };
 
-      inst.remeasure = function () {
+      /* force: redraw even at the same width — the webfont arriving can
+         leave the box's width unchanged while the canvas had drawn the
+         fallback letters */
+      inst.remeasure = function (force) {
         if (!inst.built) return;
-        if (Math.abs(el.offsetWidth - inst.w) < 4) return;
+        if (!force && Math.abs(el.offsetWidth - inst.w) < 4) return;
         inst.built = false;
         build();
       };
@@ -2424,7 +2443,12 @@
          the pinned one — a throw anywhere above leaves the section readable. */
       era.setAttribute('data-era-live', '');
       prebuild();
-      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { prebuild(); kick(); });
+      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () {
+        words.forEach(function (list) { list.forEach(function (w) { if (w.key) w.glyph.remeasure(true); }); });
+        prebuild();
+        if (!morph && liveOf >= 0) restAt(cloudOf(liveOf), liveOf);
+        kick();
+      });
 
       /* Seed the mobile field NOW, while the visitor is still up on the
          hero, rather than lazily on the first frame the section is actually
