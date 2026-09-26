@@ -391,10 +391,15 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 .era__w--key{
   font-family:var(--sans);font-weight:800;letter-spacing:-.025em;
   font-size:2.6em;line-height:1;color:var(--cream);
+  /* …but never wider than the sentence's own column: the longest key word
+     ("rencontrer", "incontrarti") is ~5.1em of ink + .24em of margin, so
+     18% of the column per em always fits it. The column is the screen less
+     the section's side padding (~60px on a phone); this binds only on
+     narrow screens. Not container units: .era__mix is sized to its content
+     while live, and inline-size containment would collapse it to nothing */
+  font-size:min(2.6em,calc((100vw - 60px) * .18));
   vertical-align:-.14em;margin:0 .12em;
-  /* longest key word in any language ("rencontrer") at 2.6em was measured
-     wider than a narrow phone's own text column — this is the fallback
-     for it, not the fix; the real fix is the smaller mobile ratio below */
+  /* last resort only, should the cap above ever fall short */
   overflow-wrap:break-word;word-break:break-word;
 }
 
@@ -454,7 +459,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      closer to the desktop treatment and reads as more deliberate. */
   .era__w--key{
     font-family:var(--sans);font-weight:800;letter-spacing:-.02em;
-    font-size:1.72em;line-height:1;
+    font-size:1.72em;font-size:min(1.72em,calc((100vw - 60px) * .18));line-height:1;
     color:var(--panel-fg,var(--cream));
     text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 14px rgba(var(--panel-shadow-rgb,10,16,22),.6);
     display:inline-block;
