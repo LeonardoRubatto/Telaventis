@@ -472,6 +472,23 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
   /* bubbles on the flow field: a soft dark halo keeps the word legible
      over the brightest streaks */
   .era__w canvas{filter:drop-shadow(0 0 5px rgba(10,16,22,.85))}
+  /* …not enough on its own where the field's brightest streaks run right
+     through the word rather than around it (reported: "cherche" and
+     "rencontrer" all but disappearing into the current under them) — a
+     second, blurred dark pool sized to the word's OWN box sits behind it,
+     on top of the stage-wide pool above. Fixed to the word rather than a
+     spot on the stage, it finds whichever key word lands there, at
+     whatever size, instead of assuming the phrase always falls in the
+     same place. Gated to the live section, same as the stage-wide pool:
+     at rest (reduced motion, no JS, print) the word is just plain,
+     legible, coloured type on a plain background — nothing there for a
+     dark pool to solve, and no canvas for it to sit behind either. */
+  .era__w--key{position:relative}
+  .era[data-era-live] .era__w--key::before{
+    content:"";position:absolute;inset:-22% -8%;
+    background:radial-gradient(closest-side,rgba(8,11,16,.68) 42%,rgba(8,11,16,.34) 70%,transparent 92%);
+    filter:blur(4px);
+  }
   .era__note{
     font-size:15.5px;
     color:rgba(var(--panel-fg-rgb,237,233,226),.76);
