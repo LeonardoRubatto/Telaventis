@@ -136,8 +136,20 @@ survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
 « Continuous Sections » ; un geste — molette, pavé tactile, swipe, touche —
-= une scène : l'élan est retenu pendant le passage) · 7 page Travaux
-(vidéos en vue, index qui suit) ·
+= une scène : l'élan est retenu pendant le passage ; la première touche/clic
+n'importe où sur la page essaie de lire puis met en pause la vidéo de la
+première scène, pour que Safari iOS autorise ensuite les lectures
+automatiques qu'un geste ne déclenche pas directement — Mode Faible
+consommation ou réglage Auto-Play strict, sinon la vidéo reste bloquée sur
+sa première image sans que rien ne le dise ; la retenue elle-même — le
+passage de `.showcase__sticky` en `position:fixed` le temps du geste,
+nécessaire pour que la scène reste à l'écran pendant que `overflow:hidden`
+casse son `position:sticky` — a déjà coupé une vidéo en cours sur Safari
+iOS (repéré : la vidéo jouait au premier passage, plus après être
+remontée puis redescendue sur la même scène, exactement le chemin qui
+redéclenche une retenue) ; `release()` relance donc `syncVideos()` à
+chaque fin de retenue, que celle-ci ait coupé quelque chose ou non) ·
+7 page Travaux (vidéos en vue, index qui suit) ·
 4 formulaire de contact.
 
 `assets/telaventis-fx.js` — 1 titres révélés lettre par lettre · 2 vagues des
@@ -151,15 +163,22 @@ interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 Trois points de vigilance sur la section 3b (méduses/champ de bulles) :
 - **Lisibilité des mots en bulles sur téléphone** : le halo par bulle (le
   `drop-shadow` sur `.era__w canvas`) ne suffit pas là où le champ de
-  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé :
-  « cherche » et « rencontrer » qui se fondaient dans le courant). Chaque
-  mot-clé a maintenant, en plus de la mare sombre pleine largeur, sa
-  propre mare floutée dimensionnée sur sa propre boîte
-  (`.era__w--key::before`, gatée `[data-era-live]` comme le reste — au
-  repos le mot est déjà lisible tel quel, rien à corriger). Si une future
-  phrase reste illisible malgré ça, monter l'opacité ou le flou de ce
-  `::before` plutôt que celui de la mare pleine largeur, qui ne suit pas
-  la position réelle du mot.
+  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé
+  deux fois : « cherche » et « rencontrer » qui se fondaient dans le
+  courant — encore vrai après une première mare, trop douce, qui
+  retombait à rien bien avant le bord du mot). Chaque mot-clé a
+  maintenant, en plus de la mare sombre pleine largeur, sa propre mare
+  dimensionnée sur sa propre boîte (`.era__w--key::before`, gatée
+  `[data-era-live]` comme le reste — au repos le mot est déjà lisible tel
+  quel, rien à corriger) — et cette fois **quasi opaque** sur l'essentiel
+  de la boîte (dégradé radial, .94 → .8 → transparent seulement dans les
+  15 derniers %), pas un simple assombrissement : un mot en bulles est
+  une texture éparse, pas un aplat, donc il perd contre un fond qui fait
+  le même genre de traits (les courants du champ) tant que ce fond garde
+  un peu de motif visible en dessous — seul le retirer marche. Si une
+  future phrase reste illisible malgré ça, monter encore l'opacité ou
+  agrandir ce `::before` plutôt que celui de la mare pleine largeur, qui
+  ne suit pas la position réelle du mot.
 
 Deux points de vigilance mesurés au profileur puis corrigés :
 - **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tournait 80

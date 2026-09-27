@@ -473,21 +473,26 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      over the brightest streaks */
   .era__w canvas{filter:drop-shadow(0 0 5px rgba(10,16,22,.85))}
   /* …not enough on its own where the field's brightest streaks run right
-     through the word rather than around it (reported: "cherche" and
-     "rencontrer" all but disappearing into the current under them) — a
-     second, blurred dark pool sized to the word's OWN box sits behind it,
-     on top of the stage-wide pool above. Fixed to the word rather than a
-     spot on the stage, it finds whichever key word lands there, at
-     whatever size, instead of assuming the phrase always falls in the
-     same place. Gated to the live section, same as the stage-wide pool:
-     at rest (reduced motion, no JS, print) the word is just plain,
-     legible, coloured type on a plain background — nothing there for a
-     dark pool to solve, and no canvas for it to sit behind either. */
+     through the word rather than around it (reported twice over: "cherche"
+     and "rencontrer" all but disappearing into the current under them,
+     still true after the first, gentler pool below — measured: its centre
+     only ever reached .68 opacity and fell off to nothing well before the
+     word's own edges, so most of a word this wide sat under a pool at .34
+     or less, barely dimmed at all). A bubble word is already at a
+     disadvantage a solid glyph never had: it's a sparse scatter of small
+     dots, not a filled shape, so the eye has far less of the letter itself
+     to lock onto against a background making the exact same kind of marks
+     (the field's own curved streaks) at a similar scale — dimming alone
+     doesn't fix a pattern competing with another pattern, only removing
+     the competing pattern does. So this is no longer a soft gradient fading
+     out near the middle: solid-dark through 65% of the word's own box,
+     still near-solid to 85%, only actually fading in the last 15% — a
+     dark plate the word sits on, not a glow behind it. */
   .era__w--key{position:relative}
   .era[data-era-live] .era__w--key::before{
-    content:"";position:absolute;inset:-22% -8%;
-    background:radial-gradient(closest-side,rgba(8,11,16,.68) 42%,rgba(8,11,16,.34) 70%,transparent 92%);
-    filter:blur(4px);
+    content:"";position:absolute;inset:-20% -8%;
+    background:radial-gradient(closest-side,rgba(6,9,13,.94) 65%,rgba(6,9,13,.8) 85%,transparent 100%);
+    filter:blur(3px);
   }
   .era__note{
     font-size:15.5px;

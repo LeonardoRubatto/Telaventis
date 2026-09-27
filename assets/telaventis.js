@@ -497,6 +497,30 @@
        scene's play, only while the showcase is on screen and the tab is
        visible, and the next scene's are asked to buffer ahead of time */
     var vidsOf = function (sc) { return sc ? Array.prototype.slice.call(sc.querySelectorAll('video')) : []; };
+    /* iOS Safari (and any browser under a strict autoplay policy — Low
+       Power Mode, or Settings > Safari > Auto-Play set to "Never Auto-
+       Play") can flatly refuse a play() that isn't tied to a genuine user
+       gesture: the promise just rejects, syncVideos()'s own catch already
+       swallows that silently, and the scene is left sitting on its
+       poster with nothing to say why. Once a video HAS played inside a
+       real gesture, WebKit's own "media needs a user action" gate opens
+       for the rest of the document — not just that one element — so this
+       primes it with exactly one: the very first touchstart / pointerdown
+       / keydown anywhere on the page tries play() on the first scene's
+       own video, then pauses it straight back before a frame could be
+       seen moving. One-shot, and it never runs at all once one of these
+       has already fired. Doesn't touch scenes never scrolled to, so nothing
+       here forces a video open that autoplay would already have covered. */
+    var unlockVideos = function () {
+      var v = vidsOf(scenes[0])[0];
+      if (!v) return;
+      var pr = v.play();
+      if (pr && pr.then) pr.then(function () { v.pause(); }).catch(function () {});
+      else if (!v.paused) v.pause();
+    };
+    ['touchstart', 'pointerdown', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, unlockVideos, { capture: true, passive: true, once: true });
+    });
     var showOn = false;
     var syncVideos = function () {
       scenes.forEach(function (sc, i) {
@@ -571,7 +595,20 @@
     var HOLD_ARRIVE = 500, QUIET = 180, HOLD_MAX = 3000;
     var root = document.documentElement;
     var scTick = 0, heldY = null, heldUntil = 0, heldSince = 0, heldTimer = 0, lastInput = 0, inside = false, jumpUntil = 0;
-    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); };
+    /* Releasing flips .showcase__sticky back from position:fixed to its
+       normal sticky (sc-held's own CSS) — a real repositioning of the very
+       element the current scene's <video> lives inside, and iOS Safari has
+       been known to pause a video outright across exactly that kind of
+       layout change, not just visually hiccup it (reported: a video that
+       played fine on the FIRST pass through the showcase going silent on a
+       later one — re-entering after having scrolled past once is exactly
+       the path that re-triggers a hold, see the `!inside` branch below,
+       where the very first pass does not). Calling syncVideos() again
+       right as the hold lifts is the cheap, unconditional fix regardless
+       of whether THIS particular hold actually tripped it: play() on a
+       video already playing is a harmless no-op, so this costs nothing on
+       the times nothing needed fixing and quietly resumes the times it did. */
+    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); syncVideos(); };
     /* released once the wipe is done and the gesture has been quiet for
        QUIET ms, re-checked until then */
     var tryRelease = function () {
@@ -609,8 +646,22 @@
     });
     window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
     document.addEventListener('visibilitychange', function () { if (document.hidden) release(); });
+    /* the first scene's video only starts actually fetching once play() is
+       first called on it (preload="none" otherwise) — reported: a beat of
+       "having trouble loading" on arrival, on a slower connection. Giving
+       it a head start: once the track is within 1.5 screens of view, ask
+       it to preload — same margin telaventis-fx.js's loadGpu() uses for
+       the same reason (its own physics bake) — well before `go()` would
+       otherwise be the first thing to ask for it. One-shot, and it costs
+       nothing extra: normal browsing was always going to fetch this video
+       moments later regardless, just not until the section arrived. */
+    var primed0 = false;
     var follow = function () {
       scTick = 0;
+      if (!primed0 && track.getBoundingClientRect().top < (window.innerHeight || 800) * 1.5) {
+        primed0 = true;
+        vidsOf(scenes[0]).forEach(function (v) { if (v.preload === 'none') v.preload = 'auto'; });
+      }
       if (heldY !== null) {
         if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
         return;
