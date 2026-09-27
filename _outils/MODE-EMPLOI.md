@@ -141,8 +141,15 @@ n'importe où sur la page essaie de lire puis met en pause la vidéo de la
 première scène, pour que Safari iOS autorise ensuite les lectures
 automatiques qu'un geste ne déclenche pas directement — Mode Faible
 consommation ou réglage Auto-Play strict, sinon la vidéo reste bloquée sur
-sa première image sans que rien ne le dise) · 7 page Travaux
-(vidéos en vue, index qui suit) ·
+sa première image sans que rien ne le dise ; la retenue elle-même — le
+passage de `.showcase__sticky` en `position:fixed` le temps du geste,
+nécessaire pour que la scène reste à l'écran pendant que `overflow:hidden`
+casse son `position:sticky` — a déjà coupé une vidéo en cours sur Safari
+iOS (repéré : la vidéo jouait au premier passage, plus après être
+remontée puis redescendue sur la même scène, exactement le chemin qui
+redéclenche une retenue) ; `release()` relance donc `syncVideos()` à
+chaque fin de retenue, que celle-ci ait coupé quelque chose ou non) ·
+7 page Travaux (vidéos en vue, index qui suit) ·
 4 formulaire de contact.
 
 `assets/telaventis-fx.js` — 1 titres révélés lettre par lettre · 2 vagues des

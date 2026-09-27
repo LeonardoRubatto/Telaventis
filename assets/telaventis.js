@@ -595,7 +595,20 @@
     var HOLD_ARRIVE = 500, QUIET = 180, HOLD_MAX = 3000;
     var root = document.documentElement;
     var scTick = 0, heldY = null, heldUntil = 0, heldSince = 0, heldTimer = 0, lastInput = 0, inside = false, jumpUntil = 0;
-    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); };
+    /* Releasing flips .showcase__sticky back from position:fixed to its
+       normal sticky (sc-held's own CSS) — a real repositioning of the very
+       element the current scene's <video> lives inside, and iOS Safari has
+       been known to pause a video outright across exactly that kind of
+       layout change, not just visually hiccup it (reported: a video that
+       played fine on the FIRST pass through the showcase going silent on a
+       later one — re-entering after having scrolled past once is exactly
+       the path that re-triggers a hold, see the `!inside` branch below,
+       where the very first pass does not). Calling syncVideos() again
+       right as the hold lifts is the cheap, unconditional fix regardless
+       of whether THIS particular hold actually tripped it: play() on a
+       video already playing is a harmless no-op, so this costs nothing on
+       the times nothing needed fixing and quietly resumes the times it did. */
+    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); syncVideos(); };
     /* released once the wipe is done and the gesture has been quiet for
        QUIET ms, re-checked until then */
     var tryRelease = function () {
