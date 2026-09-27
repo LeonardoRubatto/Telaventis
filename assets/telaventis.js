@@ -336,6 +336,27 @@
     var startArrival = function () {
       if (wtStarted) return;
       wtStarted = true;
+      /* lock the lines NOW, one frame before any letter starts moving —
+         layWords() measures the browser's own wrap at whatever width the
+         letters currently render at, which right up to this point is
+         still --wg/--wd's plain @property default (750/100, the same
+         settled values the animation ends on), so this locks in exactly
+         the final grouping. Skipping this used to leave the words flat
+         (unwrapped) through the whole arrival: wt-arrive's `from` opens
+         each letter to --wd:125 (a quarter wider) before narrowing back
+         to 100, so early in the arrival the same sentence measured wider
+         and wrapped onto more, shorter lines than its resting shape —
+         visibly reflowing, a word or two at a time, as it settled. Locked
+         from the first frame instead, a widening letter can still push
+         its own line a little wide (nowrap lets it overflow rather than
+         wrap), but never moves a word to another line. windTitle stays
+         opacity:0 until the next line adds wt-host, so this reparenting
+         itself is never seen. The later call in settleTitle() re-measures
+         the same, now-real, settled width — ordinarily an unchanged
+         grouping, just re-locked in case a webfont swap or a mid-arrival
+         resize (both currently skipped for layWords by wt-settled's own
+         guard) shifted anything. */
+      layWords();
       windTitle.classList.add('wt-host');
       setTimeout(settleTitle, arrive);
     };
