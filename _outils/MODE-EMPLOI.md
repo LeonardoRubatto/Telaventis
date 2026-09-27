@@ -151,15 +151,22 @@ interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 Trois points de vigilance sur la section 3b (méduses/champ de bulles) :
 - **Lisibilité des mots en bulles sur téléphone** : le halo par bulle (le
   `drop-shadow` sur `.era__w canvas`) ne suffit pas là où le champ de
-  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé :
-  « cherche » et « rencontrer » qui se fondaient dans le courant). Chaque
-  mot-clé a maintenant, en plus de la mare sombre pleine largeur, sa
-  propre mare floutée dimensionnée sur sa propre boîte
-  (`.era__w--key::before`, gatée `[data-era-live]` comme le reste — au
-  repos le mot est déjà lisible tel quel, rien à corriger). Si une future
-  phrase reste illisible malgré ça, monter l'opacité ou le flou de ce
-  `::before` plutôt que celui de la mare pleine largeur, qui ne suit pas
-  la position réelle du mot.
+  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé
+  deux fois : « cherche » et « rencontrer » qui se fondaient dans le
+  courant — encore vrai après une première mare, trop douce, qui
+  retombait à rien bien avant le bord du mot). Chaque mot-clé a
+  maintenant, en plus de la mare sombre pleine largeur, sa propre mare
+  dimensionnée sur sa propre boîte (`.era__w--key::before`, gatée
+  `[data-era-live]` comme le reste — au repos le mot est déjà lisible tel
+  quel, rien à corriger) — et cette fois **quasi opaque** sur l'essentiel
+  de la boîte (dégradé radial, .94 → .8 → transparent seulement dans les
+  15 derniers %), pas un simple assombrissement : un mot en bulles est
+  une texture éparse, pas un aplat, donc il perd contre un fond qui fait
+  le même genre de traits (les courants du champ) tant que ce fond garde
+  un peu de motif visible en dessous — seul le retirer marche. Si une
+  future phrase reste illisible malgré ça, monter encore l'opacité ou
+  agrandir ce `::before` plutôt que celui de la mare pleine largeur, qui
+  ne suit pas la position réelle du mot.
 
 Deux points de vigilance mesurés au profileur puis corrigés :
 - **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tournait 80
