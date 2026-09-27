@@ -646,8 +646,22 @@
     });
     window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
     document.addEventListener('visibilitychange', function () { if (document.hidden) release(); });
+    /* the first scene's video only starts actually fetching once play() is
+       first called on it (preload="none" otherwise) — reported: a beat of
+       "having trouble loading" on arrival, on a slower connection. Giving
+       it a head start: once the track is within 1.5 screens of view, ask
+       it to preload — same margin telaventis-fx.js's loadGpu() uses for
+       the same reason (its own physics bake) — well before `go()` would
+       otherwise be the first thing to ask for it. One-shot, and it costs
+       nothing extra: normal browsing was always going to fetch this video
+       moments later regardless, just not until the section arrived. */
+    var primed0 = false;
     var follow = function () {
       scTick = 0;
+      if (!primed0 && track.getBoundingClientRect().top < (window.innerHeight || 800) * 1.5) {
+        primed0 = true;
+        vidsOf(scenes[0]).forEach(function (v) { if (v.preload === 'none') v.preload = 'auto'; });
+      }
       if (heldY !== null) {
         if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
         return;
