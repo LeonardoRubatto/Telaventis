@@ -148,6 +148,38 @@ l'arrivée du titre Moka ; **pendant ces ~2,5 s le défilement est retenu**
 (« pas de speedrun », demandé par Leonardo) — sauf lors d'un saut par lien
 interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 
+Trois points de vigilance sur la section 3b (méduses/champ de bulles) :
+- **Lisibilité des mots en bulles sur téléphone** : le halo par bulle (le
+  `drop-shadow` sur `.era__w canvas`) ne suffit pas là où le champ de
+  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé :
+  « cherche » et « rencontrer » qui se fondaient dans le courant). Chaque
+  mot-clé a maintenant, en plus de la mare sombre pleine largeur, sa
+  propre mare floutée dimensionnée sur sa propre boîte
+  (`.era__w--key::before`, gatée `[data-era-live]` comme le reste — au
+  repos le mot est déjà lisible tel quel, rien à corriger). Si une future
+  phrase reste illisible malgré ça, monter l'opacité ou le flou de ce
+  `::before` plutôt que celui de la mare pleine largeur, qui ne suit pas
+  la position réelle du mot.
+
+Deux points de vigilance mesurés au profileur puis corrigés :
+- **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tournait 80
+  cycles d'un coup au chargement (~550 ms de fil principal bloqué sur ce
+  test, plus sur un téléphone réel) — assez pour geler une transition CSS en
+  cours (la transition de page entre deux documents, `@view-transition` dans
+  `telaventis.css`) et donner un « flash » figé. Il tourne maintenant par
+  tranches (`warmSlice`, un budget de temps par image plutôt qu'un nombre
+  fixe de cycles), toujours 80 cycles au total, jamais en un seul bloc.
+- **Sur ordinateur**, `navigator.gpu` peut exister sans qu'un vrai
+  périphérique WebGPU réponde derrière (Linux sans GPU, machine virtuelle,
+  WebGPU désactivé…) — un cas déjà exclu du téléphone, mais pas du bureau.
+  Sans vérifier d'abord, le module `assets/aurelia/` était chargé et sa
+  méduse construite en entier (un maillage de ressorts, plusieurs secondes
+  de fil principal bloqué) avant de découvrir qu'il n'y avait rien pour
+  l'afficher, et de revenir au canevas 2D. `loadGpu()` demande maintenant un
+  adaptateur (`requestAdapter()`, quasi instantané) avant de charger le
+  module ; sans adaptateur, le canevas 2D reste actif sans jamais payer ce
+  coût.
+
 `assets/moka-lab.js` — l'histoire Atelier Moka, et à la fin « du bruit au
 signal » (les photos pixelisées que la caméra traverse). L'ouverture de
 l'histoire (photos qui traversent l'écran, fragments rassemblés, navigateur
