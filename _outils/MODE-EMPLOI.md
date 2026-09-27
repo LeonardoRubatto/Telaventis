@@ -136,7 +136,12 @@ survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
 « Continuous Sections » ; un geste — molette, pavé tactile, swipe, touche —
-= une scène : l'élan est retenu pendant le passage) · 7 page Travaux
+= une scène : l'élan est retenu pendant le passage ; la première touche/clic
+n'importe où sur la page essaie de lire puis met en pause la vidéo de la
+première scène, pour que Safari iOS autorise ensuite les lectures
+automatiques qu'un geste ne déclenche pas directement — Mode Faible
+consommation ou réglage Auto-Play strict, sinon la vidéo reste bloquée sur
+sa première image sans que rien ne le dise) · 7 page Travaux
 (vidéos en vue, index qui suit) ·
 4 formulaire de contact.
 

@@ -497,6 +497,30 @@
        scene's play, only while the showcase is on screen and the tab is
        visible, and the next scene's are asked to buffer ahead of time */
     var vidsOf = function (sc) { return sc ? Array.prototype.slice.call(sc.querySelectorAll('video')) : []; };
+    /* iOS Safari (and any browser under a strict autoplay policy — Low
+       Power Mode, or Settings > Safari > Auto-Play set to "Never Auto-
+       Play") can flatly refuse a play() that isn't tied to a genuine user
+       gesture: the promise just rejects, syncVideos()'s own catch already
+       swallows that silently, and the scene is left sitting on its
+       poster with nothing to say why. Once a video HAS played inside a
+       real gesture, WebKit's own "media needs a user action" gate opens
+       for the rest of the document — not just that one element — so this
+       primes it with exactly one: the very first touchstart / pointerdown
+       / keydown anywhere on the page tries play() on the first scene's
+       own video, then pauses it straight back before a frame could be
+       seen moving. One-shot, and it never runs at all once one of these
+       has already fired. Doesn't touch scenes never scrolled to, so nothing
+       here forces a video open that autoplay would already have covered. */
+    var unlockVideos = function () {
+      var v = vidsOf(scenes[0])[0];
+      if (!v) return;
+      var pr = v.play();
+      if (pr && pr.then) pr.then(function () { v.pause(); }).catch(function () {});
+      else if (!v.paused) v.pause();
+    };
+    ['touchstart', 'pointerdown', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, unlockVideos, { capture: true, passive: true, once: true });
+    });
     var showOn = false;
     var syncVideos = function () {
       scenes.forEach(function (sc, i) {
