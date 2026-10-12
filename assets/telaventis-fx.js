@@ -918,6 +918,9 @@
          grid and the shorter track — decorative extras traded for per-frame
          cost on exactly the class of device least able to absorb it. */
       var isMobileEra = compactView;
+      /* The desktop backdrop (the animated gradient) now runs on phones too, by request: the flow field is kept in this file
+         but no longer mounted. Everything else the phone version adapts (track length, glyph sizes) is unchanged. */
+      var useSea = false;
       /* Panel boundaries as fractions of the whole track, not a flat 1/n
          each — mobile only, and only for the 3-panel shape this section
          actually ships (falls back to even thirds otherwise, rather than
@@ -995,7 +998,7 @@
          renderSea; `var` hoists every one of those names to this whole
          callback's scope, so referencing whichever pair did NOT run is simply
          undefined, never a ReferenceError. */
-      if (!isMobileEra) {
+      if (!useSea) {
       /* ---- the animated gradient: the desktop backdrop ---------------------------
          "Animated Gradient" (Harsh Jadhav, Componentry, MIT; design-memory item
          backgrounds/animated-gradient) — its fragment shader, unchanged in the
@@ -2176,7 +2179,7 @@
            new spot in the same world (see panSea above) — not on the very
            first activation, which is the section arriving on screen, not
            a phrase change. */
-        if (isMobileEra && state === 'active') {
+        if (useSea && state === 'active') {
           if (seaHasActivated) panSea();
           seaHasActivated = true;
         }
@@ -2240,7 +2243,7 @@
          this cannot cover: a layout that still measures 0 here (display
          none, a font/layout pass not yet flushed), where seaBuilt stays
          false and the first on-screen frame builds it exactly as before. */
-      if (isMobileEra && typeof buildSea === 'function' && !seaBuilt) {
+      if (useSea && typeof buildSea === 'function' && !seaBuilt) {
         setTimeout(function () {
           if (seaBuilt) return;
           seaBuilt = buildSea(false);
@@ -2433,7 +2436,7 @@
           }
         }
         if (!(cut && cutGoal && cutOpen > 0.6)) {
-          if (isMobileEra) { if (renderSea) renderSea(now); }
+          if (useSea) { if (renderSea) renderSea(now); }
           else { drawGrad(now); renderRipple(now); }
         }
         renderField(now);

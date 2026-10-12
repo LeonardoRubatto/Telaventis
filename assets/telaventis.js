@@ -268,14 +268,15 @@
    * sentence (aria-label); the letters are aria-hidden. */
   var windTitle = document.querySelector('.hero .h-hero');
   if (windTitle && !reduce && window.CSS && CSS.supports('font-variation-settings', '"wght" 700')) {
-    var rawTitle = windTitle.textContent;
+    var rawTitle = Array.prototype.map.call(windTitle.childNodes, function (n) { return n.nodeName === 'BR' ? '\n' : n.textContent; }).join('');   /* a <br> is a hard break, kept as \n */
     windTitle.setAttribute('aria-label', rawTitle.replace(/\s+/g, ' ').trim());
     var wtBox = document.createElement('span');
     wtBox.className = 'wt';
     wtBox.setAttribute('aria-hidden', 'true');
     var wtChars = [], wtWords = [];
-    rawTitle.split(/( +)/).forEach(function (tok) {   /* regular spaces only: a no-break space stays inside its word */
+    rawTitle.split(/( +|\n)/).forEach(function (tok) {   /* regular spaces only: a no-break space stays inside its word */
       if (!tok) return;
+      if (tok === '\n') { var br = document.createElement('br'); br.className = 'wt-br'; wtWords.push(br); return; }   /* hard break; shown only where CSS displays .wt-br */
       if (/^ +$/.test(tok)) { wtWords.push(null); return; }
       var w = document.createElement('span');
       w.className = 'wt-w';
@@ -295,7 +296,7 @@
       wtWords.forEach(function (w) { wtBox.appendChild(w || document.createTextNode(' ')); });
       var lines = [], lastTop = null;
       wtWords.forEach(function (w) {
-        if (!w) return;
+        if (!w || w.nodeName === 'BR') return;
         var t = w.offsetTop;
         if (lastTop === null || Math.abs(t - lastTop) > 4) { lines.push([]); lastTop = t; }
         lines[lines.length - 1].push(w);
