@@ -18,9 +18,6 @@ Objectifs (voir MODE-EMPLOI §7) : à 1,6 Mbit/s sans cache, le premier écran
 complet (titre, mot TELAVENTIS avec son ciel) en moins de 2,5 s, aucun
 décalage de mise en page (CLS < 0,1), moins de 350 Ko transférés avant que
 le premier écran soit complet.
-
-Pour voir l'une ou l'autre version sans attendre que la détection tranche :
-ajouter ?lite=1 (version allégée) ou ?lite=0 (version complète) à l'adresse.
 """
 import gzip, mimetypes, os, sys, threading, time
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler

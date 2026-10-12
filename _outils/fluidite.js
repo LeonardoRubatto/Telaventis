@@ -1,6 +1,6 @@
 // Mesure la fluidité des premières secondes : images perdues, tâches longues, et QUI les cause.
 //
-//   node fluidite.js <url> [--cpu=4] [--mobile] [--lite=0|1] [--secs=6]
+//   node fluidite.js <url> [--cpu=4] [--mobile] [--secs=6]
 //
 // --cpu=4 ralentit le processeur 4 fois (un portable ordinaire, un téléphone moyen) : un défaut
 // de fluidité qui passe inaperçu sur un PC rapide y saute aux yeux.
@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 const url = args.find(a => /^https?:/.test(a));
 const flag = k => { const a = args.find(x => x === '--' + k || x.startsWith('--' + k + '=')); return a ? (a.split('=')[1] ?? true) : null; };
 const mobile = !!flag('mobile'), cpu = +(flag('cpu') || 1), secs = +(flag('secs') || 6);
-if (!url) { console.error('usage : node fluidite.js <url> [--cpu=4] [--mobile] [--lite=0|1] [--secs=6]'); process.exit(1); }
+if (!url) { console.error('usage : node fluidite.js <url> [--cpu=4] [--mobile] [--secs=6]'); process.exit(1); }
 
 (async () => {
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM, headless: !process.env.HEADED, args: process.env.HEADED ? ['--window-size=1500,1000'] : [] } : {});
@@ -28,13 +28,13 @@ if (!url) { console.error('usage : node fluidite.js <url> [--cpu=4] [--mobile] [
     try { new PerformanceObserver(l => l.getEntries().forEach(e => window.__loaf.push({ t: Math.round(e.startTime), d: Math.round(e.duration), blocking: Math.round(e.blockingDuration || 0), style: Math.round(e.styleAndLayoutStart ? e.startTime + e.duration - e.styleAndLayoutStart : 0), scripts: (e.scripts || []).map(s => [s.invoker || s.type, (s.sourceURL || '').split('/').pop().split('?')[0], s.sourceFunctionName || '', Math.round(s.duration), Math.round(s.forcedStyleAndLayoutDuration || 0)]) }))).observe({ type: 'long-animation-frame', buffered: true }); } catch (e) {}
     try { new PerformanceObserver(l => l.getEntries().forEach(e => window.__lt.push([Math.round(e.startTime), Math.round(e.duration)]))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
   });
-  await page.goto(url + (flag('lite') != null ? (url.includes('?') ? '&' : '?') + 'lite=' + flag('lite') : ''), { waitUntil: 'load', timeout: 120000 });
+  await page.goto(url + '', { waitUntil: 'load', timeout: 120000 });
   await page.waitForTimeout(secs * 1000);
-  const r = await page.evaluate(() => ({ f: window.__f, loaf: window.__loaf, lt: window.__lt, tier: window.__tvTier }));
+  const r = await page.evaluate(() => ({ f: window.__f, loaf: window.__loaf, lt: window.__lt }));
   const frames = r.f.filter(x => x[0] < 1000 * 1000);
   const bad = frames.filter(x => x[1] > 24);
   const w = (a, b) => frames.filter(x => x[0] >= a && x[0] < b);
-  console.log(`CPU x${cpu}  ${mobile ? 'téléphone' : 'ordinateur'}  version ${JSON.stringify(r.tier)}`);
+  console.log(`CPU x${cpu}  ${mobile ? 'téléphone' : 'ordinateur'}`);
   console.log(`images : ${frames.length}, plus de 24 ms : ${bad.length}, plus de 50 ms : ${frames.filter(x => x[1] > 50).length}, pire : ${Math.max(...frames.map(x => x[1]))} ms`);
   console.log('par tranche de 500 ms (nombre d\'images / pire écart) :');
   const line = [];

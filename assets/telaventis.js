@@ -24,43 +24,20 @@
   var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var pointerFine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
-  /* --- connection tier: decided ONCE per page load, never revisited ----------
-   * The heavy parts of the site (the WebGPU jellyfish, the recordings, the
-   * 2D jellyfish, the bubble flight at full density) are a luxury a bad
-   * connection or a weak device cannot pay for, and a page that changes its
-   * mind half-way (a jellyfish that appears, then a different one) is worse
-   * than either version. So the tier is read here, first thing, and kept:
-   * until the next reload, the visitor has the same version throughout.
-   * "lite" is the version the phones already get (telaventis-fx.js: the
-   * flow field instead of the jellyfish, no WebGPU), plus posters instead of
-   * recordings (§6, §7).
-   * Signals, any one is enough:
-   *  · the Network Information API (Chromium only): saveData, a 2g/3g
-   *    effective type, a downlink under 1.5 Mbit/s or an RTT over 450 ms;
-   *  · measured, for the browsers that do not have it (Safari, Firefox):
-   *    this deferred script only starts once the page's HTML and its CSS are
-   *    in, so if that took more than 1.8 s the connection is the problem
-   *    (a cold load on a decent line starts it in well under a second;
-   *    measured: ~2.4 s at 700 kbit/s, ~1.6-1.9 s at 1.6 Mbit/s);
-   *  · a weak device: 2 cores or fewer, or 2 GB of memory or less;
-   *  · ?lite=1 / ?lite=0 in the address, to see either version on purpose.
-   * Exposed as window.__tvTier = { lite, why } and as html.lite. */
-  var tier = (function () {
-    var q = /[?&]lite=([01])/.exec(location.search);
-    if (q) return { lite: q[1] === '1', why: 'url' };
+  /* --- data saver ------------------------------------------------------------
+   * There is one version of the site. (There used to be a "light" one chosen by
+   * guessing the connection; with the jellyfish gone — the WebGL gradient is
+   * 60 fps on an integrated GPU — nothing was left for it to lighten except the
+   * recordings, and a guess that is sometimes wrong, on a good wifi, costs more
+   * than it saves.) The one thing kept is the visitor's own, explicit ask: when
+   * the browser says saveData (or the network is a 2g), the scenes show their
+   * posters instead of playing 0.4-1.9 MB recordings. Loading order is what
+   * protects a slow line: the headline's font and sky first, everything else
+   * after (see the preloads, the fetch priorities, WARM_AT in telaventis-fx.js). */
+  var lite = (function () {
     var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    var why = '';
-    if (c && c.saveData) why = 'saveData';
-    else if (c && /^(slow-2g|2g|3g)$/.test(c.effectiveType || '')) why = c.effectiveType;
-    else if (c && c.downlink && c.downlink < 1.5) why = 'downlink ' + c.downlink;
-    else if (c && c.rtt && c.rtt > 450) why = 'rtt ' + c.rtt;
-    else if (window.performance && performance.now() > 1800) why = 'slow start ' + Math.round(performance.now());
-    else if ((navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || (navigator.deviceMemory && navigator.deviceMemory <= 2)) why = 'weak device';
-    return { lite: !!why, why: why, at: Math.round(window.performance ? performance.now() : 0) };
+    return !!(c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || '')));
   }());
-  window.__tvTier = tier;
-  if (tier.lite) html.classList.add('lite');
-  var lite = tier.lite;
   /* posters are applied by script, as the video's scene comes near (the
      browser fetches a poster the moment it sees the attribute, even with
      preload="none": ten of them, 420 KB, used to be fetched before the
@@ -367,7 +344,7 @@
        dropped for good and the letters return to rest: a title that stays
        still is better than one that stutters. The lite tier never runs it. */
     var wtW = wtChars.map(function () { return W_REST; }), wtD = wtChars.map(function () { return D_REST; });
-    var wtOff = lite, wtSlow = 0, wtLastNow = 0;
+    var wtOff = false, wtSlow = 0, wtLastNow = 0;
     var wtStop = function () {
       wtOff = true; gustT0 = 0; wtPtr.on = false;
       for (var i = 0; i < wtChars.length; i++) { wtChars[i].style.removeProperty('--wg'); wtChars[i].style.removeProperty('--wd'); wtW[i] = W_REST; wtD[i] = D_REST; }
@@ -502,7 +479,7 @@
     else if (fontNow) whenSmooth(startArrival);
     else plainTimer = setTimeout(plainStart, 450);
     fontIn.then(onFont, onFont);
-    if (pointerFine && !lite) {
+    if (pointerFine) {
       var heroEl = document.querySelector('.hero');
       heroEl.addEventListener('pointermove', function (e) { wtPtr.x = e.clientX; wtPtr.y = e.clientY; wtPtr.on = true; wtKick(); }, { passive: true });
       heroEl.addEventListener('pointerleave', function () { wtPtr.on = false; wtKick(); });
@@ -572,8 +549,7 @@
       var paint = performance.getEntriesByName && performance.getEntriesByName('first-contentful-paint')[0];
       if (!nav) return;
       /* "code" = this document plus the stylesheets and scripts it declares
-         itself — not optional modules a script may pull in later (the
-         WebGPU jellyfish, which production never loads anyway) */
+         itself — not optional resources a script may pull in later */
       var own = {};
       Array.prototype.forEach.call(document.querySelectorAll('link[rel="stylesheet"][href],script[src]'), function (el) {
         try { own[new URL(el.getAttribute('href') || el.getAttribute('src'), location.href).href] = 1; } catch (e) {}

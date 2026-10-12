@@ -23,51 +23,11 @@
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq('(prefers-reduced-motion: reduce)');
 
-  /* The connection tier, decided once by telaventis.js (§ "connection
-     tier") before this file runs, and never changed until the next reload.
-     "lite" runs the version phones get — in #digital-era: the flow field
-     instead of the jellyfish, no WebGPU, no SVG text warp, a coarser bubble
-     grid, the shorter track — on whatever screen it is. */
-  var lite = !!(window.__tvTier && window.__tvTier.lite);
-  var compactView = lite || mq('(max-width:759px)');
-  /* The phone rules for #digital-era live in telaventis-fx.css inside one
-     @media (max-width:759px) block. For lite on a wide screen the same rules
-     are needed without the width condition: that block is copied out of the
-     loaded stylesheet (nothing to fetch, nothing duplicated in the source)
-     and re-applied as @media all, last in the cascade, exactly where the
-     original sits. */
-  if (lite && !mq('(max-width:759px)')) {
-    try {
-      var compactCss = '';
-      [].forEach.call(doc.styleSheets, function (sh) {
-        if (!sh.href || !/telaventis-fx\.css/.test(sh.href)) return;
-        [].forEach.call(sh.cssRules, function (r) {
-          if (r.type === 4 && r.media && /max-width:\s*759px/.test(r.media.mediaText)) compactCss += r.cssText.replace(/^@media[^{]*/, '@media all ');
-        });
-      });
-      if (compactCss) {
-        var compactEl = doc.createElement('style');
-        compactEl.textContent = compactCss;
-        doc.head.appendChild(compactEl);
-      }
-    } catch (e) { /* a stylesheet we may not read: the section keeps its desktop look, still correct */ }
-  }
-  /* when the visitor last scrolled — the WebGPU jellyfish waits for stillness */
-  var lastScrollAt = 0;
-  window.addEventListener('scroll', function () { lastScrollAt = performance.now(); }, { passive: true });
-
-  /* document.currentScript is only valid during this file's own synchronous
-     first run — captured here, at the top, because the one place that
-     needs it (the WebGPU loader, in §3b) only knows it wants the value
-     much later, inside an IntersectionObserver callback, by which point
-     currentScript has long gone back to null. */
-  var SELF_SRC = (doc.currentScript && doc.currentScript.src) || (function () {
-    var scripts = doc.getElementsByTagName('script');
-    for (var i = scripts.length - 1; i >= 0; i--) {
-      if (/telaventis-fx\.js/.test(scripts[i].src)) return scripts[i].src;
-    }
-    return '';
-  }());
+  /* One version for everybody (the old "light tier" is gone): in #digital-era a
+     phone gets the flow field, a coarser bubble grid and the shorter track;
+     every other screen gets the animated gradient. */
+  var phoneScreen = mq('(max-width:759px)');
+  var compactView = phoneScreen;   /* one version for everybody: the phone's (flow field) on a phone, the desktop's (gradient) elsewhere */
 
   var clamp = function (n, a, b) { return n < a ? a : n > b ? b : n; };
   var range = function (p, a, b) { return clamp((p - a) / (b - a), 0, 1); };
@@ -954,11 +914,9 @@
       if (!track || !panels.length) return;
       var n = panels.length;
       /* same breakpoint as this section's own CSS (max-width:759px in
-         telaventis-fx.css) or the lite tier (see compactView, top of file) —
-         the couple of mobile-only cuts below (the
-         WebGPU jellyfish, the SVG text warp) both trade a purely
-         decorative extra for real per-frame cost on exactly the class of
-         device least able to absorb it. */
+         telaventis-fx.css): a phone gets the flow field, a coarser particle
+         grid and the shorter track — decorative extras traded for per-frame
+         cost on exactly the class of device least able to absorb it. */
       var isMobileEra = compactView;
       /* Panel boundaries as fractions of the whole track, not a flat 1/n
          each — mobile only, and only for the 3-panel shape this section
@@ -971,7 +929,8 @@
          baseline (132), last phrase unchanged. Desktop keeps plain even
          thirds; its own track height was never split unevenly. */
       var segBounds = (function () {
-        var weights = (isMobileEra && n === 3) ? [158, 158, 132] : null;
+        /* the phone's uneven stretches belong to a phone's screen only */
+        var weights = (phoneScreen && n === 3) ? [158, 158, 132] : null;
         var b = [0], acc = 0, i, sum;
         if (weights) {
           sum = weights[0] + weights[1] + weights[2];
@@ -1029,50 +988,158 @@
         return { x: ptr.x - r.left, y: ptr.y - r.top, r: rad, active: true };
       };
 
-      /* ---- background layer: jellyfish (desktop) or seascape (mobile) ---
-         Exactly one of these two branches ever mounts — decided once here
-         by isMobileEra, the same split the WebGPU/2D and warp choices
-         already use elsewhere in this file. render() and the panel-change
-         trigger further down are shared by both and only ever call
-         renderAurora/renderRipple/setAuroraScene OR renderSea/setSeaScene,
-         whichever pair actually ran; `var` hoists every one of those names
-         to this whole callback's scope, so referencing whichever pair did
-         NOT run is simply undefined, never a ReferenceError — the same
-         reasoning the gpu/GPU_SCENES names below already relied on. */
+      /* ---- background layer: gradient (desktop) or flow field (mobile) ---
+         Exactly one of these two branches ever mounts — decided once here by
+         isMobileEra. render() and the panel-change trigger further down are
+         shared by both and only ever call drawGrad/renderRipple OR
+         renderSea; `var` hoists every one of those names to this whole
+         callback's scope, so referencing whichever pair did NOT run is simply
+         undefined, never a ReferenceError. */
       if (!isMobileEra) {
-      /* ---- the aurora backdrop ------------------------------------------
-         "Aurelia" (holtsetio, https://github.com/holtsetio/aurelia) turns
-         out to be a moon-jellyfish simulation, not a light effect the name
-         suggested — its own README: "The bell is formed by a sinusoidally
-         contracting hemisphere, while the bell seam, oral arms and
-         tentacles are simulated using a verlet particle system that is
-         evaluated on the GPU with compute shaders," rendered with Three.js'
-         WebGPURenderer. None of that runs here: WebGPU still isn't
-         supported everywhere, Three.js is ~600KB, and a GPU compute pass is
-         a different machine entirely from a 2D canvas — all flatly
-         incompatible with a site whose whole argument is zero runtime
-         dependencies and support for any browser.
-         What IS taken, honestly, is the silhouette and the behaviour its
-         README names: a dome that contracts on a sine (kept, literally —
-         same idea, no compute shader needed for one pulsing shape), and
-         tentacles trailing and swaying beneath it (here, strings of fading
-         dots on a swaying offset — a plain restatement of "trailing soft
-         particles," not the verlet physics actually driving them there).
-         Each panel is a different swum-to position; the jellyfish glides
-         between them on the exact same panel-change trigger as everything
-         else in this section, so "the background moves to another view
-         when the phrase changes" is one more state scroll only ever
-         starts, never drives. */
-      var auroraCanvas = doc.createElement('canvas');
-      auroraCanvas.className = 'era__aurora';
-      auroraCanvas.setAttribute('aria-hidden', 'true');
-      era.querySelector('.era__sticky').insertBefore(auroraCanvas, era.querySelector('.era__stage'));
-      var auroraCtx = auroraCanvas.getContext('2d');
+      /* ---- the animated gradient: the desktop backdrop ---------------------------
+         "Animated Gradient" (Harsh Jadhav, Componentry, MIT; design-memory item
+         backgrounds/animated-gradient) — its fragment shader, unchanged in the
+         maths (three colours blended by a domain-warped pattern: noise-driven
+         distortion, then a swirl of cos() iterations, then a checks / stripes /
+         edge shape), ported from React to a plain WebGL2 canvas. Adapted:
+         · three colours of THIS site (the page's ink, the teal its section always
+           glowed with, the coral of the wordmark — _outils/etude-couleurs.py),
+           mixed in OKLab, chosen so cream text keeps >= 8:1 on the brightest part;
+         · drawn at the screen's pixel ratio (1.5 at most, ~3 Mpx at most), 30
+           times a second; fewer swirl iterations; slower than the source's presets;
+         · ordered dithering at the end: dark gradients band visibly in 8 bits;
+         · it rests when the section is not on screen or the door is opening (the
+           shared render loop).
+         Without WebGL2 (or if the context is lost) nothing is drawn: the section's
+         own ground (.era__sticky::before, two soft radial gradients in CSS) is what
+         is seen, and the text stays readable on it. */
+      var GRAD_PAL = { c1: '#0E1620', c2: '#1B4458', c3: '#A8441F' };
+      var GRAD = {
+        rotation: -30, proportion: 36, scale: 0.5, speed: 5, distortion: 22, swirl: 45, iterations: 6,
+        softness: 100, offset: 120, shape: 0, shapeSize: 30     /* 0 checks, 1 stripes, 2 edge */
+      };
+      var GRAD_FS = '#version 300 es\n' +
+        'precision highp float;\n' +
+        'uniform float u_time; uniform float u_pixelRatio; uniform vec2 u_resolution;\n' +
+        'uniform float u_scale, u_rotation, u_proportion, u_softness, u_shape, u_shapeScale, u_distortion, u_swirl, u_swirlIterations;\n' +
+        'uniform vec3 u_color1, u_color2, u_color3;\n' +
+        'out vec4 fragColor;\n' +
+        '#define TWO_PI 6.28318530718\n' +
+        '#define PI 3.14159265358979323846\n' +
+        'vec2 rotate(vec2 uv, float th) { return mat2(cos(th), sin(th), -sin(th), cos(th)) * uv; }\n' +
+        'float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123); }\n' +
+        'float noise(vec2 st) {\n' +
+        '  vec2 i = floor(st); vec2 f = fract(st);\n' +
+        '  float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0));\n' +
+        '  vec2 u = f * f * (3.0 - 2.0 * f);\n' +
+        '  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);\n' +
+        '}\n' +
+        'vec3 oklab_to_srgb(vec3 c) {\n' +
+        '  float l_ = c.x + 0.3963377774 * c.y + 0.2158037573 * c.z; float m_ = c.x - 0.1055613458 * c.y - 0.0638541728 * c.z; float s_ = c.x - 0.0894841775 * c.y - 1.2914855480 * c.z;\n' +
+        '  float l = l_ * l_ * l_; float m = m_ * m_ * m_; float s = s_ * s_ * s_;\n' +
+        '  vec3 rgb = clamp(vec3(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s), 0., 1.);\n' +
+        '  return mix(12.92 * rgb, 1.055 * pow(rgb, vec3(1. / 2.4)) - 0.055, step(0.0031308, rgb));\n' +
+        '}\n' +
+        'vec3 blend_colors(vec3 c1, vec3 c2, vec3 c3, float mixer, float edgesWidth, float edge_blur) {\n' +
+        '  float r1 = smoothstep(.0 + .35 * edgesWidth, .7 - .35 * edgesWidth + .5 * edge_blur, mixer);\n' +
+        '  float r2 = smoothstep(.3 + .35 * edgesWidth, 1. - .35 * edgesWidth + edge_blur, mixer);\n' +
+        '  return mix(mix(c1, c2, r1), c3, r2);\n' +
+        '}\n' +
+        'void main() {\n' +
+        '  vec2 uv = gl_FragCoord.xy / u_resolution.xy;\n' +
+        '  float t = .5 * u_time;\n' +
+        '  float noise_scale = .0005 + .006 * u_scale;\n' +
+        '  uv -= .5; uv *= (noise_scale * u_resolution); uv = rotate(uv, u_rotation * .5 * PI); uv /= u_pixelRatio; uv += .5;\n' +
+        '  float n1 = noise(uv * 1. + t); float n2 = noise(uv * 2. - t);\n' +
+        '  float angle = n1 * TWO_PI;\n' +
+        '  uv.x += 4. * u_distortion * n2 * cos(angle); uv.y += 4. * u_distortion * n2 * sin(angle);\n' +
+        '  float iterations_number = ceil(clamp(u_swirlIterations, 1., 30.));\n' +
+        '  for (float i = 1.; i <= iterations_number; i++) {\n' +
+        '    uv.x += clamp(u_swirl, 0., 2.) / i * cos(t + i * 1.5 * uv.y);\n' +
+        '    uv.y += clamp(u_swirl, 0., 2.) / i * cos(t + i * 1. * uv.x);\n' +
+        '  }\n' +
+        '  float proportion = clamp(u_proportion, 0., 1.);\n' +
+        '  float shape = 0.; float mixer = 0.;\n' +
+        '  if (u_shape < .5) {\n' +
+        '    vec2 s_uv = uv * (.5 + 3.5 * u_shapeScale);\n' +
+        '    shape = .5 + .5 * sin(s_uv.x) * cos(s_uv.y);\n' +
+        '    mixer = shape + .48 * sign(proportion - .5) * pow(abs(proportion - .5), .5);\n' +
+        '  } else if (u_shape < 1.5) {\n' +
+        '    vec2 s_uv = uv * (.25 + 3. * u_shapeScale);\n' +
+        '    float f = fract(s_uv.y);\n' +
+        '    shape = smoothstep(.0, .55, f) * smoothstep(1., .45, f);\n' +
+        '    mixer = shape + .48 * sign(proportion - .5) * pow(abs(proportion - .5), .5);\n' +
+        '  } else {\n' +
+        '    float sh = 1. - uv.y; sh -= .5; sh /= (noise_scale * u_resolution.y); sh += .5;\n' +
+        '    float shape_scaling = .2 * (1. - u_shapeScale);\n' +
+        '    shape = smoothstep(.45 - shape_scaling, .55 + shape_scaling, sh + .3 * (proportion - .5));\n' +
+        '    mixer = shape;\n' +
+        '  }\n' +
+        '  vec3 col = oklab_to_srgb(blend_colors(u_color1, u_color2, u_color3, mixer, 1. - clamp(u_softness, 0., 1.), .01 + .01 * u_scale));\n' +   /* mixed in OKLab, shown in sRGB */
+        '  col += (random(gl_FragCoord.xy) - .5) / 255.;\n' +   /* dithering: no banding in the darks */
+        '  fragColor = vec4(col, 1.);\n' +
+        '}\n';
+      var gradCanvas = null, gradGl = null, gradU = null, gradOK = false, gradLast = 0, gradT0 = 0;
+      var gradRgb = function (hex) {   /* hex -> OKLab (the shader mixes there: a blend of blue-green and coral stays one colour's brightness, not a muddy sRGB midpoint) */
+        var n = parseInt(hex.slice(1), 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+        var r = lin(n >> 16 & 255), g = lin(n >> 8 & 255), b = lin(n & 255);
+        var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+        return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+      };
+      var gradInit = function () {
+        try {
+          var cv = doc.createElement('canvas');
+          cv.className = 'era__aurora era__aurora--grad';
+          cv.setAttribute('aria-hidden', 'true');
+          var gl = cv.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: 'low-power' });
+          if (!gl) return;
+          var mk = function (type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+          var vs = mk(gl.VERTEX_SHADER, '#version 300 es\nin vec4 a_position;\nvoid main() { gl_Position = a_position; }');
+          var fs = mk(gl.FRAGMENT_SHADER, GRAD_FS);
+          if (!vs || !fs) return;
+          var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+          if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+          gl.useProgram(pr);
+          var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+          var loc = gl.getAttribLocation(pr, 'a_position'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+          var names = ['u_time', 'u_pixelRatio', 'u_resolution', 'u_scale', 'u_rotation', 'u_proportion', 'u_softness', 'u_shape', 'u_shapeScale', 'u_distortion', 'u_swirl', 'u_swirlIterations', 'u_color1', 'u_color2', 'u_color3'];
+          gradU = {}; names.forEach(function (k) { gradU[k] = gl.getUniformLocation(pr, k); });
+          var c1 = gradRgb(GRAD_PAL.c1), c2 = gradRgb(GRAD_PAL.c2), c3 = gradRgb(GRAD_PAL.c3);
+          gl.uniform3f(gradU.u_color1, c1[0], c1[1], c1[2]); gl.uniform3f(gradU.u_color2, c2[0], c2[1], c2[2]); gl.uniform3f(gradU.u_color3, c3[0], c3[1], c3[2]);
+          gl.uniform1f(gradU.u_scale, GRAD.scale); gl.uniform1f(gradU.u_rotation, GRAD.rotation * Math.PI / 180);
+          gl.uniform1f(gradU.u_proportion, GRAD.proportion / 100); gl.uniform1f(gradU.u_softness, GRAD.softness / 100);
+          gl.uniform1f(gradU.u_shape, GRAD.shape); gl.uniform1f(gradU.u_shapeScale, GRAD.shapeSize / 100);
+          gl.uniform1f(gradU.u_distortion, GRAD.distortion / 50); gl.uniform1f(gradU.u_swirl, GRAD.swirl / 100);
+          gl.uniform1f(gradU.u_swirlIterations, GRAD.iterations);
+          cv.addEventListener('webglcontextlost', function (e) { e.preventDefault(); gradOK = false; era.classList.remove('era--grad'); cv.style.display = 'none'; });
+          era.querySelector('.era__sticky').insertBefore(cv, era.querySelector('.era__stage'));
+          gradCanvas = cv; gradGl = gl; gradOK = true; gradT0 = 0;
+          era.classList.add('era--grad');
+        } catch (e) { gradOK = false; }
+      };
+      var drawGrad = function (now) {
+        if (!gradOK) return;
+        if (now - gradLast < 30) return;     /* 30 times a second: it is a slow, soft field */
+        gradLast = now;
+        var cw = gradCanvas.clientWidth, ch = gradCanvas.clientHeight;
+        /* drawn at the screen's own pixel ratio (1.5 at most: a gradient this soft needs no more),
+           and never more than ~3 million pixels, so a huge screen is drawn smaller and upsampled
+           smoothly rather than slowly */
+        var gres = Math.min(Math.min(window.devicePixelRatio || 1, 1.5), Math.sqrt(3.2e6 / Math.max(1, cw * ch)));
+        var w = Math.max(2, Math.round(cw * gres)), h = Math.max(2, Math.round(ch * gres));
+        if (gradCanvas.width !== w || gradCanvas.height !== h) { gradCanvas.width = w; gradCanvas.height = h; gradGl.viewport(0, 0, w, h); gradGl.uniform1f(gradU.u_pixelRatio, gres); }
+        if (!gradT0) gradT0 = now;
+        gradGl.uniform1f(gradU.u_time, (now - gradT0) / 1000 * (GRAD.speed / 100) * 5 + GRAD.offset * 0.01);
+        gradGl.uniform2f(gradU.u_resolution, w, h);
+        gradGl.drawArrays(gradGl.TRIANGLES, 0, 6);
+      };
+      gradInit();
 
       /* ---- hover bubbles on the water -------------------------------------
          The same bubble sprites a hovered word gets (fxType.getSprites().
          bubbles — the very images drawParticles paints words with) spawned
-         at the cursor over the jellyfish backdrop instead of sampled from a
+         at the cursor over the gradient backdrop instead of sampled from a
          glyph, so hovering the water gets the same kind of reaction
          hovering the text already had. Its own small canvas rather than a
          reuse of drawParticles itself: that function ages a whole array off
@@ -1080,8 +1147,7 @@
          this is a continuous trail where every bubble is born at its own
          moment, which fits a short-lived, self-contained loop better than
          bending drawParticles' shared-evap model to a spawner. A z-index
-         above either jellyfish layer (telaventis-fx.css) keeps it visible
-         over whichever one is actually showing. */
+         above the gradient (telaventis-fx.css) keeps it visible. */
       var rippleCanvas = doc.createElement('canvas');
       rippleCanvas.className = 'era__ripple';
       rippleCanvas.setAttribute('aria-hidden', 'true');
@@ -1144,584 +1210,6 @@
         rippleParticles = kept;
       };
 
-      /* ---- the text warp -------------------------------------------------
-         A slight distortion of the text as the jellyfish passes near it, as
-         if it genuinely displaced something in front of it — an SVG
-         feDisplacementMap on the text block, its `scale` driven every frame
-         by real distance between the jellyfish's current on-screen position
-         (tracked below regardless of whether the 2D canvas or the WebGPU
-         one is what's actually visible — see warpAt()) and the active
-         panel's own box. Zero at rest, so there is no permanent softening
-         of the type; it only ever appears while something is genuinely
-         passing close, and only ever as much as it is close.
-         Skipped entirely on mobile (isMobileEra): feTurbulence +
-         feDisplacementMap is real per-frame raster work — its `scale`
-         changes every frame below, and most mobile browsers have no
-         hardware-accelerated path for this filter pair at all, so it was
-         paying for a subtle hover-proximity nicety by recomputing an
-         expensive noise+displacement pass on the section's own readable
-         text, 60 times a second, on exactly the devices least able to
-         absorb that cost. warpMap stays null; applyWarp() below no-ops
-         the instant it finds that, so nothing else here needs to know. */
-      var warpMap = null, warpBodies = [], warpUrl = '', warpOn = false;
-      if (!isMobileEra) {
-        var warpSvg = doc.createElementNS(SVGNS, 'svg');
-        warpSvg.setAttribute('width', '0');
-        warpSvg.setAttribute('height', '0');
-        warpSvg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-        var warpId = 'era-warp-' + Math.random().toString(36).slice(2, 8);
-        warpSvg.innerHTML =
-          '<filter id="' + warpId + '" x="-20%" y="-20%" width="140%" height="140%">' +
-          '<feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="n"/>' +
-          '<feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>' +
-          '</filter>';
-        era.appendChild(warpSvg);
-        warpMap = warpSvg.querySelector('feDisplacementMap');
-        /* the filter is attached to the three text blocks only while it is
-           doing something (see setWarp): an SVG filter on a block keeps it a
-           filtered layer, and the displacement runs again whenever anything
-           touches it, even at scale 0 */
-        warpBodies = [].slice.call(era.querySelectorAll('.era__body'));
-        warpUrl = 'url(#' + warpId + ')';
-      }
-
-      /* current jellyfish position, in VIEWPORT px — kept up to date by
-         both renderAurora() (2D mode) and setInterval-free polling of the
-         WebGPU camera is not available from outside, so the 2D tracking
-         doubles as the position source for the warp even while the WebGPU
-         canvas is what visitors actually see: the two scenes are driven by
-         the same trigger and roughly the same choreography, so it stays a
-         reasonable stand-in rather than requiring a 3D-to-screen
-         projection of the real camera. */
-      var jellyScreen = { x: -9999, y: -9999 };
-      /* an SVG filter attribute written every frame, even with the same value,
-         can re-run the whole displacement filter over three text blocks: only
-         write when it changed */
-      var warpLast = '';
-      var setWarp = function (v) {
-        if (v === warpLast) return;
-        warpLast = v;
-        var on = parseFloat(v) > 0.05;
-        if (on !== warpOn) { warpOn = on; for (var wi = 0; wi < warpBodies.length; wi++) warpBodies[wi].style.filter = on ? warpUrl : ''; }
-        warpMap.setAttribute('scale', v);
-      };
-      var applyWarp = function () {
-        if (!warpMap) return; /* mobile: no filter was ever attached, nothing to drive */
-        /* the actual set glyphs — .era__mix or, on the plain panel,
-           .era__phrase — not .era__body, which is a flex box padded out to
-           most of the sticky viewport: measured against THAT, the
-           jellyfish is "inside" it almost everywhere it ever drifts, and
-           the warp would sit permanently maxed out instead of responding
-           to anything. Distance has to be measured against where the
-           letters actually are. */
-        var activeText = era.querySelector('.era__panel.is-active .era__mix, .era__panel.is-active .era__phrase');
-        if (!activeText) { setWarp('0'); return; }
-        var r = activeText.getBoundingClientRect();
-        var cx = clamp(jellyScreen.x, r.left, r.right);
-        var cy = clamp(jellyScreen.y, r.top, r.bottom);
-        var d = Math.hypot(jellyScreen.x - cx, jellyScreen.y - cy);
-        /* falls off over a narrower margin than the text's own box, and the
-           per-panel ambient drift is small enough on its own that this
-           should mostly sit near zero between panel changes — the big,
-           meaningful excursion is the scene glide AT a panel change, which
-           sweeps the jellyfish across a genuinely different part of the
-           screen, not the small in-place sway the rest of the time. Squared
-           for a falloff that's flat near zero and only really shows up once
-           truly close, and capped low — "légère", not a melt. */
-        var reach = Math.max(140, r.width * 0.32);
-        var amt = 1 - range(d, 0, reach);
-        setWarp((amt * amt * 5.5).toFixed(1));
-      };
-
-      /* one swim position per panel: [x, y, scale] as fractions of the box */
-      var AURORA_SCENES = [
-        [.26, .34, .92],
-        [.72, .30, 1.05],
-        [.50, .60, 1.16]
-      ];
-      var jelly = {
-        x: AURORA_SCENES[0][0], y: AURORA_SCENES[0][1], s: AURORA_SCENES[0][2],
-        fx: AURORA_SCENES[0][0], fy: AURORA_SCENES[0][1], fs: AURORA_SCENES[0][2],
-        tx: AURORA_SCENES[0][0], ty: AURORA_SCENES[0][1], ts: AURORA_SCENES[0][2]
-      };
-      var auroraT0 = 0;
-      var AURORA_DUR = 1000; /* matches gpu.setView's own glide time below */
-
-      /* Two tiers of trailing strands — a dozen fine "hair" tentacles plus a
-         handful of thicker oral arms — rather than one sparse set, which is
-         what actually reads as a detailed creature instead of a diagram of
-         one. Each carries its own timing so none of them move in lockstep. */
-      var HAIR_N = 16, ARM_N = 5, RIB_N = 9, SPARK_N = 26;
-      var hairs = [], arms = [], ribs = [], sparks = [];
-      for (var hi = 0; hi < HAIR_N; hi++) hairs.push({ ph: Math.random() * Math.PI * 2, ph2: Math.random() * Math.PI * 2, sp: 0.55 + Math.random() * 0.5, len: 0.55 + Math.random() * 0.5, w: 0.5 + Math.random() * 0.5 });
-      for (var ai = 0; ai < ARM_N; ai++) arms.push({ ph: Math.random() * Math.PI * 2, sp: 0.4 + Math.random() * 0.3, len: 0.8 + Math.random() * 0.35 });
-      for (var ri = 0; ri < RIB_N; ri++) ribs.push({ a: (ri / RIB_N) * Math.PI });
-      for (var sp2 = 0; sp2 < SPARK_N; sp2++) sparks.push({ x: Math.random(), y: Math.random(), ph: Math.random() * Math.PI * 2, sp: 0.2 + Math.random() * 0.3, r: 0.6 + Math.random() * 1.4 });
-
-      /* a small secondary jelly, blurred and dim, drifting behind and to the
-         side of the main one — the cheapest possible depth cue in a medium
-         with no actual camera or z-buffer: two of the same silhouette at
-         different scale and opacity reads as near/far */
-      var bgJelly = { phX: Math.random() * 10, phY: Math.random() * 10 };
-
-      var setAuroraScene = function (idx, now) {
-        idx = ((idx % AURORA_SCENES.length) + AURORA_SCENES.length) % AURORA_SCENES.length;
-        var s = AURORA_SCENES[idx];
-        jelly.fx = jelly.x; jelly.fy = jelly.y; jelly.fs = jelly.s;
-        jelly.tx = s[0]; jelly.ty = s[1]; jelly.ts = s[2];
-        auroraT0 = now;
-      };
-
-      /* Draws one jellyfish — bell, ribs, rim light and trailing strands —
-         at the given centre/scale/detail level. Used twice: once richly for
-         the main animal, once with `detail=false` for the small blurred one
-         behind it, so the depth layer costs almost nothing extra to draw. */
-      var drawJelly = function (cx, cy, scale, t, detail, alphaMul) {
-        /* Real jellyfish locomotion is a sharp contraction (thrust) and a
-           slow relax (glide), not a symmetric wobble — sin() raised to a
-           power skews it exactly that way, and it is what actually reads
-           as swimming rather than breathing. Each pulse also gives the
-           whole body a small upward kick, timed to the contraction. */
-        var raw = 0.5 + 0.5 * Math.sin(t * 1.1);
-        var pulse = Math.pow(raw, 2.4);
-        var thrust = Math.pow(raw, 7) * scale * 0.05;
-        cy -= thrust;
-
-        var bellW = scale * (1 + 0.07 * pulse);
-        var bellH = scale * (0.68 - 0.11 * pulse);
-
-        /* a slow, layered tilt — two sine harmonics of unrelated frequency
-           so the roll never repeats on a noticeable cycle — is the one
-           cheapest trick that reads as three-dimensional turning rather
-           than a flat sprite sliding sideways */
-        var tilt = Math.sin(t * 0.11) * 0.09 + Math.sin(t * 0.052 + 2) * 0.05;
-
-        auroraCtx.save();
-        auroraCtx.translate(cx, cy);
-        auroraCtx.rotate(tilt);
-        auroraCtx.globalCompositeOperation = 'lighter';
-
-        /* contrast raised hard against the dark water — the first pass read
-           as a flat grey cloud precisely because it was close in value to
-           the ink background it sits on; a bioluminescent creature has to
-           be BRIGHT against dark water, not a subtle tint of it */
-        var glow = auroraCtx.createRadialGradient(0, 0, 0, 0, 0, bellW * (detail ? 1.9 : 1.6));
-        glow.addColorStop(0, 'rgba(224,150,90,' + (0.34 * alphaMul).toFixed(3) + ')');
-        glow.addColorStop(1, 'rgba(224,150,90,0)');
-        auroraCtx.fillStyle = glow;
-        auroraCtx.beginPath();
-        auroraCtx.arc(0, 0, bellW * (detail ? 1.9 : 1.6), 0, Math.PI * 2);
-        auroraCtx.fill();
-
-        /* the bell: a dome closed by a softly scalloped skirt instead of a
-           flat line, so the silhouette reads as a bell, not a half-circle */
-        auroraCtx.beginPath();
-        auroraCtx.ellipse(0, 0, bellW, bellH, 0, Math.PI, Math.PI * 2, false);
-        var scallops = 8;
-        for (var si = 1; si <= scallops; si++) {
-          var fx1 = bellW - (bellW * 2) * si / scallops;
-          var midX = bellW - (bellW * 2) * (si - 0.5) / scallops;
-          var bumpY = bellH * 0.16 + Math.sin(t * 1.4 + si * 0.9) * bellH * 0.05;
-          auroraCtx.quadraticCurveTo(midX, bumpY, fx1, 0);
-        }
-        auroraCtx.closePath();
-        var bellGrad = auroraCtx.createRadialGradient(0, -bellH * 0.3, 0, 0, 0, bellW * 1.1);
-        bellGrad.addColorStop(0, 'rgba(255,247,232,' + (0.62 * alphaMul).toFixed(3) + ')');
-        bellGrad.addColorStop(0.55, 'rgba(232,140,70,' + (0.42 * alphaMul).toFixed(3) + ')');
-        bellGrad.addColorStop(1, 'rgba(180,80,30,' + (0.12 * alphaMul).toFixed(3) + ')');
-        auroraCtx.fillStyle = bellGrad;
-        auroraCtx.fill();
-
-        if (detail) {
-          /* radial ribs — the canal pattern a real bell shows — a handful of
-             thin curves from the crown to the rim, breathing with the pulse */
-          auroraCtx.strokeStyle = 'rgba(255,222,180,' + (0.20 * alphaMul).toFixed(3) + ')';
-          auroraCtx.lineWidth = 1;
-          for (var rj = 0; rj < RIB_N; rj++) {
-            var a = ribs[rj].a;
-            var rx = Math.cos(a) * bellW * 0.94, ry = -bellH * 0.55 + Math.sin(a) * bellH * 0.35;
-            auroraCtx.beginPath();
-            auroraCtx.moveTo(0, -bellH * 0.32);
-            auroraCtx.quadraticCurveTo(rx * 0.5, -bellH * 0.15, rx, ry * 0.15 + bellH * (0.05 * pulse));
-            auroraCtx.stroke();
-          }
-          /* rim light: the silhouette's edge only, brighter than the fill —
-             a cheap fresnel, same idea as the bubble sprite's rim gradient
-             already used for the word particles elsewhere in this file */
-          auroraCtx.strokeStyle = 'rgba(255,235,205,' + (0.55 * alphaMul).toFixed(3) + ')';
-          auroraCtx.lineWidth = 1.3;
-          auroraCtx.beginPath();
-          auroraCtx.ellipse(0, 0, bellW, bellH, 0, Math.PI, Math.PI * 2, false);
-          auroraCtx.stroke();
-        }
-
-        /* trailing strands. Phase carries a term in `u` (distance from the
-           root) as well as `t`, so the wave has to travel outward along the
-           strand instead of every point swaying in lockstep — the
-           difference between something rippling and something just
-           wiggling in place. */
-        var drawStrand = function (rootX, rootY, len, sway, dots, width, alpha, ph, sp) {
-          for (var di = 1; di <= dots; di++) {
-            var u = di / dots;
-            var s = Math.sin(t * sp - u * 2.6 + ph) * sway * u;
-            var px = rootX + s;
-            var py = rootY + len * u;
-            var a = (1 - u * 0.92) * alpha * alphaMul;
-            auroraCtx.beginPath();
-            auroraCtx.arc(px, py, Math.max(0.5, width * (1 - u * 0.6)), 0, Math.PI * 2);
-            auroraCtx.fillStyle = 'rgba(250,220,180,' + a.toFixed(3) + ')';
-            auroraCtx.fill();
-          }
-        };
-
-        if (detail) {
-          for (var k = 0; k < ARM_N; k++) {
-            var arm = arms[k];
-            var fracA = (k + 0.5) / ARM_N;
-            drawStrand(bellW * (fracA * 2 - 1) * 0.7, bellH * 0.08, bellH * 2.1 * arm.len, bellW * 0.10, 16, 2.6, 0.40, arm.ph, arm.sp);
-          }
-          for (var m = 0; m < HAIR_N; m++) {
-            var hair = hairs[m];
-            var fracH = (m + 0.5) / HAIR_N;
-            drawStrand(bellW * (fracH * 2 - 1) * 0.96, bellH * 0.12, bellH * 2.9 * hair.len, bellW * 0.16 * hair.w, 12, 1.1 * hair.w, 0.26, hair.ph, hair.sp * 0.7);
-          }
-        } else {
-          for (var kk = 0; kk < 4; kk++) {
-            drawStrand(bellW * (kk / 3 - 0.5) * 1.3, bellH * 0.1, bellH * 2.2, bellW * 0.12, 8, 2, 0.22, kk * 1.7, 0.4);
-          }
-        }
-
-        auroraCtx.globalCompositeOperation = 'source-over';
-        auroraCtx.restore();
-      };
-
-      var renderAurora = function (now) {
-        var w = auroraCanvas.clientWidth, h = auroraCanvas.clientHeight;
-        if (!w || !h) return;
-        if (gpu) {
-          /* the WebGPU jellyfish covers this canvas: nothing is drawn on it (it
-             was still being cleared and redrawn, blurred by a CSS filter, every
-             frame, invisibly). Only the jellyfish's position is kept up to date,
-             for the text warp. */
-          var ge = auroraT0 ? easeInOutCubic(clamp((now - auroraT0) / AURORA_DUR, 0, 1)) : 1;
-          jelly.x = jelly.fx + (jelly.tx - jelly.fx) * ge;
-          jelly.y = jelly.fy + (jelly.ty - jelly.fy) * ge;
-          var gt = now / 1000;
-          var gcx = jelly.x * w + (Math.sin(gt * 0.10 + 1.3) * 0.55 + Math.sin(gt * 0.031 + 4) * 0.45) * w * 0.03;
-          var gcy = jelly.y * h + (Math.sin(gt * 0.084) * 0.6 + Math.sin(gt * 0.021 + 2.2) * 0.4) * h * 0.03;
-          var gr = auroraCanvas.getBoundingClientRect();
-          jellyScreen.x = gr.left + gcx * (gr.width / w);
-          jellyScreen.y = gr.top + gcy * (gr.height / h);
-          applyWarp();
-          return;
-        }
-        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        var pxW = Math.round(w * dpr), pxH = Math.round(h * dpr);
-        if (auroraCanvas.width !== pxW || auroraCanvas.height !== pxH) {
-          auroraCanvas.width = pxW; auroraCanvas.height = pxH;
-        }
-        auroraCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        auroraCtx.clearRect(0, 0, w, h);
-        var t = now / 1000;
-
-        /* ambient drifting sparkle — cheap depth and atmosphere: a field of
-           tiny twinkling points at a fixed screen position, well behind
-           everything else, so the two jellyfish read as swimming THROUGH a
-           volume rather than pasted on a flat background */
-        for (var sIdx = 0; sIdx < SPARK_N; sIdx++) {
-          var sk = sparks[sIdx];
-          var sx = (sk.x + Math.sin(t * 0.03 * sk.sp + sk.ph) * 0.02) * w;
-          var sy = ((sk.y + t * 0.006 * sk.sp) % 1) * h;
-          var tw = 0.10 + 0.10 * (0.5 + 0.5 * Math.sin(t * 0.6 * sk.sp + sk.ph));
-          auroraCtx.beginPath();
-          auroraCtx.arc(sx, sy, sk.r, 0, Math.PI * 2);
-          auroraCtx.fillStyle = 'rgba(210,232,236,' + tw.toFixed(3) + ')';
-          auroraCtx.fill();
-        }
-
-        /* the eased "which scene" position, still gliding smoothly toward
-           its target for AURORA_DUR after every trigger */
-        var e = auroraT0 ? easeInOutCubic(clamp((now - auroraT0) / AURORA_DUR, 0, 1)) : 1;
-        jelly.x = jelly.fx + (jelly.tx - jelly.fx) * e;
-        jelly.y = jelly.fy + (jelly.ty - jelly.fy) * e;
-        jelly.s = jelly.fs + (jelly.ts - jelly.fs) * e;
-
-        /* a slow, continuous swim drift on top of that — never perfectly
-           still, in transition or out of one — built from two harmonics per
-           axis so the path doesn't trace the same loop twice */
-        var driftX = Math.sin(t * 0.10 + 1.3) * 0.55 + Math.sin(t * 0.031 + 4) * 0.45;
-        var driftY = Math.sin(t * 0.084) * 0.6 + Math.sin(t * 0.021 + 2.2) * 0.4;
-        var cx = jelly.x * w + driftX * w * 0.03;
-        var cy = jelly.y * h + driftY * h * 0.03;
-        var scale = jelly.s * Math.min(w, h) * 0.32;
-
-        /* the small blurred one behind, opposite corner-ish, at its own
-           slower drift — pure depth cue, cheap to draw (drawJelly's
-           detail=false path skips the ribs/rim/dense hair entirely) */
-        var bgx = (1 - jelly.x) * w * 0.9 + Math.sin(t * 0.06 + bgJelly.phX) * w * 0.03;
-        var bgy = jelly.y * h * 0.5 + h * 0.18 + Math.sin(t * 0.05 + bgJelly.phY) * h * 0.02;
-        drawJelly(bgx, bgy, scale * 0.6, t * 0.8 + 5, false, 0.45);
-
-        drawJelly(cx, cy, scale, t, true, 1);
-
-        /* canvas-local (cx,cy) → viewport px, then let the warp react to
-           wherever that now is */
-        var canvasRect = auroraCanvas.getBoundingClientRect();
-        jellyScreen.x = canvasRect.left + cx * (canvasRect.width / w);
-        jellyScreen.y = canvasRect.top + cy * (canvasRect.height / h);
-        applyWarp();
-      };
-
-      /* ---- the real thing, for browsers that can run it -----------------
-         Everything above is the fallback. This is holtsetio's actual
-         Aurelia — https://github.com/holtsetio/aurelia, MIT-licensed, built
-         from source with their own Vite config and loaded here unmodified
-         except for the entry point: the original self-executes fullscreen
-         against fixed DOM ids from its own demo page, so it was rewritten
-         to export one function, createAurelia(container), that mounts into
-         any element and sizes to IT instead of the window — see
-         assets/aurelia/ for exactly what changed and why. The physics, the
-         shaders, the geometry are untouched.
-         Requires WebGPU, which is not universal yet, so this is strictly
-         additive: the 2D canvas above is what every browser gets and
-         already looks and behaves correctly on its own; this quietly
-         upgrades it where it can run, and if it fails for any reason —
-         unsupported, slow to init, an exception — the 2D version is simply
-         what stays on screen, because it was never removed. */
-      var gpu = null;      /* { canvas, setView, setPaused, setQuality, dispose } once ready */
-      /* ---- the performance frame --------------------------------------------
-         The WebGPU jellyfish is a physics simulation (90 000 springs) plus
-         bloom, at the screen's own resolution: on a modest GPU it cannot hold a
-         frame rate, and a jellyfish at 20 fps is worse than a simpler one at 60.
-         So it is governed: every second of being on screen its real frame rate
-         is read; under 40 fps it steps down — 1: pixel ratio 1
-         and half the bloom, 2: 0.7 and no bloom, then, if even that is not
-         enough, the 2D jellyfish (never removed, only covered) takes over for
-         the rest of the visit. Never back up: a version that changes its mind
-         is worse than either. ?gq=0|1|2|3 forces a level (3 = no WebGPU) and
-         switches the governor off, to look at one. */
-      var gpuQ = 0, gpuT = 0, gpuN = 0, gpuBad = 0, gpuGov = true, gpuBox = null;
-      var gqForced = /[?&]gq=([0-3])/.exec(location.search);
-      var gpuLevel = function (l) {
-        gpuQ = l;
-        if (l >= 3) {
-          if (gpu && gpu.dispose) gpu.dispose();
-          gpu = null;
-          if (gpuBox) gpuBox.remove();
-          auroraCanvas.style.opacity = '1';
-          gpuGov = false;
-          console.info('[aurelia] too heavy for this machine — the 2D jellyfish stays.');
-        } else if (gpu && gpu.setQuality) gpu.setQuality(l);
-      };
-      var govern = function (now, door) {
-        if (!gpuGov || door) { gpuT = 0; return; }
-        if (!gpuT) { gpuT = now; gpuN = 0; return; }
-        gpuN++;
-        if (now - gpuT < 1000) return;
-        var fps = gpuN * 1000 / (now - gpuT);
-        gpuT = now; gpuN = 0;
-        if (fps >= 40) return;
-        gpuLevel(gpuQ + 1);
-      };
-      var gpuLoading = false;
-      var gpuArmed = false;   /* the page is loaded, idle and still: loading may begin */
-      /* [camera position, look-at] per panel. Aurelia's background/light
-         (assets/aurelia/, background.js's fogFunction + lights.js) is lit
-         from straight overhead, and the fog colour is literally the view
-         ray's upward component times the sky colour — a shot that TILTS
-         DOWN reads as dark water automatically, no separate darkening
-         needed, regardless of how high up the camera itself sits. First
-         pass conflated the two and dropped the camera down near the
-         medusae's own drift band to get that tilt — which read as diving
-         into the swarm instead of watching it from a respectful distance,
-         and put the camera close enough to their y=-25 respawn point (see
-         medusa.js) that a fresh one could pop in already inside the frame
-         instead of visibly rising into it from below. Camera height and
-         distance are back up here; only the look-at target is sent deep
-         to keep the downward tilt (and the contrast win) on its own. */
-      /* vantage points brought about a third closer together than first
-         tuned: the old 25-unit swing from the second to the third one read
-         as a lurch, not a glide */
-      /* ---- the camera as a critically damped spring ----------------------
-         The module's own setView() tweens each move over a fixed time with
-         an ease-in-out: every phrase change restarted the camera from a
-         standstill, accelerated hard and braked hard — "un peu brusque".
-         Now the module is only ever told where the camera IS this frame
-         (setView with a 1ms duration), and where it is comes from a
-         second-order spring chasing the current goal: gentle departure, no
-         overshoot, about two seconds to settle, and if the goal changes
-         mid-flight the camera simply bends toward the new one without its
-         velocity ever jumping. */
-      var cam = null, camGoal = null;
-      var CAM_W = 2.1;   /* rad/s — critically damped, settles in ~2.2s */
-      var stepCam = function (now) {
-        if (!gpu || !gpu.setView || !camGoal) return false;
-        if (!cam) {
-          cam = { p: camGoal[0].slice(), v: [0, 0, 0], l: camGoal[1].slice(), lv: [0, 0, 0], t: now };
-          gpu.setView(cam.p, cam.l, 1);
-          return false;
-        }
-        var dt = Math.min(0.05, Math.max(0, (now - cam.t) / 1000));
-        cam.t = now;
-        var moving = false;
-        for (var k = 0; k < 3; k++) {
-          cam.v[k] += (CAM_W * CAM_W * (camGoal[0][k] - cam.p[k]) - 2 * CAM_W * cam.v[k]) * dt;
-          cam.p[k] += cam.v[k] * dt;
-          cam.lv[k] += (CAM_W * CAM_W * (camGoal[1][k] - cam.l[k]) - 2 * CAM_W * cam.lv[k]) * dt;
-          cam.l[k] += cam.lv[k] * dt;
-          if (Math.abs(cam.v[k]) + Math.abs(cam.lv[k]) > 0.002) moving = true;
-        }
-        gpu.setView(cam.p, cam.l, 1);
-        return moving;
-      };
-
-      var GPU_SCENES = [
-        [[0, 3, 20], [0, -12, 0]],
-        [[8, 1.5, 15], [0, -14, 0]],
-        [[-7, 3.5, 16], [0, -11, 0]]
-      ];
-
-      /* reduced-motion is already handled: this whole module returned at
-         its very first line if `reduce` was true, so reaching here already
-         guarantees motion is wanted — only WebGPU support is left to check.
-         isMobileEra excludes mobile outright regardless of navigator.gpu:
-         plenty of phones expose that property with no real hardware
-         WebGPU backend behind it, so `import()`ing this pulls in Three.js
-         (~600KB) and then quietly falls back to running its verlet
-         physics sim (tens of thousands of springs, a real "physics bake"
-         per the comment above) over WebGL2 instead — on a phone GPU, THAT
-         is the mobile lag this was meant to be strictly additive to, not
-         the cause of. The 2D canvas above already looks and behaves
-         correctly on its own; the upgrade is only worth its cost on a
-         screen big enough that it was actually designed and tuned for. */
-      if (window.navigator && navigator.gpu && !isMobileEra) {
-        var loadGpu = function () {
-          if (gpuLoading || gpu) return;
-          gpuLoading = true;
-          /* resolved against THIS SCRIPT's own captured location (SELF_SRC,
-             top of file), not the page, so it finds assets/aurelia/aurelia.js
-             at any page depth (site root or /en/, /it/) — same reasoning as
-             the ink-hover art path in telaventis.js */
-          var url;
-          try { url = new URL('aurelia/aurelia.js?v=3', SELF_SRC).href; }   /* v=3: the module now has setPaused() and setQuality(); assets are cached for a year */
-          catch (e) { gpuLoading = false; return; }
-
-          /* navigator.gpu existing is not the same as a working WebGPU
-             backend behind it — the comment above already excludes mobile
-             for exactly this gap. It reaches just as often on desktop (a
-             Linux box with no GPU passthrough, a locked-down or virtualised
-             browser, WebGPU disabled by policy…), and without this check
-             the only place that finds out is INSIDE createAurelia() — after
-             aurelia.js has downloaded and its physics bake (a real "tens of
-             thousands of springs" mesh build, done in JS before any GPU
-             call) has already run to completion, several seconds of the
-             main thread blocked for a jellyfish that was never going to
-             mount. requestAdapter() alone answers the same question near-
-             instantly, so a missing backend is now found out before any of
-             that cost is paid, not after. */
-          if (!navigator.gpu.requestAdapter) return;   /* same non-transient case as above */
-          navigator.gpu.requestAdapter().then(function (adapter) {
-            if (!adapter) {
-              /* not transient like a fetch error below — asking again on
-                 the next frame this is called from would just get the same
-                 answer, so gpuLoading is left true: one try, then settled,
-                 same as createAurelia() itself resolving null below. */
-              console.info('[aurelia] no WebGPU adapter available — 2D fallback stays active.');
-              return;
-            }
-            /* Which GPU. The simulation (90 000 springs + bloom) is built for a
-               discrete card or an Apple chip. On an integrated Intel or Qualcomm
-               GPU it was measured at 20-28 fps even with bloom off and the
-               resolution cut to 0.7 — a jellyfish that stutters, a second of
-               frozen page to start it, 2 MB to fetch — so those machines keep
-               the 2D jellyfish (60 fps there) and never download the module.
-               An unreadable adapter is given the benefit of the doubt (the
-               governor below watches it). ?gq=0..2 loads it anyway, to look. */
-            var ginfo = adapter.info || {};
-            var gvendor = String(ginfo.vendor || '').toLowerCase(), garch = String(ginfo.architecture || '').toLowerCase();
-            var gstrong = !gvendor || /nvidia|amd|apple|ati/.test(gvendor) || /xe-hpg|alchemist|battlemage/.test(garch);
-            if (!gstrong && !gqForced) {
-              console.info('[aurelia] integrated GPU (' + gvendor + ' ' + garch + ') — the 2D jellyfish is the better version here and stays.');
-              return;
-            }
-
-            var container = doc.createElement('div');
-            container.className = 'era__aurora era__aurora--gpu';
-            container.style.opacity = '0';   /* fades in over the 2D jellyfish once it is really drawing (.era__aurora's own opacity transition) */
-            era.querySelector('.era__sticky').insertBefore(container, era.querySelector('.era__stage'));
-
-            /* Console only — never a visible element on the page. A visitor
-               has nothing to gain from a status badge; whoever is diagnosing
-               this has devtools open already, which is what console.error
-               below is actually for. */
-            import(/* @vite-ignore */ url).then(function (mod) {
-              return mod.createAurelia(container);
-            }).then(function (inst) {
-              if (!inst) {
-                console.error('[aurelia] createAurelia(container) returned null — module loaded but init declined (app.init() failed inside it, despite an adapter). Falling back to the 2D canvas.');
-                container.remove();
-                return;
-              }
-              gpu = inst;
-              gpuBox = container;
-              if (gqForced) { gpuGov = false; gpuLevel(+gqForced[1]); }
-              else if ((window.devicePixelRatio || 1) > 1.25 && gpu.setQuality) { gpuQ = 1; gpu.setQuality(1); }   /* a dense screen starts one step down */
-              console.info('[aurelia] live: WebGPU jellyfish mounted from ' + url);
-              /* the 2D canvas is not removed, only covered — if the WebGPU
-                 one ever throws mid-flight, dispose() below falls straight
-                 back to a fully intact fallback with nothing to rebuild */
-              auroraCanvas.style.opacity = '0';
-              requestAnimationFrame(function () { requestAnimationFrame(function () { container.style.opacity = '1'; }); });
-              camGoal = GPU_SCENES[Math.max(0, target) % GPU_SCENES.length];
-              cam = null;   /* the spring (below) starts from rest at this vantage */
-            }).catch(function (err) {
-              /* console.error, not .warn — a fetch 404, a syntax error in the
-                 built module, a thrown exception inside init: whatever it is,
-                 it belongs in the same place every other bug on this page
-                 would show up, unmissably, not filed away as a warning */
-              console.error('[aurelia] failed to load ' + url + ' — 2D fallback stays active. Cause:', err);
-              container.remove();
-              gpuLoading = false;
-            });
-          }, function (err) {
-            console.info('[aurelia] requestAdapter() rejected — 2D fallback stays active.', err);
-            gpuLoading = false;
-          });
-        };
-
-        /* Not at page load, and not on scroll proximity either. The module is
-           real work — 426 KB over the wire, then a physics bake and shader
-           compilation that blocks the main thread for the better part of a
-           second (630 ms measured on a 16-core desktop, several times that
-           on an ordinary laptop) — and it used to start in the very first
-           second, in the middle of the hero's own entrance and of the
-           visitor's first scroll, while the headline's font was still in
-           flight. So: only on the full tier (lite never gets here: compactView
-           excludes it), only once the page has finished loading, only when the
-           browser has nothing else to do, and only when the visitor has been
-           still for a moment; a still-scrolling visitor is waited out. The 2D
-           jellyfish is on screen the whole time, and this one fades in over
-           it. loadGpu() is a no-op past its first call, so render()'s own
-           call (guarded by gpuArmed) is only a backstop. */
-        var armGpu = function () {
-          var tryLoad = function () {
-            if (doc.hidden || performance.now() - lastScrollAt < 1500) { setTimeout(tryLoad, 1000); return; }
-            gpuArmed = true;
-            loadGpu();
-          };
-          tryLoad();
-        };
-        /* not before the headline has landed and its gust has crossed (~4.5 s
-           after the page began): the module's start-up is a second of main
-           thread in several blocks, and it must not share them */
-        var afterLoad = function () {
-          setTimeout(function () {
-            if (window.requestIdleCallback) window.requestIdleCallback(armGpu, { timeout: 6000 });
-            else armGpu();
-          }, Math.max(1800, 4800 - performance.now()));
-        };
-        if (doc.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
-      }
       } else {
       /* ---- the flow field: Alex Andrix's actual technique, tamed --------
          codepen.io is not reachable from where this file is written, so
@@ -2069,8 +1557,7 @@
         era.style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
       };
 
-      /* idx is ignored (no per-panel scene table like the desktop's
-         AURORA_SCENES — the field itself is the whole backdrop, there is
+      /* idx is ignored (the field itself is the whole backdrop, there is
          nothing panel-specific to look up); `pending` is what matters.
          true = the trigger just stepped one leg of a longer catch-up and
          the true scroll position (raw) still hasn't been reached, so
@@ -2132,9 +1619,8 @@
       /* How long a departed panel's bubble words keep dissolving after the
          panel itself starts fading — matched to .era__body's own opacity
          duration in telaventis-fx.css (see the comment there) and close to
-         the camera's glide to the next vantage (gpu.setView's own ms
-         below), so the fade, the rise-and-scatter, and the camera still
-         read as one beat and not three separate cuts. Brought down from an
+         the bubbles' flight to the next phrase, so the fade and the
+         rise-and-scatter read as one beat and not two separate cuts. Brought down from an
          earlier, more deliberate 1.4s that ended up reading as sluggish —
          this is still real time, not scroll-scrubbed, so it always plays
          out at this same pace regardless of how fast the visitor scrolled
@@ -2231,9 +1717,22 @@
         return headings[i] ? sampleHeading(headings[i], box) : out;
       };
 
+      var restSig = '';
+      /* where this panel's key words (or its heading) are on the screen right now: if
+         it changes while the bubbles rest (a phone's address bar sliding in or out
+         changes the height the text is centred in; a font landing; a rotation), they
+         are put back on the words instead of staying where the words used to be */
+      var sigOf = function (i) {
+        var b = sticky.getBoundingClientRect(), sg = [b.left | 0, b.top | 0, b.width | 0, b.height | 0];
+        if (kinds[i]) words[i].forEach(function (w) { if (w.key) { var r = w.el.getBoundingClientRect(); sg.push(r.left | 0, r.top | 0); } });
+        else if (headings[i]) { var hr = headings[i].getBoundingClientRect(); sg.push(hr.left | 0, hr.top | 0); }
+        return sg.join(',');
+      };
       var restAt = function (cloud, i) {
-        live = cloud.map(function (c) { return { x: c.x, y: c.y, s: c.s, sp: c.sp, ph: c.ph != null ? c.ph : Math.random() * 6.283 }; });
+        var old = live;
+        live = cloud.map(function (c, k) { return { x: c.x, y: c.y, s: c.s, sp: c.sp, ph: c.ph != null ? c.ph : (old.length === cloud.length && liveOf === i && old[k] ? old[k].ph : Math.random() * 6.283) }; });
         liveOf = i;
+        restSig = sigOf(i);
       };
 
       var startMorph = function (from, to, now) {
@@ -2284,7 +1783,9 @@
       /* land whatever is in flight, instantly and in place */
       var endMorph = function () {
         if (!morph) return;
-        if (!morph.toHeading) restAt(morph.parts, morph.to);
+        /* landed: the resting places are read from the words as they are NOW, not
+           from where they were when the flight began */
+        if (!morph.toHeading) { var landed = morph.to; morph = null; restAt(cloudOf(landed), landed); return; }
         morph = null;
       };
 
@@ -2293,7 +1794,9 @@
         if (!morphCtx) return false;
         /* at rest the bubbles only breathe, slowly: drawn every other frame (the
            canvas keeps what was drawn); a flight or the pointer gets every frame */
-        if (!morph && !ptr.active && live.length && (fieldTick++ & 1)) return true;
+        fieldTick++;
+        if (!morph && live.length && liveOf >= 0 && (fieldTick & 7) === 0 && sigOf(liveOf) !== restSig) restAt(cloudOf(liveOf), liveOf);
+        if (!morph && !ptr.active && live.length && (fieldTick & 1)) return true;
         var w = morphCanvas.clientWidth, h = morphCanvas.clientHeight;
         if (!w || !h) return false;
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -2576,7 +2079,16 @@
         if (!cutGoal && q > CUT_AT) {
           /* bring an overshooting fling back to just past the line (not
              during an in-page jump) */
-          if (performance.now() > jumpUntil) lockScroll(q > CUT_AT + 0.12 ? yAt(CUT_AT + 0.04) : window.scrollY);
+          if (performance.now() > jumpUntil) {
+            /* the last phrase gets its time too: after a hard fling the door used to
+               open the instant the phrase had landed. The page is held at the line
+               until the phrase has been there STEP_COOLDOWN_MS, then the door opens */
+            if (now - lastStepAt < STEP_COOLDOWN_MS) {
+              if (lockY === null) lockScroll(q > CUT_AT + 0.12 ? yAt(CUT_AT + 0.04) : window.scrollY);
+              return paintCut(cutOpen);
+            }
+            lockScroll(q > CUT_AT + 0.12 ? yAt(CUT_AT + 0.04) : window.scrollY);
+          }
           tweenCut(1, now, CUT_MS); intoCut(now);
         }
         else if (cutGoal && q < CUT_AT - 0.06) {
@@ -2748,18 +2260,12 @@
          land, so the pace a visitor sees is set by this number alone,
          never by scroll speed — a fast flick past several thresholds just
          plays each panel in turn at this same fixed pace instead of
-         glitching through them. 1000ms — the longest of the handful of
-         fixed-duration animations a step kicks off (the jelly/camera
-         glide on desktop, AURORA_DUR, matching gpu.setView's own 1000ms;
-         the seascape pan on mobile, SEA_DUR, the same number for the same
-         reason; the .era__body crossfade and EXIT_MS bubble dissolve both
-         finish sooner, at 850ms) — so none of them is ever cut short by
-         the next step starting underneath it. A literal here rather than
-         a reference to either AURORA_DUR or SEA_DUR: this line is shared
-         code that runs regardless of which of the two branches above
-         actually mounted, and whichever one did NOT run never assigned
-         its constant — see the comment where the two branches split. */
-      var STEP_COOLDOWN_MS = 1300;   /* >= MORPH_MS (3c): a new step never cuts a flight short */
+         glitching through them. */
+      /* A phrase stays at least this long before the next can take over, whatever
+         the scroll does: MORPH_MS (3c) is its flight, the rest is time to read it.
+         At 1300 a hard flick went 1 -> 2 -> 3 so fast that the second phrase had
+         barely landed when it was already leaving: it looked skipped. */
+      var STEP_COOLDOWN_MS = 2000;
       var lastStepAt = 0;
 
       /* ---- 3e. the section moves on by itself, for whoever does not know it scrolls
@@ -2789,9 +2295,9 @@
          hidden tab, a held page (the door) or an open door pause or end it.
          Same on phones, where the backdrop is the flow field. */
       var AUTO_DWELL = [3000, 4000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 */
-      var ARRIVE_GRACE = 900;                 /* ms after the section is pinned that still belong to the gesture that brought the visitor */
+      var QUIET_GAP = 250;                    /* ms without any input once the section is whole: the gesture that brought the visitor is over (a trackpad's inertia can run for more than a second — a fixed grace period cancelled autoplay for people who did nothing) */
       var ASSIST_TOP = 0.08;                  /* within this fraction of the screen of being whole, ease it the rest of the way */
-      var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false;
+      var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false, quietSeen = false;
       /* data-auto on the section says where autoplay is: idle (waiting for the
          section to be pinned), count, move, off — for debugging and the test
          harness */
@@ -2805,7 +2311,7 @@
         userAt = now;
         assistMove = null;                      /* a visitor who takes over an ease to 100% simply gets the page back */
         if (autoOff) return;
-        if (autoMove || (autoSince && now - pinnedAt > ARRIVE_GRACE)) autoStop();
+        if (autoMove || (autoSince && quietSeen)) autoStop();
       };
       window.addEventListener('wheel', userMoved, { passive: true });
       window.addEventListener('touchmove', userMoved, { passive: true });
@@ -2819,7 +2325,7 @@
         /* while counting, the page is still: any movement that is not ours
            (scrollbar drag, find-in-page, anything) is the visitor's — once the
            arrival gesture's tail is over */
-        if (autoSince && !autoMove && !assistMove && lockY === null && performance.now() - pinnedAt > ARRIVE_GRACE && Math.abs(y - lastSeenY) > 2) autoStop();
+        if (autoSince && !autoMove && !assistMove && lockY === null && quietSeen && Math.abs(y - lastSeenY) > 2) autoStop();
         lastSeenY = y;
       }, { passive: true });
       var glide = function (m, now) {
@@ -2831,8 +2337,9 @@
         if (autoOff) return;
         if (cutGoal) { autoStop(); return; }     /* the door has opened (by us or not): its own one-shot takes over, and autoplay is done */
         var pinned = rect.top <= 2 && rect.bottom >= vh - 2;
-        if (pinned && !wasPinned) pinnedAt = now;
+        if (pinned && !wasPinned) { pinnedAt = now; quietSeen = false; }
         wasPinned = pinned;
+        if (pinned && !quietSeen && now - pinnedAt >= QUIET_GAP && now - userAt >= QUIET_GAP) quietSeen = true;
         if (autoMove) {
           setAutoState('move');
           if (lockY !== null) { autoMove = null; autoSince = 0; return; }
@@ -2876,25 +2383,18 @@
            finishes. Checked ahead of the onScreen early-return below on
            purpose, so it still gets a chance to fire on approach, not only
            once the stricter definition is already met. */
-        if (loadGpu && gpuArmed && rect.top < vh * 1.8 && rect.bottom > 0) loadGpu();
         /* "on screen" means actually looked at: the section's top edge sits
            right at the bottom of the hero, so a bare rect.top < vh was true from
-           the very first frame — the whole backdrop (jellyfish, bubble field,
-           warp) was being drawn, every frame, for a section that was a few pixels
+           the very first frame — the whole backdrop (gradient, bubble field)
+           was being drawn, every frame, for a section that was a few pixels
            inside the fold (349 ms of main thread in the first 3 s: the hero's
            stutter). A margin of 48px keeps that sliver out. */
         var onScreen = rect.top < vh - 48 && rect.bottom > 48;
-        /* the WebGPU jellyfish runs a render loop of its own, forever, whether
-           it is seen or not (it halved the whole page to 30 fps from the moment
-           it loaded, on the hero, the showcase, everywhere): it is told to rest
-           whenever the section is not on screen */
         /* and while the door is opening: the slit covers the scene within a
            second, its backdrop is not seen any more, and these frames belong to
            the door */
         var doorBusy = !!(cut && cutGoal && cutOpen > 0.02);
-        if (gpu && gpu.setPaused) gpu.setPaused(!onScreen || doc.hidden || doorBusy);
-        if (!onScreen || doc.hidden) { gpuT = 0; return false; }
-        if (gpu) govern(now, doorBusy);
+        if (!onScreen || doc.hidden) return false;
         if (!warmed) warmNow();
 
         var scrollable = Math.max(1, track.offsetHeight - vh);
@@ -2928,35 +2428,15 @@
           endMorph(); startMorph(target, next, now);
           target = next;
           lastStepAt = now;
-          if (!isMobileEra) {
-            setAuroraScene(target, now);
-            /* the real camera flying to a different vantage point in
-               actual 3D space — the same trigger, the same idea as
-               setAuroraScene above, just driven by a real perspective
-               camera instead of a 2D x/y/scale interpolation */
-            if (gpu && gpu.setView) {
-              /* only the GOAL changes here; stepCam() glides there */
-              camGoal = GPU_SCENES[target % GPU_SCENES.length];
-            }
-          }
           for (var i = 0; i < n; i++) {
             applyState(i, i < target ? 'after' : (i > target ? 'before' : 'active'), now, dir);
           }
         }
         if (!(cut && cutGoal && cutOpen > 0.6)) {
           if (isMobileEra) { if (renderSea) renderSea(now); }
-          else { renderAurora(now); renderRipple(now); stepCam(now); }
+          else { drawGrad(now); renderRipple(now); }
         }
         renderField(now);
-
-        /* the same live cursor already tracked for the word-glyph canvases
-           (ptr, above) also nudges any medusa it passes near — the sim
-           already has this built in (Medusa.updatePointerInteraction, a
-           small speed boost that decays on its own) and only needed a way
-           in, since the canvas itself is deliberately pointer-events:none.
-           No-op on the 2D fallback (gpu.setPointer only exists once the
-           WebGPU module is actually loaded). */
-        if (gpu && gpu.setPointer) gpu.setPointer(ptr.active ? ptr.x : -99999, ptr.active ? ptr.y : -99999);
 
 
         return true;

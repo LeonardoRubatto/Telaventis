@@ -131,8 +131,7 @@ la Search Console permet de demander une nouvelle exploration.
 ## 4. Où vit chaque effet
 
 `assets/telaventis.js` — sections numérotées en tête de fichier :
-**version choisie (légère ou complète), décidée une seule fois au chargement,
-voir §7** · 0 menu mobile & barre qui se cache · 1 apparition des blocs · 2 encre au
+0 menu mobile & barre qui se cache · 1 apparition des blocs · 2 encre au
 survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre) ·
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
@@ -176,9 +175,9 @@ dernière phrase la page va jusqu'à la porte, qui joue son titre Moka d'un seul
 coup ; c'est là que l'automatique s'arrête, pour la visite. Un défilement du
 visiteur **après** que la section est à 100 % (molette, doigt, touche, barre de
 défilement, Échap) lui rend la main pour de bon jusqu'au rechargement. Le
-défilement qui l'amène à la section ne compte pas : une entrée dans les 900 ms
-qui suivent (`ARRIVE_GRACE`, la queue d'un geste de pavé tactile) repousse
-seulement le départ. Et si la section est à moins de 8 % d'être entière (le
+défilement qui l'amène à la section ne compte pas : tout ce qui arrive avant le
+premier instant d'immobilité (250 ms sans rien, `QUIET_GAP` : l'inertie d'un pavé
+tactile peut durer plus d'une seconde) fait seulement repartir l'attente. Et si la section est à moins de 8 % d'être entière (le
 visiteur s'est arrêté à ~95 %) et qu'il est immobile, la page est amenée en
 douceur à 100 % (`ASSIST_TOP`). État lisible dans `data-auto` sur la section
 (idle / count / move / off). Mouvement réduit : rien, la section n'est même pas
@@ -212,50 +211,18 @@ changer la taille des scènes. Sans JavaScript la barre
 n'existe pas (scènes empilées). Rejouable avec `node _outils/vitrine.js <url>
 --scenario=timer|click|user|shots`.
 
-La méduse WebGPU (2 Mo de code, ~630 ms de fil principal bloqué même sur un
-PC à 16 cœurs) ne se charge plus au chargement de la page : seulement en
-version complète, une fois la page chargée, le navigateur au repos et le
-visiteur immobile ; elle apparaît en fondu par-dessus la méduse 2D, qui était
-à l'écran depuis le début.
-
-Trois points de vigilance sur la section 3b (méduses/champ de bulles) :
-- **Lisibilité des mots en bulles sur téléphone** : le halo par bulle (le
-  `drop-shadow` sur `.era__w canvas`) ne suffit pas là où le champ de
-  bulles passe au plus vif *à travers* le mot plutôt qu'autour (signalé
-  deux fois : « cherche » et « rencontrer » qui se fondaient dans le
-  courant — encore vrai après une première mare, trop douce, qui
-  retombait à rien bien avant le bord du mot). Chaque mot-clé a
-  maintenant, en plus de la mare sombre pleine largeur, sa propre mare
-  dimensionnée sur sa propre boîte (`.era__w--key::before`, gatée
-  `[data-era-live]` comme le reste — au repos le mot est déjà lisible tel
-  quel, rien à corriger) — et cette fois **quasi opaque** sur l'essentiel
-  de la boîte (dégradé radial, .94 → .8 → transparent seulement dans les
-  15 derniers %), pas un simple assombrissement : un mot en bulles est
-  une texture éparse, pas un aplat, donc il perd contre un fond qui fait
-  le même genre de traits (les courants du champ) tant que ce fond garde
-  un peu de motif visible en dessous — seul le retirer marche. Si une
-  future phrase reste illisible malgré ça, monter encore l'opacité ou
-  agrandir ce `::before` plutôt que celui de la mare pleine largeur, qui
-  ne suit pas la position réelle du mot.
-
-Deux points de vigilance mesurés au profileur puis corrigés :
-- **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tournait 80
-  cycles d'un coup au chargement (~550 ms de fil principal bloqué sur ce
-  test, plus sur un téléphone réel) — assez pour geler une transition CSS en
-  cours (la transition de page entre deux documents, `@view-transition` dans
-  `telaventis.css`) et donner un « flash » figé. Il tourne maintenant par
-  tranches (`warmSlice`, un budget de temps par image plutôt qu'un nombre
-  fixe de cycles), toujours 80 cycles au total, jamais en un seul bloc.
-- **Sur ordinateur**, `navigator.gpu` peut exister sans qu'un vrai
-  périphérique WebGPU réponde derrière (Linux sans GPU, machine virtuelle,
-  WebGPU désactivé…) — un cas déjà exclu du téléphone, mais pas du bureau.
-  Sans vérifier d'abord, le module `assets/aurelia/` était chargé et sa
-  méduse construite en entier (un maillage de ressorts, plusieurs secondes
-  de fil principal bloqué) avant de découvrir qu'il n'y avait rien pour
-  l'afficher, et de revenir au canevas 2D. `loadGpu()` demande maintenant un
-  adaptateur (`requestAdapter()`, quasi instantané) avant de charger le
-  module ; sans adaptateur, le canevas 2D reste actif sans jamais payer ce
-  coût.
+Deux points de vigilance sur la section 3b (champ de bulles / dégradé) :
+- **Lisibilité des mots en bulles.** Un mot en bulles est une texture éparse, pas un
+  aplat : il perd contre un fond qui fait le même genre de traits (les courants du
+  champ de bulles sur téléphone). Il n'y a plus de plaque sombre sous chaque mot (retirée
+  à la demande de Leonardo : « pas d'ombres sous les écritures en bulles ») ; seul reste un
+  halo général doux sous la phrase (`.era__sticky::after` sur téléphone, `.era--grad` avec
+  le dégradé). Si une phrase devient illisible, c'est d'abord la couleur du fond qu'il
+  faut revoir, pas une ombre qu'il faut rajouter.
+- **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tourne par tranches
+  (`warmSlice`, un budget de temps par image plutôt qu'un nombre fixe de cycles : 80 cycles
+  d'un coup bloquaient ~550 ms de fil principal, assez pour geler une transition CSS), et
+  seulement après le titre du hero.
 
 `assets/moka-lab.js` — l'histoire Atelier Moka, et à la fin « du bruit au
 signal » (les photos pixelisées que la caméra traverse). L'ouverture de
@@ -308,112 +275,104 @@ effet doit être écrit dans les fichiers du site, pas chargé depuis un CDN.
 
 ---
 
-## 7. Connexion lente : la version choisie, et comment la mesurer
+## 7. Connexion lente et fluidité : l'état actuel
 
-Le site doit rester agréable sur une mauvaise connexion, à froid, sans cache —
-pas seulement sur la fibre ou au second passage. Deux idées commandent tout :
+Le site doit rester agréable sur une mauvaise connexion, à froid, sans cache. **Il n'y a
+qu'une version** (une version « légère » devinée d'après la connexion a existé : elle se
+trompait parfois, par exemple un « 3g » annoncé par Chrome sur un bon wifi, et ne
+servait plus à rien une fois les méduses retirées). Ce qui protège une connexion lente,
+c'est l'**ordre de chargement** — le hero d'abord, tout le reste après :
 
-**Le premier écran ne dépend de rien d'autre que de lui-même.** Le titre est
-visible dès la première image, dans une police de repli réglée sur les largeurs
-d'Archivo (`@font-face 'Archivo Fallback'`, chiffres mesurés par
-`_outils/metrics.py`) : quand Archivo arrive, rien ne bouge. L'animation du titre
-ne se joue que si Archivo est déjà là (cache, préchargement) ; sinon le titre
-reste où il est, puis le coup de vent passe quand la police est arrivée. Le mot
-TELAVENTIS (bandeau, en-tête, pied de page) a sous le ciel un fond uni et un
-aperçu flou de 332 octets (`--sky-lqip`) : le mot est entier dès la première
-image, le vrai ciel se précise par-dessus. La police et le ciel sont préchargés
-(`<link rel="preload">` dans chaque page, et `Link:` dans `_headers` pour les
-trois accueils : Cloudflare en fait des « 103 Early Hints »). Tout ce qui est
-plus bas dans la page attend : affiches des vidéos (`data-poster`, appliquées
-par `loadPoster()` à l'approche — le générateur les écrit ainsi, et un
-`<noscript>` garde l'image sans JavaScript), vidéos, méduse WebGPU, images de
-l'histoire Moka.
+- **Le premier écran ne dépend de rien d'autre que de lui-même.** Le titre est visible dès
+  la première image, dans une police de repli réglée sur les largeurs d'Archivo
+  (`@font-face 'Archivo Fallback'`, chiffres de `_outils/metrics.py`) : quand Archivo arrive,
+  rien ne bouge. Son animation (opacité et position seulement : elle ne fait travailler que
+  le compositeur) ne démarre qu'au premier moment fluide (4 images de suite sous 24 ms,
+  0,9 s au plus : `whenSmooth`) ; si Archivo n'est pas là, le titre reste où il est et le
+  coup de vent passe quand la police arrive (quantifié, et abandonné de lui-même si la page
+  ne suit plus : `wtStop`). Le mot TELAVENTIS a un fond uni et un aperçu flou du ciel
+  (`--sky-lqip`, 332 octets) : entier dès la première image.
+- **Préchargé, en haute priorité :** la police Archivo et le ciel (`<link rel="preload">`
+  dans chaque page, et `Link:` dans `_headers` pour les trois accueils : Early Hints), les
+  deux scripts `telaventis.js` et `telaventis-fx.js`.
+- **Après, en priorité basse ou à l'approche :** `moka-lab.js`, les images du bas de page,
+  les affiches des vidéos (`data-poster`, appliquées par `loadPoster()` ; un `<noscript>`
+  garde l'image sans JavaScript), les vidéos (la scène courante et la suivante seulement),
+  les images de l'histoire Moka (en 640 px pour la mosaïque).
+- **Repoussé après le titre :** l'échantillonnage des mots-clés des bulles (~270 ms, un
+  mot par tâche, `WARM_AT`), le champ de bulles mobile, la première mesure de l'histoire
+  Moka. La section méduses ne dessine rien tant qu'elle n'est pas vraiment à l'écran
+  (marge de 48 px), ni pendant la porte (`doorBusy`).
+- **Le défilement n'est jamais freiné pour rien :** les écouteurs molette/toucher non
+  passifs ne sont posés que pendant une retenue.
+- **Le seul réglage lié au réseau :** si le navigateur dit `saveData` (ou un réseau 2g),
+  les scènes montrent leurs affiches au lieu de lire les enregistrements (`lite` dans
+  `telaventis.js`, qui ne veut plus dire que cela).
 
-**L'apparition du titre est fluide parce qu'elle ne fait travailler que le
-compositeur.** Elle animait les axes de la police (graisse et largeur) de 49
-lettres à la fois : à chaque image, chaque lettre était recomposée à un nouveau
-réglage et toute la ligne remise en page (10 à 23 ms par image sur un PC rapide,
-40 à 90 ms sur un portable ordinaire) : c'était la saccade. Elle n'anime plus que
-l'opacité et la position (`wt-arrive`). Le coup de vent et l'effet du pointeur,
-eux, animent bien les axes, mais par paliers (quelques réglages par lettre, que
-la police met en cache), seulement quand une valeur change, et s'arrêtent d'eux-mêmes
-si la page n'arrive plus à suivre (10 images lentes de suite : `wtStop`). En
-version légère, ni coup de vent ni effet du pointeur. `node _outils/fluidite.js
-<url> --cpu=4` mesure les images perdues et le script responsable.
-
-**Ce qui est repoussé après le titre (première visite, rien en cache).** Tout
-arrive en retard à froid, donc tout s'empile dans les mêmes images : c'est là que
-l'apparition du titre saccadait alors qu'elle est fluide depuis le cache. Le titre
-ne démarre donc qu'au premier moment fluide (4 images de suite sous 24 ms, 0,9 s
-au plus : `whenSmooth`) ; l'échantillonnage des mots-clés des bulles (~270 ms)
-se fait un mot par tâche, une fois le titre posé (`WARM_AT`) ; la section méduses
-ne dessine rien tant qu'elle n'est pas vraiment à l'écran (marge de 48 px) ; la
-méduse WebGPU ne se charge qu'après ~4,8 s, quand le visiteur est immobile, et
-**se met en pause hors de l'écran** (`setPaused`, ajouté à `aurelia.js`, importé
-avec `?v=2`) : sa boucle de rendu tournait en permanence et faisait passer toute
-la page à 30 images/s. Mesurer dans un vrai navigateur, pas seulement le mode
-sans écran : `HEADED=1 CHROMIUM=<chrome.exe de playwright> node _outils/fluidite.js <url>`.
-
-**Le cadre de performance de la section méduses.** Mesuré dans une vraie fenêtre
-Chrome (carte Intel intégrée), la section tournait à 24 images/s et la porte vers
-Moka à 26 (45 images de plus de 50 ms en 4,5 s). Coupables, dans l'ordre :
-un flou de 18 px recalculé par le GPU à chaque image sur le fond animé
-(`.era__sticky::before`) ; le décor entier qui continuait d'être dessiné pendant
-la porte ; la variable `--cut` re-résolue par tous les éléments de la scène à
-chaque image (maintenant une transformation en ligne sur six calques, la variable
-ne vit que dans la porte) ; le filtre SVG de déformation gardé sur les trois blocs
-de texte même à zéro (maintenant attaché seulement quand il agit) ; la méduse 2D
-redessinée sous la WebGPU ; les bulles au repos redessinées à chaque image (une
-sur deux maintenant). Résultat sur la même machine : 54 images/s dans la section,
-60 pendant la porte. Règles posées pour que ça tienne :
-- le décor se met en pause dès que la porte s'ouvre (`doorBusy`) ;
-- la méduse WebGPU n'est chargée que sur une carte forte (NVIDIA, AMD, Apple, Intel
-  Arc) : sur Intel intégré ou Qualcomm elle tournait à 20-28 images/s même sans
-  bloom et à 0,7 de résolution, donc c'est la méduse 2D qui reste (60 images/s) et le
-  module de 2 Mo n'est jamais téléchargé ;
-- si elle est chargée, elle est gouvernée (`govern`) : chaque seconde à l'écran son
-  débit réel est lu ; sous 40 images/s elle descend d'un cran (1 : résolution 1 et
-  demi-bloom ; 2 : 0,7 sans bloom ; 3 : retour à la méduse 2D, définitif). Jamais
-  de remontée. `?gq=0|1|2|3` force un cran (3 = pas de WebGPU) pour le regarder.
-Mesurer : `HEADED=1 node _outils/fluidite.js <url>` (accueil) ; la section et la
-porte se rejouent avec `parcours.js` et les scripts de mesure de `_outils/`.
-
-**Une seule version par visite.** `telaventis.js` décide au tout début, une fois,
-si la visite est « légère » : `saveData`, type effectif 2g/3g, débit < 1,5 Mbit/s
-ou latence > 450 ms (Chrome) ; sinon, pour Safari/Firefox qui n'ont pas cette
-API, le script lui-même démarre plus de 1,8 s après le début de la navigation ;
-ou appareil faible (≤ 2 cœurs ou ≤ 2 Go). Le résultat est gardé jusqu'au
-rechargement (`window.__tvTier`, classe `html.lite`) : jamais de méduse qui
-apparaît puis disparaît. La version légère est celle des téléphones — champ de
-bulles au lieu de la méduse, pas de WebGPU, pas de déformation du texte, grille
-de bulles plus grossière, piste plus courte — sur n'importe quel écran
-(`compactView` dans `telaventis-fx.js` ; les règles CSS du téléphone sont
-recopiées sans leur condition de largeur, rien à dupliquer à la main), plus des
-affiches à la place des vidéos (accueil et page Travaux). **Pour voir l'une ou l'autre : `?lite=1` ou
-`?lite=0` dans l'adresse.**
+**Le fond de la section « Le point de départ ».** Ordinateur et tablette : le « Animated
+Gradient » du design system (Harsh Jadhav / Componentry, MIT : `backgrounds/animated-gradient`,
+crédité dans les trois `mentions-legales.html`), son shader porté sur une toile WebGL2. Trois
+couleurs du site, choisies par une étude en OKLCH (`_outils/etude-couleurs.py`) : encre
+`#0E1620`, bleu-vert `#1B4458` (la lueur que la section avait déjà, teinte 232°), corail
+`#A8441F` (`--coral` adouci d'un cheveu, teinte 39° : ~170° du bleu-vert, une paire presque
+complémentaire). Mélange en OKLab (le milieu bleu-vert/corail y est moins boueux), tramage
+final contre les bandes, dessiné au rapport de pixels de l'écran (1,5 au plus, ~3 Mpx au
+plus), 30 images/s, `speed: 5`, en pause hors écran et pendant la porte, halo sombre doux
+sous la phrase (`.era--grad`). Mesuré sur images réelles du fond seul (`mesurer-degrade.js`
++ `analyser-degrade.py`) : le texte crème a au pire 8,3:1 derrière lui, 13,6:1 en moyenne ;
+aucun motif de blocs ; grain de 0,3 niveau sur 255. Mesuré en fenêtre Chrome réelle (carte
+Intel intégrée) : 60 images/s dans la section, porte comprise. Sans WebGL2, rien n'est
+dessiné : le fond CSS de la section (`.era__sticky::before`) reste. Téléphone : le champ de
+bulles (Alex Andrix), inchangé.
 
 **Mesurer.** Dans deux terminaux :
 
 ```bash
 python _outils/lent.py 3g            # serveur lent : 700 kbit/s, 400 ms (ou « 4g » : 1,6 Mbit/s, 300 ms)
 cd _outils && npm install            # une fois
-node mesurer.js http://127.0.0.1:8762/index.html            # ordinateur ; --mobile pour un téléphone
-node mesurer.js http://127.0.0.1:8762/index.html --film=out  # garde des images à 1, 2, 3, 5, 8 s
-node parcours.js http://127.0.0.1:8742/index.html --scenario=auto   # joue la section des méduses
+node mesurer.js http://127.0.0.1:8762/index.html            # premier affichage à froid ; --mobile pour un téléphone
+node parcours.js http://127.0.0.1:8742/index.html --scenario=auto   # joue la section : auto | user | user-late | assist | inertia | fling
+node vitrine.js http://127.0.0.1:8742/index.html --scenario=timer   # joue la vitrine : timer | click | user | shots
+HEADED=1 node fluidite.js http://127.0.0.1:8742/index.html          # images perdues, avec le script responsable
 ```
 
-(`mesurer.js` / `parcours.js` utilisent le Chromium de playwright-core ; si la
-version installée n'est pas celle attendue : `CHROMIUM=<chemin du .exe>`.)
-Objectifs, à 1,6 Mbit/s sans cache : premier écran lisible en moins de 2 s,
-décalage de mise en page (CLS) sous 0,1, aucune vidéo ni affiche de la vitrine
-demandée avant la fin du chargement, aucune erreur dans la console. Mesures de
-référence de ce travail (ordinateur, 1,6 Mbit/s, sans cache, version complète) :
-premier affichage 1,65 s, CLS 0,009, 237 Ko reçus avant le premier affichage,
-aucune vidéo ni affiche de la vitrine avant la fin du chargement. `parcours.js` rejoue la section des méduses :
-`auto` (doit aller jusqu'au titre Moka puis s'arrêter), `user` et `user-late`
-(doivent rendre la main au premier geste et ne plus se relancer), `fling` (une
-molette vive ne doit jamais déclencher le défilement automatique).
+(`CHROMIUM=<chemin du .exe>` si le navigateur de playwright-core n'est pas celui installé ;
+`HEADED=1` ouvre une vraie fenêtre, avec carte graphique : les mesures « sans écran » ne
+voient pas les coûts de rendu réels.) Objectifs à 1,6 Mbit/s sans cache : premier écran
+lisible en moins de 2 s, CLS sous 0,1, aucune vidéo ni affiche de la vitrine avant la fin du
+chargement, aucune erreur de console. Avant d'ajouter quoi que ce soit au premier écran :
+le mesurer ainsi.
 
-Avant d'ajouter quoi que ce soit au premier écran : le mesurer ainsi. Un ajout
-qui se charge avant le titre ou le ciel se paie en secondes sur ceux qui en ont
-le plus besoin.
+---
+
+## 8. Réglages décidés avec Leonardo (12 octobre)
+
+- **Le défilement du visiteur n'a pas changé** : seuils (`segBounds`, `HYST`), hauteurs de
+  piste, retenue de la porte. Le défilement automatique ne fait que bouger la vraie
+  position, il n'invente aucune règle.
+- **Une phrase reste au moins 2 s** avant que la suivante puisse la remplacer
+  (`STEP_COOLDOWN_MS`) ; la porte attend aussi que la dernière phrase ait eu ses 2 s.
+- **Défilement automatique** : 3 s, 4 s, 4 s ; départ dès que la section est à 100 % de
+  l'écran, accompagnement doux de ~95 % à 100 % ; rendu au premier geste du visiteur
+  après le premier instant d'immobilité (`QUIET_GAP`, 250 ms : l'inertie d'un pavé
+  tactile peut durer plus d'une seconde). Arrêt au titre Moka.
+- **Bulles : elles suivent leurs mots** (`sigOf` / `restAt` : positions relues sur les
+  mots à l'atterrissage et dès que la page bouge sous elles). Pas d'ombre ni de plaque
+  sous les mots en bulles.
+- **Phrases** : Source Serif 4 en graisse 330 (350 pour la grande), plus grand ; 400/450 sur
+  téléphone ; pas de point final ; plus de texte sous la dernière.
+- **Barre des projets (vitrine)** : en haut de l'écran épinglé, un lien par projet
+  (`projets.py` la génère) ; le projet courant est un minuteur de 7 s (animation CSS
+  `rail-fill`, `animationend`), qui laisse finir la boucle de la vidéo ; en pause
+  pendant la lecture (pointeur sur le texte), arrêté pour la visite au premier défilement
+  du visiteur ; l'en-tête du site ne redescend pas tant qu'on est dans la vitrine
+  (`inShowcase()`) ; le contenu des scènes est descendu d'une bande pour lui faire
+  place.
+- **Titre de l'histoire Moka** (« 01 Donner une direction ») : centré en haut.
+- **Accueil** : plus de « Ouvert à de nouveaux projets » dans le hero (le fait reste sur
+  la page Studio, « En ce moment »).
+
+**Retirés, récupérables dans l'historique git (tag `meduses-webgpu-et-version-legere`) :**
+la méduse WebGPU (`assets/aurelia/`, holtsetio / Aurelia, MIT), la méduse 2D de secours et
+la déformation du texte, la version « légère » et sa détection, le texte sous la dernière
+phrase. Les crédits de `mentions-legales.html` ont été mis à jour (Aurelia n'y figure plus).

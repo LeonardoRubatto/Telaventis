@@ -26,9 +26,10 @@ généré, ce qui est écrit à la main, et la méthode pas à pas.
 9. **Le premier écran se mesure** : toute modification du `<head>`, du titre, du
    mot TELAVENTIS ou de ce qui se charge avant eux se vérifie avec
    `_outils/lent.py` + `_outils/mesurer.js` (MODE-EMPLOI §7). Les affiches de
-   vidéos sont écrites `data-poster` par le générateur, jamais `poster`. La
-   version (légère / complète) est choisie une fois par visite : ne pas la
-   rechoisir en cours de route.
+   vidéos sont écrites `data-poster` par le générateur, jamais `poster`. Il n'y a
+   qu'une version du site : pas de détection de connexion pour en choisir une
+   autre ; l'ordre de chargement (hero d'abord, le reste après) est ce qui
+   protège une connexion lente.
 
 Pour tout travail de front-end, le Design Memory
 (`C:\.Leonardo\Project\design system (website elements template)`) se consulte

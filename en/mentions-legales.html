@@ -41,7 +41,7 @@
 <link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
 <link rel="stylesheet" href="../assets/telaventis.css?v=50">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=41">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=46">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -154,8 +154,8 @@
       <div class="fact"><dt class="fact__k">GreenSock — &laquo;&nbsp;SVG Shape Overlays&nbsp;&raquo; (codepen qBedXpg), d&#39;apr&egrave;s Blake Bowen</dt><dd class="fact__v" style="margin:0;">Liquid background fill behind the pricing blocks</dd></div>
       <div class="fact"><dt class="fact__k">Codrops / uuuulala — &laquo;&nbsp;Typing Effects with Three.js&nbsp;&raquo;</dt><dd class="fact__v" style="margin:0;">Phrases made of flowers and bubbles, “Where it starts” section</dd></div>
       <div class="fact"><dt class="fact__k">betawaxx — &laquo;&nbsp;Paths &amp; Control Points&nbsp;&raquo; (codepen JoGZQLZ)</dt><dd class="fact__v" style="margin:0;">Marker travelling a curve through the project steps, Studio page</dd></div>
-      <div class="fact"><dt class="fact__k">holtsetio — “Aurelia” (github.com/holtsetio/aurelia), MIT licence</dt><dd class="fact__v" style="margin:0;">Drifting jellyfish backdrop, “Where it starts” section (larger screens) — the real source code (WebGPU, Three.js, verlet particle physics), built from the original repository and loaded only in WebGPU-capable browsers; everywhere else, a 2D-canvas reconstruction (a bell silhouette and trailing tentacles, without the simulation) stands in instead. The entry point was adapted to mount inside this page rather than fill the whole screen; the simulation itself is unmodified.</dd></div>
       <div class="fact"><dt class="fact__k">Alex Andrix — “A random world of Turbulence” (codepen jgyWww)</dt><dd class="fact__v" style="margin:0;">“Where it starts” section backdrop on mobile — a particle field carried by a few invisible vortices (“eddies”) whose radial and angular velocities sum together, each particle stroked from its last position to its new one every frame; that construction is the original demo’s own maths. Adapted: each particle keeps one fixed hue — coral or teal, the site’s own two colours — with speed driving its brightness instead of speed steering the hue itself across a full rainbow as in the source; strokes fade slightly each frame instead of accumulating forever; the field is reseeded on every phrase change rather than on click; and the text colour is continuously checked against the actual pixels behind it.</dd></div>
+      <div class="fact"><dt class="fact__k">Harsh Jadhav — “Animated Gradient” (Componentry, componentry.dev), MIT licence</dt><dd class="fact__v" style="margin:0;">Background of the “Le point de départ” section on wide screens, when the WebGPU jellyfish is not running — the original shader (three colours blended by a distorted noise field, then a swirl), ported from React to a plain WebGL2 canvas. Adapted: the three colours are the site’s own (the page’s ink, the teal of its glow, the coral of the TELAVENTIS wordmark), drawn at half resolution at 30 frames a second, with a final dither against banding in the darks, slower than in the source, and paused when off screen.</dd></div>
       <div class="fact"><dt class="fact__k">GreenSock / BrianCross — “Animated Continuous Sections” (codepen XWzRraJ, after PoWapLP)</dt><dd class="fact__v" style="margin:0;">Hand-over between projects on the home page: outer mask and inner layer translating in opposite directions, parallax backdrops, name revealed letter by letter — rebuilt without GSAP or Observer, on native scroll.</dd></div>
       <div class="fact"><dt class="fact__k">Codrops — “Ease Reverse Clip Menu” (MIT)</dt><dd class="fact__v" style="margin:0;">Full-screen mobile menu opening as a circle from its button — the clip-path idea, redone in plain CSS on a &lt;details&gt; element.</dd></div>
       <div class="fact"><dt class="fact__k">Codrops — “Telescope Zoom” and “Image Pixel Loading”</dt><dd class="fact__v" style="margin:0;">Atelier Moka story: the camera travels through a cloud of pixelated photos that sharpen in steps — rebuilt without GSAP or ScrollSmoother.</dd></div>
@@ -206,7 +206,7 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=35" defer fetchpriority="high"></script>
-<script src="../assets/telaventis-fx.js?v=54" defer fetchpriority="high"></script>
+<script src="../assets/telaventis.js?v=38" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=60" defer fetchpriority="high"></script>
 </body>
 </html>

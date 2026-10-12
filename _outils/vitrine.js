@@ -1,6 +1,6 @@
 // Joue la vitrine des projets (barre en haut + minuteur) comme un visiteur.
 //
-//   node vitrine.js <url> [--mobile] [--lite=0|1] [--scenario=timer|click|user|shots]
+//   node vitrine.js <url> [--mobile] [--scenario=timer|click|user|shots]
 //
 //   timer   arrive sur la vitrine et ne touche à rien : la barre du projet courant doit se remplir
 //           (7 s), puis la vitrine passe au projet suivant, et ainsi de suite jusqu'au dernier,
@@ -14,7 +14,7 @@ const args = process.argv.slice(2);
 const url = args.find(a => /^https?:/.test(a));
 const flag = k => { const a = args.find(x => x === '--' + k || x.startsWith('--' + k + '=')); return a ? (a.split('=')[1] ?? true) : null; };
 const mobile = !!flag('mobile'), scenario = flag('scenario') || 'timer', film = flag('film');
-if (!url) { console.error('usage : node vitrine.js <url> [--mobile] [--lite=0|1] [--scenario=timer|click|user|shots] [--film=dossier]'); process.exit(1); }
+if (!url) { console.error('usage : node vitrine.js <url> [--mobile] [--scenario=timer|click|user|shots] [--film=dossier]'); process.exit(1); }
 const fs = require('fs');
 
 (async () => {
@@ -27,7 +27,7 @@ const fs = require('fs');
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto(url + (flag('lite') != null ? (url.includes('?') ? '&' : '?') + 'lite=' + flag('lite') : ''), { waitUntil: 'load' });
+  await page.goto(url + '', { waitUntil: 'load' });
   await page.waitForTimeout(1500);
   // traverser la section des méduses par un saut d'ancre (c'est ce que le site tolère), puis se poser sur la vitrine
   await page.evaluate(() => { location.hash = '#showcase-title'; });

@@ -1,6 +1,6 @@
 // Joue la section des méduses (#digital-era) comme un visiteur, et note ce qui se passe.
 //
-//   node parcours.js <url> [--mobile] [--lite=0|1] [--scenario=auto|user|user-late|assist|fling]
+//   node parcours.js <url> [--mobile] [--scenario=auto|user|user-late|assist|inertia|fling]
 //
 //   auto       arrive sur la section et ne touche plus à rien : le défilement automatique doit
 //              enchaîner les 3 phrases, ouvrir la porte, jouer le titre Moka, puis s'arrêter.
@@ -9,6 +9,8 @@
 //   user-late  laisse le défilement automatique passer à la 2e phrase, puis défile : idem.
 //   assist     s'arrête à ~95 % (la section à 40 px du haut) sans plus toucher à rien : la page doit
 //              être amenée en douceur à 100 %, puis le défilement automatique démarre.
+//   inertia    arrive puis laisse courir l'inertie d'un pavé tactile (molette qui décroît, 1,4 s) : le défilement
+//              automatique ne doit PAS s'en croire coupé.
 //   fling      défile à la molette, fort, depuis le haut de la page jusqu'au-delà de la section :
 //              le défilement automatique ne doit jamais s'en mêler.
 //
@@ -19,7 +21,7 @@ const args = process.argv.slice(2);
 const url = args.find(a => /^https?:/.test(a));
 const flag = k => { const a = args.find(x => x === '--' + k || x.startsWith('--' + k + '=')); return a ? (a.split('=')[1] ?? true) : null; };
 const mobile = !!flag('mobile'), scenario = flag('scenario') || 'auto';
-if (!url) { console.error('usage : node parcours.js <url> [--mobile] [--lite=0|1] [--scenario=auto|user|user-late|assist|fling]'); process.exit(1); }
+if (!url) { console.error('usage : node parcours.js <url> [--mobile] [--scenario=auto|user|user-late|assist|inertia|fling]'); process.exit(1); }
 
 (async () => {
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
@@ -30,10 +32,10 @@ if (!url) { console.error('usage : node parcours.js <url> [--mobile] [--lite=0|1
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto(url + (flag('lite') != null ? (url.includes('?') ? '&' : '?') + 'lite=' + flag('lite') : ''), { waitUntil: 'load' });
+  await page.goto(url + '', { waitUntil: 'load' });
   await page.waitForTimeout(2500);
-  const info = await page.evaluate(() => ({ tier: window.__tvTier, sea: !!document.querySelector('.era__sea'), trackH: document.querySelector('.era__track').offsetHeight, vh: innerHeight }));
-  console.log('version', JSON.stringify(info.tier), info.sea ? '(champ de bulles)' : '(méduse)', 'piste', info.trackH, 'px, écran', info.vh);
+  const info = await page.evaluate(() => ({ sea: !!document.querySelector('.era__sea'), trackH: document.querySelector('.era__track').offsetHeight, vh: innerHeight }));
+  console.log(info.sea ? 'fond : champ de bulles' : 'fond : dégradé', 'piste', info.trackH, 'px, écran', info.vh);
 
   const snap = () => page.evaluate(() => {
     const era = document.querySelector('#digital-era'), top = era.getBoundingClientRect().top + scrollY;
@@ -64,6 +66,7 @@ if (!url) { console.error('usage : node parcours.js <url> [--mobile] [--lite=0|1
   } else {
     await page.evaluate(([y, a]) => window.scrollTo(0, a ? y - 40 : y + 2), [eraTop, scenario === 'assist']);
     let did = false, countAt = 0;
+    if (scenario === 'inertia') { await page.mouse.move(700, 450); for (let i = 0; i < 85; i++) { await page.mouse.wheel(0, Math.max(1, Math.round(60 * Math.exp(-i / 22)))); await page.waitForTimeout(16); } }
     const limit = 45000;
     while (Date.now() - t0 < limit) {
       await page.waitForTimeout(200);

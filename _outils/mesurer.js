@@ -4,13 +4,11 @@
 //   python lent.py 3g                              (dans un autre terminal)
 //   node mesurer.js http://127.0.0.1:8762/index.html            ordinateur
 //   node mesurer.js http://127.0.0.1:8762/index.html --mobile   téléphone 390 px
-//   node mesurer.js <url> --lite=1                  force la version allégée
 //   node mesurer.js <url> --film=out/dossier        garde les images (1, 2, 3, 5, 8 s)
 //
 // Ce que ça donne, et ce que ça vérifie (objectifs : MODE-EMPLOI §7) :
 //   FCP, LCP (et quel élément), CLS (et quels éléments ont bougé), fin du
-//   chargement, octets reçus à ces trois instants, la version choisie
-//   (window.__tvTier), si l'animation du titre a joué ou si le titre s'est
+//   chargement, octets reçus à ces trois instants, si l'animation du titre a joué ou si le titre s'est
 //   simplement affiché, et les fichiers lourds demandés avant le premier écran.
 const { chromium } = require('playwright-core');
 const fs = require('fs');
@@ -21,7 +19,7 @@ const url = args.find(a => /^https?:/.test(a));
 const flag = k => { const a = args.find(x => x === '--' + k || x.startsWith('--' + k + '=')); return a ? (a.split('=')[1] ?? true) : null; };
 const mobile = !!flag('mobile');
 const film = flag('film');
-if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--lite=0|1] [--film=dossier]'); process.exit(1); }
+if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--film=dossier]'); process.exit(1); }
 
 (async () => {
   // CHROMIUM=<chemin> si le navigateur de playwright-core n'est pas celui installé
@@ -47,7 +45,7 @@ if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--lite=0|1]
     new PerformanceObserver(l => l.getEntries().forEach(e => { if (!e.hadRecentInput) window.__m.cls.push([Math.round(e.startTime), +e.value.toFixed(4), (e.sources || []).map(s => s.node && (s.node.className || s.node.nodeName)).filter(Boolean).slice(0, 3).join('|')]); })).observe({ type: 'layout-shift', buffered: true });
   });
   if (film) fs.mkdirSync(film, { recursive: true });
-  const target = url + (flag('lite') != null ? (url.includes('?') ? '&' : '?') + 'lite=' + flag('lite') : '');
+  const target = url + '';
   const go = page.goto(target, { waitUntil: 'load', timeout: 120000 }).catch(e => errors.push('goto: ' + e.message));
   const shots = [1, 2, 3, 5, 8];
   const tStart = Date.now();
@@ -64,7 +62,7 @@ if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--lite=0|1]
     return {
       paint: window.__m.paint, lcp: window.__m.lcp, cls: window.__m.cls,
       clsTotal: +window.__m.cls.reduce((a, b) => a + b[1], 0).toFixed(4),
-      load: Math.round(nav.loadEventEnd), tier: window.__tvTier, htmlClass: document.documentElement.className,
+      load: Math.round(nav.loadEventEnd), htmlClass: document.documentElement.className,
       title: h && h.className, gpu: !!document.querySelector('.era__aurora--gpu'), sea: !!document.querySelector('.era__sea'),
       eraLive: document.querySelector('[data-era]') && document.querySelector('[data-era]').hasAttribute('data-era-live'),
       trackH: document.querySelector('.era__track') && document.querySelector('.era__track').offsetHeight,

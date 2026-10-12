@@ -42,7 +42,9 @@ html.moka-held .moka-story__sticky{position:fixed;top:0;left:0;width:100%}
    purpose, this is a demo box wanting to sit close under its label, not
    a section wanting real separation from one. */
 .moka-story__canvas{position:absolute;inset:clamp(96px,10.3vh,116px) clamp(18px,4.4vw,70px) clamp(28px,4vh,52px);min-height:0}
-.moka-story__phase{position:absolute;left:clamp(54px,7vw,118px);top:clamp(72px,8vh,88px);z-index:8;display:flex;align-items:baseline;gap:14px;pointer-events:none}
+/* centred over the browser, at the top, with the same breath above it as the canvas has at its sides:
+   (top: 4.4vh ~ 40px at 900, label ~36px tall, canvas starting at ~96-116px = a clear 20px+ gap) */
+.moka-story__phase{position:absolute;left:0;right:0;top:clamp(34px,4.4vh,52px);z-index:8;display:flex;align-items:baseline;justify-content:center;text-align:center;gap:14px;pointer-events:none}
 .moka-story__phase-num{font-family:var(--mono);font-size:clamp(12px,1.1vw,15px);letter-spacing:.14em;color:var(--coral);min-width:26px;transition:opacity .32s ease,transform .32s ease}
 /* Sized up from an earlier 12px — too small to read as the point of the
    demo rather than a decorative label, per feedback that it wasn't clear

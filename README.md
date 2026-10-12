@@ -18,7 +18,6 @@ assets/
   telaventis.css / telaventis.js         styles et scripts globaux (sections listées en tête de fichier)
   telaventis-fx.{css,js}                 effets visuels (méduses, bulles, fente, titres…)
   moka-lab.{css,js}                      l'histoire Atelier Moka (page d'accueil)
-  aurelia/                               méduses WebGPU (écrans larges), cf. crédits
   fonts/                                 Archivo, Source Serif 4 (auto-hébergées)
   fonts/clients/                         le nom de chaque client dans sa propre police (OFL, sous-ensembles)
   video/                                 enregistrements des sites clients (AV1 + H.264)   ← générés

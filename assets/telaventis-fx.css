@@ -182,39 +182,28 @@
   to{transform:translate3d(2%,1.5%,0) scale(1.06)}
 }
 
-/* ---- the aurora: a drifting jellyfish behind the words -------------------
-   After holtsetio's "Aurelia" (github.com/holtsetio/aurelia) — a moon-
-   jellyfish simulation: a sinusoidally contracting bell, with the seam,
-   oral arms and tentacles run as a verlet particle system evaluated on the
-   GPU via WebGPU compute shaders, through Three.js' WebGPURenderer. None of
-   that runs here — WebGPU isn't universal, Three.js is ~600KB, and a GPU
-   compute pass has no 2D-canvas equivalent — so this keeps only what a
-   single canvas honestly can: the bell's pulse (one shape breathing on a
-   sine needs no GPU) and the trailing-tentacle silhouette, restated as
-   fading dot-strings rather than simulated particles. See the JS for the
-   full account of what was and wasn't carried over.
-   Layered above the always-on ::before blur (the JS-optional base layer,
-   above) and below the panels. */
-.era__aurora{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;filter:blur(4px) saturate(1.08);opacity:1;transition:opacity .8s ease}
-/* the real WebGPU render sits ABOVE the 2D fallback (later in the DOM) and
-   is not blurred/saturated the way the plain-canvas approximation is —
-   real volumetric lighting doesn't need the same crutch */
-.era__aurora--gpu{filter:none}
-/* small bubbles trailing the cursor over the water itself — same sprites
+/* ---- the aurora: the animated gradient behind the words (desktop) -----------
+   A WebGL canvas (telaventis-fx.js, "the animated gradient": the design
+   system's Animated Gradient, in the site's own ink, teal and coral). Above the
+   always-on ::before ground (the CSS-only layer that is all there is where WebGL2
+   is missing) and below the panels. No blur on it: it is a field of colour, not
+   a drawing. */
+.era__aurora{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;opacity:1;transition:opacity .8s ease}
+/* over the gradient the phrase needs a quiet ground: a soft dark pool right under
+   the text (the phone has the same, for the flow field), so the bright veins of
+   colour never pass behind a word at full strength */
+.era--grad[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(62% 36% at 50% 47%,rgba(7,11,16,.46),rgba(7,11,16,.22) 55%,transparent 82%)}
+/* small bubbles trailing the cursor over the backdrop itself — same sprites
    and idea as hovering a bubble word, just spawned at the pointer instead
-   of sampled from a glyph. Its own z-index between the jellyfish (1,
-   whichever of .era__aurora/--gpu is actually showing) and the text
-   (.era__stage, bumped to 3) rather than DOM order, since which jellyfish
-   layer exists when this canvas is created can change later (the WebGPU
-   one mounts asynchronously, well after this does) — a z-index doesn't
-   care which arrived when. Never intercepts the pointer itself, same as
-   the jellyfish canvas under it — it only ever reads where the pointer
-   already is. */
+   of sampled from a glyph. Its own z-index between the backdrop (1) and the
+   text (.era__stage, bumped to 3); never intercepts the pointer, it only ever
+   reads where the pointer already is. */
 .era__ripple{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
 
 /* ---- the flow field: mobile-only backdrop ---------------------------------
-   Desktop keeps the jellyfish (.era__aurora / .era__ripple, just above); on
-   mobile neither of those mounts at all any more (telaventis-fx.js, the
+   Desktop has the gradient (.era__aurora / .era__ripple, just above); on
+   mobile neither of those mounts at all (telaventis-fx.js, the
    isMobileEra branch in §3b) — replaced by Alex Andrix's actual "A random
    world of Turbulence" technique (codepen jgyWww), a live particle/eddy
    velocity-field simulation, redrawn every frame at a viewport-sized canvas
@@ -320,7 +309,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
    pair of bubble words, which keep dissolving upward on their own canvas
    for a while after this fade starts (EXIT_MS in telaventis-fx.js) — so
    the duration here stays matched to that and to the camera's own glide
-   to the next vantage (GPU_SCENES' setView duration), all three tuned
+   to the next phrase (the bubbles' flight), all tuned
    down together from an earlier pass that read as sluggish. The DEFAULT
    here (opacity 0) is also "not yet reached", so there is never a frame
    where [data-era-live] has switched this to the pinned/absolute layout
@@ -347,12 +336,12 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
    has actually painted something, the same fail-safe contract every other
    canvas on this site follows. */
 .era__mix{
-  margin:0;max-width:52ch;font-family:var(--serif);font-weight:400;
-  font-size:clamp(36px,3.7vw,45px);line-height:1.56;
+  margin:0;max-width:52ch;font-family:var(--serif);font-weight:330;
+  font-size:clamp(38px,3.9vw,48px);line-height:1.5;
   color:rgba(237,233,226,.94);text-wrap:balance;
   /* a dark shadow behind light text, not a lighter text colour — legibility
      has to hold regardless of what's directly behind a given word at a
-     given moment (the jellyfish's own glow, mid-scene, is bright enough to
+     given moment (a bright vein of the backdrop, mid-scene, is bright enough to
      wash out plain cream text without it), and a shadow works the same way
      against ANY backdrop, unlike trying to sample and react to one */
   text-shadow:0 1px 3px rgba(10,16,22,.9),0 2px 18px rgba(10,16,22,.85),0 0 2px rgba(10,16,22,.9);
@@ -418,7 +407,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
   margin:0;font-weight:700;letter-spacing:-.035em;line-height:1.03;
   font-size:clamp(30px,6.2vw,84px);color:var(--cream);
 }
-.era__phrase--serif{font-family:var(--serif);font-weight:500;letter-spacing:-.045em;max-width:17ch;margin:0}
+.era__phrase--serif{font-family:var(--serif);font-weight:350;letter-spacing:-.045em;max-width:17ch;margin:0}   /* Source Serif 4 at its display optical size, light: the phrases read as set type, not as a UI line (tried against Archivo and a heavier serif: this one keeps the key words' bubbles as the only weight on the screen) */
 .era__body .link{color:var(--coral-2);border-color:rgba(224,116,47,.4)}
 .era__body .link:hover{color:var(--cream);border-color:var(--cream)}
 
@@ -452,7 +441,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      shadow always darkens against light text and lightens against dark
      text instead of one shadow colour fighting whichever it landed on. */
   .era__mix{
-    font-size:35px;
+    font-size:35px;font-weight:400;   /* a light weight is for a big screen: on a phone, over a moving field, it needs the body */
     color:var(--panel-fg,var(--cream));
     text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
   }
@@ -473,10 +462,9 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      dark pool under the text (between the field and the words) keeps the
      bubble words legible without dimming the rest of the scene */
   .era[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
-    background:radial-gradient(75% 34% at 50% 46%,rgba(8,11,16,.72),rgba(8,11,16,.35) 55%,transparent 80%)}
+    background:radial-gradient(75% 34% at 50% 46%,rgba(8,11,16,.5),rgba(8,11,16,.22) 55%,transparent 80%)}
   /* bubbles on the flow field: a soft dark halo keeps the word legible
      over the brightest streaks */
-  .era__w canvas{filter:drop-shadow(0 0 5px rgba(10,16,22,.85))}
   /* …not enough on its own where the field's brightest streaks run right
      through the word rather than around it (reported twice over: "cherche"
      and "rencontrer" all but disappearing into the current under them,
@@ -494,11 +482,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      still near-solid to 85%, only actually fading in the last 15% — a
      dark plate the word sits on, not a glow behind it. */
   .era__w--key{position:relative}
-  .era[data-era-live] .era__w--key::before{
-    content:"";position:absolute;inset:-20% -8%;
-    background:radial-gradient(closest-side,rgba(6,9,13,.94) 65%,rgba(6,9,13,.8) 85%,transparent 100%);
-    filter:blur(3px);
-  }
+  /* (no plate under the bubble words any more: they stand on their own) */
   .era__note{
     font-size:15.5px;
     color:rgba(var(--panel-fg-rgb,237,233,226),.76);
@@ -506,22 +490,10 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
   /* panel 3's plain heading gets the same sampled colour — it sits over
      the identical seascape, just without any [data-fx-key] words in it */
   .era__phrase{
+    font-weight:450;
     color:var(--panel-fg,var(--cream));
     text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
   }
-}
-
-/* The lite tier on a wide screen: telaventis-fx.js re-applies the phone block
-   above without its width condition (compactView), which brings the phone's
-   35px phrase and 1.72em key words — right at 390px, lost on a 1440px screen.
-   The desktop's own sizes are put back (the animation is the phone's, the
-   typography is the desktop's); everything else of the phone treatment (flow field,
-   dark pools, sampled colours) is kept as it is. */
-@media (min-width:760px){
-  html.lite .era__mix{font-size:clamp(36px,3.7vw,45px)}   /* the desktop sizes, exactly */
-  html.lite .era__w--key{font-size:2.6em;font-size:min(2.6em,calc((100vw - 60px) * .18))}
-  html.lite .era__note{font-size:clamp(15.5px,1.3vw,18px)}
-  html.lite .era__body{padding-left:clamp(22px,7vw,96px);padding-right:clamp(22px,7vw,96px)}
 }
 
 /* ---- fx-type / era resting state ----------------------------------------
