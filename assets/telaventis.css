@@ -1217,12 +1217,12 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
 
 /* the headline is split by script into letters (§2c); until then it is held
    invisible — but only when scripts are on and motion is wanted, and only for
-   0.6s at most (counted from the moment this stylesheet applies), after which
+   1.1s at most (counted from the moment this stylesheet applies; the arrival waits for a smooth moment, telaventis.js whenSmooth), after which
    it shows, in the size-matched fallback face, whatever the script is doing:
    on a slow connection the script and the font come much later than that, and
    the title used to be blank until they did (telaventis.js §2c) */
 @media (prefers-reduced-motion: no-preference){
-  html.js .hero .h-hero:not(.wt-host){opacity:0;animation:wt-failsafe .01s linear .6s forwards}
+  html.js .hero .h-hero:not(.wt-host){opacity:0;animation:wt-failsafe .01s linear 1.1s forwards}
   @keyframes wt-failsafe{to{opacity:1}}
 }
 

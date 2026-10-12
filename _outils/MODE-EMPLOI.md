@@ -163,8 +163,8 @@ interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
 
 **3e — la section avance toute seule** (défilement automatique, pour qui ne sait
 pas qu'il faut défiler) : dès que la section est à 100 % de l'écran (épinglée),
-la phrase reste entière 3 s (4 s pour la dernière, qui est un titre et un
-paragraphe : `AUTO_DWELL`), puis la page défile d'elle-même vers la suivante —
+la phrase reste entière 3 s, puis 4 s pour la deuxième et la troisième
+(`AUTO_DWELL`), puis la page défile d'elle-même vers la suivante —
 un vrai défilement (la position réelle bouge), donc le déclencheur, ses seuils
 (`segBounds`, `HYST`, `STEP_COOLDOWN_MS`, hauteurs de piste, retenue de la porte),
 la caméra, les bulles et le titre Moka passent par le même chemin qu'avec la
@@ -340,6 +340,19 @@ la police met en cache), seulement quand une valeur change, et s'arrêtent d'eux
 si la page n'arrive plus à suivre (10 images lentes de suite : `wtStop`). En
 version légère, ni coup de vent ni effet du pointeur. `node _outils/fluidite.js
 <url> --cpu=4` mesure les images perdues et le script responsable.
+
+**Ce qui est repoussé après le titre (première visite, rien en cache).** Tout
+arrive en retard à froid, donc tout s'empile dans les mêmes images : c'est là que
+l'apparition du titre saccadait alors qu'elle est fluide depuis le cache. Le titre
+ne démarre donc qu'au premier moment fluide (4 images de suite sous 24 ms, 0,9 s
+au plus : `whenSmooth`) ; l'échantillonnage des mots-clés des bulles (~270 ms)
+se fait un mot par tâche, une fois le titre posé (`WARM_AT`) ; la section méduses
+ne dessine rien tant qu'elle n'est pas vraiment à l'écran (marge de 48 px) ; la
+méduse WebGPU ne se charge qu'après ~4,8 s, quand le visiteur est immobile, et
+**se met en pause hors de l'écran** (`setPaused`, ajouté à `aurelia.js`, importé
+avec `?v=2`) : sa boucle de rendu tournait en permanence et faisait passer toute
+la page à 30 images/s. Mesurer dans un vrai navigateur, pas seulement le mode
+sans écran : `HEADED=1 CHROMIUM=<chrome.exe de playwright> node _outils/fluidite.js <url>`.
 
 **Une seule version par visite.** `telaventis.js` décide au tout début, une fois,
 si la visite est « légère » : `saveData`, type effectif 2g/3g, débit < 1,5 Mbit/s

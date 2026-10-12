@@ -134,8 +134,10 @@
     var canvas=story.querySelector('[data-moka-canvas]');
     var maxInner=0;
     var measure=function(){maxInner=Math.max(0,page.scrollHeight-viewport.clientHeight);};
-    measure();
-    if('ResizeObserver' in window)new ResizeObserver(measure).observe(viewport);
+    /* no direct measure() here: it forced a layout of the whole page in the
+       first second; the observer measures as soon as the browser has laid the
+       viewport out anyway */
+    if('ResizeObserver' in window)new ResizeObserver(measure).observe(viewport);else measure();
 
     var act=null, actPast=null;
     var render=function(dt){

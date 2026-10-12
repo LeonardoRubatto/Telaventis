@@ -508,11 +508,13 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 
 /* The lite tier on a wide screen: telaventis-fx.js re-applies the phone block
    above without its width condition (compactView), which brings the phone's
-   35px phrase — right at 390px, lost on a 1440px screen. Same typography,
-   scaled with the screen; everything else of the phone treatment (flow field,
+   35px phrase and 1.72em key words — right at 390px, lost on a 1440px screen.
+   The desktop's own sizes are put back (the animation is the phone's, the
+   typography is the desktop's); everything else of the phone treatment (flow field,
    dark pools, sampled colours) is kept as it is. */
 @media (min-width:760px){
-  html.lite .era__mix{font-size:clamp(35px,3.5vw,58px)}
+  html.lite .era__mix{font-size:clamp(36px,3.7vw,45px)}   /* the desktop sizes, exactly */
+  html.lite .era__w--key{font-size:2.6em;font-size:min(2.6em,calc((100vw - 60px) * .18))}
   html.lite .era__note{font-size:clamp(15.5px,1.3vw,18px)}
   html.lite .era__body{padding-left:clamp(22px,7vw,96px);padding-right:clamp(22px,7vw,96px)}
 }

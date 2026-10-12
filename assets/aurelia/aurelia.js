@@ -56447,10 +56447,10 @@ async function eZ(n) {
       var T = (x - w.left) / w.width * 2 - 1, N = -((P - w.top) / w.height * 2 - 1);
       r.raycaster.setFromCamera({ x: T, y: N }, r.camera), r.physics.setMouseRay(r.raycaster.ray.origin, r.raycaster.ray.direction);
     }
-  }, p = 0, m = !1, v = new A2(), g = function(x) {
+  }, p = 0, m = !1, Z = !1, v = new A2(), g = function(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }, b = async function() {
-    if (!m) {
+    if (!m && !Z) {
       var x = v.getDelta(), P = v.getElapsedTime(), w = c ? Math.min(1, (performance.now() - c) / u) : 1, T = g(w);
       o.pos.lerpVectors(a.pos, l.pos, T), o.look.lerpVectors(a.look, l.look, T), r.camera.position.copy(o.pos), r.controls.target.copy(o.look);
       try {
@@ -56459,10 +56459,18 @@ async function eZ(n) {
         console.warn("[aurelia]", N), m = !0;
         return;
       }
-      p = requestAnimationFrame(b);
+      Z || (p = requestAnimationFrame(b));
     }
   };
   p = requestAnimationFrame(b);
+  /* telaventis: rest the render loop while the section is not on screen (it ran forever, seen or not) */
+  var S = function(x) {
+    x = !!x;
+    if (x === Z || m) return;
+    Z = x;
+    if (x) { p && (cancelAnimationFrame(p), p = 0); }
+    else { v.getDelta(), p = requestAnimationFrame(b); }
+  };
   var _ = function() {
     var x = Math.max(1, n.clientWidth), P = Math.max(1, n.clientHeight);
     s.setSize(x, P), r.resize(x, P);
@@ -56471,7 +56479,7 @@ async function eZ(n) {
   var C = function() {
     m = !0, p && cancelAnimationFrame(p), window.removeEventListener("resize", _), s.domElement.parentNode && s.domElement.parentNode.removeChild(s.domElement);
   };
-  return { canvas: s.domElement, setView: h, setPointer: d, dispose: C };
+  return { canvas: s.domElement, setView: h, setPointer: d, setPaused: S, dispose: C };
 }
 export {
   eZ as createAurelia

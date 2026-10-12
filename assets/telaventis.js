@@ -428,6 +428,9 @@
     var arrive = (wtChars.length * 14 + 60 + 1000), wtStarted = false;
     var startArrival = function () {
       if (wtStarted) return;
+      /* the fail-safe may have shown the title while we waited for a smooth
+         moment: never hide it again to replay it */
+      if (parseFloat(getComputedStyle(windTitle).opacity) > 0.5) { plainStart(); return; }
       wtStarted = true; wtMode = 'arrival';
       /* lock the lines NOW, one frame before any letter starts moving —
          layWords() measures the browser's own wrap at whatever width the
@@ -469,8 +472,25 @@
       layWords();
       windTitle.classList.add('wt-host', 'wt-settled');   /* settled = no arrival animation: it simply shows */
     };
+    /* A CSS animation runs on the clock, not on frames: started in the middle
+       of the page's start-up (a first layout of the whole page, scripts, the
+       fonts landing — a few hundred milliseconds in which no frame is drawn),
+       it has already played half of itself when frames resume, and the arrival
+       looks like a skip rather than a movement. So it starts on the first
+       smooth stretch: four frames in a row under 24 ms, or after 0.9 s at the
+       latest. This is why it stuttered on a first visit and not from the
+       cache: from the cache the start-up is short. */
+    var whenSmooth = function (cb) {
+      var t0 = performance.now(), last = 0, good = 0;
+      var f = function (t) {
+        if (last) { if (t - last < 24) good++; else good = 0; }
+        last = t;
+        if (good >= 4 || t - t0 > 900) cb(); else requestAnimationFrame(f);
+      };
+      requestAnimationFrame(f);
+    };
     var onFont = function () {
-      if (!wtStarted) { clearTimeout(plainTimer); startArrival(); }
+      if (!wtStarted) { clearTimeout(plainTimer); whenSmooth(startArrival); }
       else if (wtMode === 'plain') settleTitle();
     };
     var fonts = document.fonts;
@@ -479,7 +499,7 @@
     try { fontNow = !fonts || !fonts.check || fonts.check('750 64px Archivo', rawTitle); } catch (e) {}
     var shownAlready = parseFloat(getComputedStyle(windTitle).opacity) > 0.5;
     if (shownAlready) plainStart();
-    else if (fontNow) startArrival();
+    else if (fontNow) whenSmooth(startArrival);
     else plainTimer = setTimeout(plainStart, 450);
     fontIn.then(onFont, onFont);
     if (pointerFine && !lite) {

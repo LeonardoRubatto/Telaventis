@@ -1536,7 +1536,7 @@
              at any page depth (site root or /en/, /it/) — same reasoning as
              the ink-hover art path in telaventis.js */
           var url;
-          try { url = new URL('aurelia/aurelia.js', SELF_SRC).href; }
+          try { url = new URL('aurelia/aurelia.js?v=2', SELF_SRC).href; }   /* v=2: the module now has setPaused(); assets are cached for a year */
           catch (e) { gpuLoading = false; return; }
 
           /* navigator.gpu existing is not the same as a working WebGPU
@@ -1620,17 +1620,20 @@
            call (guarded by gpuArmed) is only a backstop. */
         var armGpu = function () {
           var tryLoad = function () {
-            if (doc.hidden || performance.now() - lastScrollAt < 1000) { setTimeout(tryLoad, 1000); return; }
+            if (doc.hidden || performance.now() - lastScrollAt < 1500) { setTimeout(tryLoad, 1000); return; }
             gpuArmed = true;
             loadGpu();
           };
           tryLoad();
         };
+        /* not before the headline has landed and its gust has crossed (~4.5 s
+           after the page began): the module's start-up is a second of main
+           thread in several blocks, and it must not share them */
         var afterLoad = function () {
           setTimeout(function () {
             if (window.requestIdleCallback) window.requestIdleCallback(armGpu, { timeout: 6000 });
             else armGpu();
-          }, 1800);
+          }, Math.max(1800, 4800 - performance.now()));
         };
         if (doc.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
       }
@@ -2495,14 +2498,52 @@
       /* sample every key word now, before any panel is shown, and mark it
          as drawn by its canvas: from here on its letters are never the
          thing on screen. A word that cannot be sampled keeps its text. */
-      var prebuild = function () {
-        words.forEach(function (list) {
-          list.forEach(function (w) {
-            if (!w.key) return;
-            if (w.glyph.ensure()) { w.glyph.reveal(true); w.el.classList.remove('fx-type-fail'); }
-            else w.el.classList.add('fx-type-fail');
-          });
-        });
+      var prebuildOne = function (w) {
+        if (w.glyph.ensure()) { w.glyph.reveal(true); w.el.classList.remove('fx-type-fail'); }
+        else w.el.classList.add('fx-type-fail');
+      };
+      var keyWords = [];
+      words.forEach(function (list) { list.forEach(function (w) { if (w.key) keyWords.push(w); }); });
+      var prebuild = function () { keyWords.forEach(prebuildOne); };
+      /* Sampling the key words (a canvas each, read back pixel by pixel) is
+         ~270 ms of main thread in all, and it used to run in the first second
+         of the visit — in the middle of the headline's arrival, which is what
+         made that arrival stutter on a first, uncached visit (everything is
+         late then, so everything piles up in the same frames). The section is
+         a screen and a half below the fold; nothing needs these words until
+         someone gets there. So: one word per task, starting once the headline
+         has landed (WARM_AT ms after the page began) and the browser is idle,
+         never in one block. If the visitor is already on their way to the
+         section (render(), below) whatever is left is done at once, before
+         the section can be seen: its key words stay invisible (the canvas
+         stands for them) until they are built, so they must be. */
+      var WARM_AT = 3200, warmed = false, warmDirty = false, warmRunning = false;
+      var warmNow = function () { if (!warmed) { prebuild(); warmed = true; } };
+      var warmSlices = function (remeasure) {
+        if (warmRunning) { warmDirty = warmDirty || remeasure; return; }
+        warmRunning = true;
+        var i = 0;
+        (function step() {
+          if (warmed && !remeasure) { warmRunning = false; return; }
+          if (i >= keyWords.length) {
+            warmed = true; warmRunning = false;
+            if (!morph && liveOf >= 0) restAt(cloudOf(liveOf), liveOf);
+            kick();
+            if (warmDirty) { warmDirty = false; warmSlices(true); }
+            return;
+          }
+          var w = keyWords[i++];
+          if (remeasure) w.glyph.remeasure(true);
+          prebuildOne(w);
+          setTimeout(step, 0);
+        }());
+      };
+      var scheduleWarm = function (remeasure) {
+        var wait = Math.max(0, WARM_AT - performance.now());
+        setTimeout(function () {
+          if (window.requestIdleCallback) window.requestIdleCallback(function () { warmSlices(remeasure); }, { timeout: 2500 });
+          else warmSlices(remeasure);
+        }, wait);
       };
 
       var EXIT_MS = 850;
@@ -2562,12 +2603,12 @@
       /* Only now does the CSS switch from the plain stacked resting state to
          the pinned one — a throw anywhere above leaves the section readable. */
       era.setAttribute('data-era-live', '');
-      prebuild();
+      scheduleWarm(false);
       if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () {
-        words.forEach(function (list) { list.forEach(function (w) { if (w.key) w.glyph.remeasure(true); }); });
-        prebuild();
-        if (!morph && liveOf >= 0) restAt(cloudOf(liveOf), liveOf);
-        kick();
+        /* the words are measured with whatever face was there: once the real
+           fonts are in, measure them again — but only if they were built
+           already (otherwise the first build simply uses the real fonts) */
+        if (warmed) scheduleWarm(true);
       });
 
       /* Seed the mobile field NOW, while the visitor is still up on the
@@ -2589,8 +2630,11 @@
          none, a font/layout pass not yet flushed), where seaBuilt stays
          false and the first on-screen frame builds it exactly as before. */
       if (isMobileEra && typeof buildSea === 'function' && !seaBuilt) {
-        seaBuilt = buildSea(false);
-        if (seaBuilt) seaNeedsReseed = false;
+        setTimeout(function () {
+          if (seaBuilt) return;
+          seaBuilt = buildSea(false);
+          if (seaBuilt) seaNeedsReseed = false;
+        }, Math.max(0, WARM_AT + 400 - performance.now()));   /* after the headline, like the key words; renderSea() builds it itself if the section is reached first */
       }
 
       var target = -1;
@@ -2645,7 +2689,7 @@
          motion never gets here (this module returned at its first line); a
          hidden tab, a held page (the door) or an open door pause or end it.
          Same on phones, where the backdrop is the flow field. */
-      var AUTO_DWELL = [3000, 3000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 (the last is a heading and a paragraph) */
+      var AUTO_DWELL = [3000, 4000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 */
       var ARRIVE_GRACE = 900;                 /* ms after the section is pinned that still belong to the gesture that brought the visitor */
       var ASSIST_TOP = 0.08;                  /* within this fraction of the screen of being whole, ease it the rest of the way */
       var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false;
@@ -2734,8 +2778,20 @@
            purpose, so it still gets a chance to fire on approach, not only
            once the stricter definition is already met. */
         if (loadGpu && gpuArmed && rect.top < vh * 1.8 && rect.bottom > 0) loadGpu();
-        var onScreen = rect.top < vh && rect.bottom > 0;
+        /* "on screen" means actually looked at: the section's top edge sits
+           right at the bottom of the hero, so a bare rect.top < vh was true from
+           the very first frame — the whole backdrop (jellyfish, bubble field,
+           warp) was being drawn, every frame, for a section that was a few pixels
+           inside the fold (349 ms of main thread in the first 3 s: the hero's
+           stutter). A margin of 48px keeps that sliver out. */
+        var onScreen = rect.top < vh - 48 && rect.bottom > 48;
+        /* the WebGPU jellyfish runs a render loop of its own, forever, whether
+           it is seen or not (it halved the whole page to 30 fps from the moment
+           it loaded, on the hero, the showcase, everywhere): it is told to rest
+           whenever the section is not on screen */
+        if (gpu && gpu.setPaused) gpu.setPaused(!onScreen || doc.hidden);
         if (!onScreen || doc.hidden) return false;
+        if (!warmed) warmNow();
 
         var scrollable = Math.max(1, track.offsetHeight - vh);
         var tailPx = cut ? vh * TAIL_VH : 0;

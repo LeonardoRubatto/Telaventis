@@ -14,7 +14,7 @@ const mobile = !!flag('mobile'), cpu = +(flag('cpu') || 1), secs = +(flag('secs'
 if (!url) { console.error('usage : node fluidite.js <url> [--cpu=4] [--mobile] [--lite=0|1] [--secs=6]'); process.exit(1); }
 
 (async () => {
-  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM, headless: !process.env.HEADED, args: process.env.HEADED ? ['--window-size=1500,1000'] : [] } : {});
   const ctx = await browser.newContext(mobile
     ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }
     : { viewport: { width: 1440, height: 900 } });
