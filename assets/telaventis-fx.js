@@ -1163,7 +1163,7 @@
          text, 60 times a second, on exactly the devices least able to
          absorb that cost. warpMap stays null; applyWarp() below no-ops
          the instant it finds that, so nothing else here needs to know. */
-      var warpMap = null;
+      var warpMap = null, warpBodies = [], warpUrl = '', warpOn = false;
       if (!isMobileEra) {
         var warpSvg = doc.createElementNS(SVGNS, 'svg');
         warpSvg.setAttribute('width', '0');
@@ -1177,7 +1177,12 @@
           '</filter>';
         era.appendChild(warpSvg);
         warpMap = warpSvg.querySelector('feDisplacementMap');
-        era.querySelectorAll('.era__body').forEach(function (b) { b.style.filter = 'url(#' + warpId + ')'; });
+        /* the filter is attached to the three text blocks only while it is
+           doing something (see setWarp): an SVG filter on a block keeps it a
+           filtered layer, and the displacement runs again whenever anything
+           touches it, even at scale 0 */
+        warpBodies = [].slice.call(era.querySelectorAll('.era__body'));
+        warpUrl = 'url(#' + warpId + ')';
       }
 
       /* current jellyfish position, in VIEWPORT px — kept up to date by
@@ -1189,6 +1194,17 @@
          reasonable stand-in rather than requiring a 3D-to-screen
          projection of the real camera. */
       var jellyScreen = { x: -9999, y: -9999 };
+      /* an SVG filter attribute written every frame, even with the same value,
+         can re-run the whole displacement filter over three text blocks: only
+         write when it changed */
+      var warpLast = '';
+      var setWarp = function (v) {
+        if (v === warpLast) return;
+        warpLast = v;
+        var on = parseFloat(v) > 0.05;
+        if (on !== warpOn) { warpOn = on; for (var wi = 0; wi < warpBodies.length; wi++) warpBodies[wi].style.filter = on ? warpUrl : ''; }
+        warpMap.setAttribute('scale', v);
+      };
       var applyWarp = function () {
         if (!warpMap) return; /* mobile: no filter was ever attached, nothing to drive */
         /* the actual set glyphs — .era__mix or, on the plain panel,
@@ -1199,7 +1215,7 @@
            to anything. Distance has to be measured against where the
            letters actually are. */
         var activeText = era.querySelector('.era__panel.is-active .era__mix, .era__panel.is-active .era__phrase');
-        if (!activeText) { warpMap.setAttribute('scale', '0'); return; }
+        if (!activeText) { setWarp('0'); return; }
         var r = activeText.getBoundingClientRect();
         var cx = clamp(jellyScreen.x, r.left, r.right);
         var cy = clamp(jellyScreen.y, r.top, r.bottom);
@@ -1214,7 +1230,7 @@
            truly close, and capped low — "légère", not a melt. */
         var reach = Math.max(140, r.width * 0.32);
         var amt = 1 - range(d, 0, reach);
-        warpMap.setAttribute('scale', (amt * amt * 5.5).toFixed(1));
+        setWarp((amt * amt * 5.5).toFixed(1));
       };
 
       /* one swim position per panel: [x, y, scale] as fractions of the box */
@@ -1382,6 +1398,23 @@
       var renderAurora = function (now) {
         var w = auroraCanvas.clientWidth, h = auroraCanvas.clientHeight;
         if (!w || !h) return;
+        if (gpu) {
+          /* the WebGPU jellyfish covers this canvas: nothing is drawn on it (it
+             was still being cleared and redrawn, blurred by a CSS filter, every
+             frame, invisibly). Only the jellyfish's position is kept up to date,
+             for the text warp. */
+          var ge = auroraT0 ? easeInOutCubic(clamp((now - auroraT0) / AURORA_DUR, 0, 1)) : 1;
+          jelly.x = jelly.fx + (jelly.tx - jelly.fx) * ge;
+          jelly.y = jelly.fy + (jelly.ty - jelly.fy) * ge;
+          var gt = now / 1000;
+          var gcx = jelly.x * w + (Math.sin(gt * 0.10 + 1.3) * 0.55 + Math.sin(gt * 0.031 + 4) * 0.45) * w * 0.03;
+          var gcy = jelly.y * h + (Math.sin(gt * 0.084) * 0.6 + Math.sin(gt * 0.021 + 2.2) * 0.4) * h * 0.03;
+          var gr = auroraCanvas.getBoundingClientRect();
+          jellyScreen.x = gr.left + gcx * (gr.width / w);
+          jellyScreen.y = gr.top + gcy * (gr.height / h);
+          applyWarp();
+          return;
+        }
         var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         var pxW = Math.round(w * dpr), pxH = Math.round(h * dpr);
         if (auroraCanvas.width !== pxW || auroraCanvas.height !== pxH) {
@@ -1455,7 +1488,41 @@
          upgrades it where it can run, and if it fails for any reason —
          unsupported, slow to init, an exception — the 2D version is simply
          what stays on screen, because it was never removed. */
-      var gpu = null;      /* { canvas, setView, dispose } once ready */
+      var gpu = null;      /* { canvas, setView, setPaused, setQuality, dispose } once ready */
+      /* ---- the performance frame --------------------------------------------
+         The WebGPU jellyfish is a physics simulation (90 000 springs) plus
+         bloom, at the screen's own resolution: on a modest GPU it cannot hold a
+         frame rate, and a jellyfish at 20 fps is worse than a simpler one at 60.
+         So it is governed: every second of being on screen its real frame rate
+         is read; under 40 fps it steps down — 1: pixel ratio 1
+         and half the bloom, 2: 0.7 and no bloom, then, if even that is not
+         enough, the 2D jellyfish (never removed, only covered) takes over for
+         the rest of the visit. Never back up: a version that changes its mind
+         is worse than either. ?gq=0|1|2|3 forces a level (3 = no WebGPU) and
+         switches the governor off, to look at one. */
+      var gpuQ = 0, gpuT = 0, gpuN = 0, gpuBad = 0, gpuGov = true, gpuBox = null;
+      var gqForced = /[?&]gq=([0-3])/.exec(location.search);
+      var gpuLevel = function (l) {
+        gpuQ = l;
+        if (l >= 3) {
+          if (gpu && gpu.dispose) gpu.dispose();
+          gpu = null;
+          if (gpuBox) gpuBox.remove();
+          auroraCanvas.style.opacity = '1';
+          gpuGov = false;
+          console.info('[aurelia] too heavy for this machine — the 2D jellyfish stays.');
+        } else if (gpu && gpu.setQuality) gpu.setQuality(l);
+      };
+      var govern = function (now, door) {
+        if (!gpuGov || door) { gpuT = 0; return; }
+        if (!gpuT) { gpuT = now; gpuN = 0; return; }
+        gpuN++;
+        if (now - gpuT < 1000) return;
+        var fps = gpuN * 1000 / (now - gpuT);
+        gpuT = now; gpuN = 0;
+        if (fps >= 40) return;
+        gpuLevel(gpuQ + 1);
+      };
       var gpuLoading = false;
       var gpuArmed = false;   /* the page is loaded, idle and still: loading may begin */
       /* [camera position, look-at] per panel. Aurelia's background/light
@@ -1536,7 +1603,7 @@
              at any page depth (site root or /en/, /it/) — same reasoning as
              the ink-hover art path in telaventis.js */
           var url;
-          try { url = new URL('aurelia/aurelia.js?v=2', SELF_SRC).href; }   /* v=2: the module now has setPaused(); assets are cached for a year */
+          try { url = new URL('aurelia/aurelia.js?v=3', SELF_SRC).href; }   /* v=3: the module now has setPaused() and setQuality(); assets are cached for a year */
           catch (e) { gpuLoading = false; return; }
 
           /* navigator.gpu existing is not the same as a working WebGPU
@@ -1562,6 +1629,21 @@
               console.info('[aurelia] no WebGPU adapter available — 2D fallback stays active.');
               return;
             }
+            /* Which GPU. The simulation (90 000 springs + bloom) is built for a
+               discrete card or an Apple chip. On an integrated Intel or Qualcomm
+               GPU it was measured at 20-28 fps even with bloom off and the
+               resolution cut to 0.7 — a jellyfish that stutters, a second of
+               frozen page to start it, 2 MB to fetch — so those machines keep
+               the 2D jellyfish (60 fps there) and never download the module.
+               An unreadable adapter is given the benefit of the doubt (the
+               governor below watches it). ?gq=0..2 loads it anyway, to look. */
+            var ginfo = adapter.info || {};
+            var gvendor = String(ginfo.vendor || '').toLowerCase(), garch = String(ginfo.architecture || '').toLowerCase();
+            var gstrong = !gvendor || /nvidia|amd|apple|ati/.test(gvendor) || /xe-hpg|alchemist|battlemage/.test(garch);
+            if (!gstrong && !gqForced) {
+              console.info('[aurelia] integrated GPU (' + gvendor + ' ' + garch + ') — the 2D jellyfish is the better version here and stays.');
+              return;
+            }
 
             var container = doc.createElement('div');
             container.className = 'era__aurora era__aurora--gpu';
@@ -1581,6 +1663,9 @@
                 return;
               }
               gpu = inst;
+              gpuBox = container;
+              if (gqForced) { gpuGov = false; gpuLevel(+gqForced[1]); }
+              else if ((window.devicePixelRatio || 1) > 1.25 && gpu.setQuality) { gpuQ = 1; gpu.setQuality(1); }   /* a dense screen starts one step down */
               console.info('[aurelia] live: WebGPU jellyfish mounted from ' + url);
               /* the 2D canvas is not removed, only covered — if the WebGPU
                  one ever throws mid-flight, dispose() below falls straight
@@ -2203,11 +2288,15 @@
         morph = null;
       };
 
+      var fieldTick = 0;
       var renderField = function (now) {
         if (!morphCtx) return false;
+        /* at rest the bubbles only breathe, slowly: drawn every other frame (the
+           canvas keeps what was drawn); a flight or the pointer gets every frame */
+        if (!morph && !ptr.active && live.length && (fieldTick++ & 1)) return true;
         var w = morphCanvas.clientWidth, h = morphCanvas.clientHeight;
         if (!w || !h) return false;
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         var pw = Math.round(w * dpr), ph = Math.round(h * dpr);
         if (morphCanvas.width !== pw || morphCanvas.height !== ph) { morphCanvas.width = pw; morphCanvas.height = ph; }
         morphCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2330,7 +2419,17 @@
       var paintCut = function (e) {
         if (Math.abs(e - cutPainted) < 0.0005) return;
         cutPainted = e;
-        sticky.style.setProperty('--cut', e.toFixed(4));
+        /* the section leans in as the door opens. This used to be a CSS variable
+           on the whole pinned scene, re-resolved by every element under it, every
+           frame, with calc() on six full-screen layers; now one inline transform
+           on each of those layers (they are composited: no style cascade, no
+           repaint) and the variable lives only on the door itself. */
+        cut.style.setProperty('--cut', e.toFixed(4));
+        var leanTo = e > 0.0005 ? 'scale(' + (1 + e * 0.16).toFixed(4) + ')' : '';
+        for (var ci = 0; ci < sticky.children.length; ci++) {
+          var kid = sticky.children[ci];
+          if (/\bera__(stage|aurora|ripple|sea|morph)\b/.test(kid.className)) kid.style.transform = leanTo;
+        }
         if (e <= 0.0005) { cut.style.visibility = 'hidden'; return; }
         cut.style.visibility = 'visible';
         /* the spring only approaches 1; past 98.5% the door is simply open */
@@ -2372,7 +2471,7 @@
         if (!src.length) return;
         var W = sticky.clientWidth, H = sticky.clientHeight, g = axisOf(W, H);
         var tMin = 0.55 / 2.1, tMax = 1.55 / 2.1;   /* the on-screen stretch of the axis */
-        var N = Math.min(MORPH_CAP, src.length), parts = new Array(N);
+        var N = Math.min(Math.min(MORPH_CAP, 1400), src.length), parts = new Array(N);   /* the dissolve into the slit is seen for a second, behind the door's own cost: 1400 bubbles are plenty */
         for (var k = 0; k < N; k++) {
           var a = src[Math.floor(k * src.length / N)];
           var t = tMin + (tMax - tMin) * ((a.x / W) * 0.8 + Math.random() * 0.2);
@@ -2789,8 +2888,13 @@
            it is seen or not (it halved the whole page to 30 fps from the moment
            it loaded, on the hero, the showcase, everywhere): it is told to rest
            whenever the section is not on screen */
-        if (gpu && gpu.setPaused) gpu.setPaused(!onScreen || doc.hidden);
-        if (!onScreen || doc.hidden) return false;
+        /* and while the door is opening: the slit covers the scene within a
+           second, its backdrop is not seen any more, and these frames belong to
+           the door */
+        var doorBusy = !!(cut && cutGoal && cutOpen > 0.02);
+        if (gpu && gpu.setPaused) gpu.setPaused(!onScreen || doc.hidden || doorBusy);
+        if (!onScreen || doc.hidden) { gpuT = 0; return false; }
+        if (gpu) govern(now, doorBusy);
         if (!warmed) warmNow();
 
         var scrollable = Math.max(1, track.offsetHeight - vh);
@@ -2839,8 +2943,10 @@
             applyState(i, i < target ? 'after' : (i > target ? 'before' : 'active'), now, dir);
           }
         }
-        if (isMobileEra) { if (renderSea) renderSea(now); }
-        else { renderAurora(now); renderRipple(now); stepCam(now); }
+        if (!(cut && cutGoal && cutOpen > 0.6)) {
+          if (isMobileEra) { if (renderSea) renderSea(now); }
+          else { renderAurora(now); renderRipple(now); stepCam(now); }
+        }
         renderField(now);
 
         /* the same live cursor already tracked for the word-glyph canvases

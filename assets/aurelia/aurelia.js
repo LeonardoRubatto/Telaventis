@@ -56464,6 +56464,10 @@ async function eZ(n) {
   };
   p = requestAnimationFrame(b);
   /* telaventis: rest the render loop while the section is not on screen (it ran forever, seen or not) */
+  var Q = function(l) {
+    var dpr = l <= 0 ? Math.min(window.devicePixelRatio || 1, 2) : (l === 1 ? 1 : 0.7), bl = l <= 0 ? 0.62 : (l === 1 ? 0.3 : 0);
+    s.setPixelRatio(dpr), r.bloomPass && (r.bloomPass.strength.value = bl), _();
+  };
   var S = function(x) {
     x = !!x;
     if (x === Z || m) return;
@@ -56479,7 +56483,7 @@ async function eZ(n) {
   var C = function() {
     m = !0, p && cancelAnimationFrame(p), window.removeEventListener("resize", _), s.domElement.parentNode && s.domElement.parentNode.removeChild(s.domElement);
   };
-  return { canvas: s.domElement, setView: h, setPointer: d, setPaused: S, dispose: C };
+  return { canvas: s.domElement, setView: h, setPointer: d, setPaused: S, setQuality: Q, dispose: C };
 }
 export {
   eZ as createAurelia

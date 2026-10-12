@@ -172,7 +172,9 @@
   background:
     radial-gradient(46% 38% at 22% 28%,rgba(224,116,47,.16),transparent 70%),
     radial-gradient(40% 34% at 78% 72%,rgba(51,98,122,.24),transparent 72%);
-  filter:blur(18px);
+  /* no blur(18px) here any more: two radial gradients are already soft, and a
+     full-screen blur over an element that animates (below) was re-computed by the
+     GPU every frame — measured: 24 fps with it, 34 without, on an integrated GPU */
   animation:eraDrift 26s ease-in-out infinite alternate;
 }
 @keyframes eraDrift{
@@ -259,11 +261,14 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 @keyframes cut-lede{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .era__cut-in .moka-story__intro{min-height:0;width:100%;padding-top:0;padding-bottom:0;
   transform:translateY(calc((1 - var(--cut,0)) * 6vh)) scale(calc(.94 + var(--cut,0) * .06));transform-origin:30% 50%}
+/* the scale itself is written inline by telaventis-fx.js (paintCut): a variable
+   on the whole scene, resolved by every element every frame, was a large part of
+   the door's cost */
 .era[data-era-live] .era__stage,
 .era[data-era-live] .era__aurora,
 .era[data-era-live] .era__ripple,
 .era[data-era-live] .era__sea,
-.era[data-era-live] .era__morph{transform:scale(calc(1 + var(--cut,0) * .16));transform-origin:50% 55%}
+.era[data-era-live] .era__morph{transform-origin:50% 55%;will-change:transform}
 .era[data-era-live] .era__cue{opacity:calc(1 - var(--cut,0) * 4)}
 /* the section the cut hands over to: its title now lives in the cut */
 .moka-story.is-hoisted{border-top:0}

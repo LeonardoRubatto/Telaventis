@@ -354,6 +354,30 @@ avec `?v=2`) : sa boucle de rendu tournait en permanence et faisait passer toute
 la page à 30 images/s. Mesurer dans un vrai navigateur, pas seulement le mode
 sans écran : `HEADED=1 CHROMIUM=<chrome.exe de playwright> node _outils/fluidite.js <url>`.
 
+**Le cadre de performance de la section méduses.** Mesuré dans une vraie fenêtre
+Chrome (carte Intel intégrée), la section tournait à 24 images/s et la porte vers
+Moka à 26 (45 images de plus de 50 ms en 4,5 s). Coupables, dans l'ordre :
+un flou de 18 px recalculé par le GPU à chaque image sur le fond animé
+(`.era__sticky::before`) ; le décor entier qui continuait d'être dessiné pendant
+la porte ; la variable `--cut` re-résolue par tous les éléments de la scène à
+chaque image (maintenant une transformation en ligne sur six calques, la variable
+ne vit que dans la porte) ; le filtre SVG de déformation gardé sur les trois blocs
+de texte même à zéro (maintenant attaché seulement quand il agit) ; la méduse 2D
+redessinée sous la WebGPU ; les bulles au repos redessinées à chaque image (une
+sur deux maintenant). Résultat sur la même machine : 54 images/s dans la section,
+60 pendant la porte. Règles posées pour que ça tienne :
+- le décor se met en pause dès que la porte s'ouvre (`doorBusy`) ;
+- la méduse WebGPU n'est chargée que sur une carte forte (NVIDIA, AMD, Apple, Intel
+  Arc) : sur Intel intégré ou Qualcomm elle tournait à 20-28 images/s même sans
+  bloom et à 0,7 de résolution, donc c'est la méduse 2D qui reste (60 images/s) et le
+  module de 2 Mo n'est jamais téléchargé ;
+- si elle est chargée, elle est gouvernée (`govern`) : chaque seconde à l'écran son
+  débit réel est lu ; sous 40 images/s elle descend d'un cran (1 : résolution 1 et
+  demi-bloom ; 2 : 0,7 sans bloom ; 3 : retour à la méduse 2D, définitif). Jamais
+  de remontée. `?gq=0|1|2|3` force un cran (3 = pas de WebGPU) pour le regarder.
+Mesurer : `HEADED=1 node _outils/fluidite.js <url>` (accueil) ; la section et la
+porte se rejouent avec `parcours.js` et les scripts de mesure de `_outils/`.
+
 **Une seule version par visite.** `telaventis.js` décide au tout début, une fois,
 si la visite est « légère » : `saveData`, type effectif 2g/3g, débit < 1,5 Mbit/s
 ou latence > 450 ms (Chrome) ; sinon, pour Safari/Firefox qui n'ont pas cette
