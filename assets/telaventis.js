@@ -24,6 +24,53 @@
   var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var pointerFine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
+  /* --- connection tier: decided ONCE per page load, never revisited ----------
+   * The heavy parts of the site (the WebGPU jellyfish, the recordings, the
+   * 2D jellyfish, the bubble flight at full density) are a luxury a bad
+   * connection or a weak device cannot pay for, and a page that changes its
+   * mind half-way (a jellyfish that appears, then a different one) is worse
+   * than either version. So the tier is read here, first thing, and kept:
+   * until the next reload, the visitor has the same version throughout.
+   * "lite" is the version the phones already get (telaventis-fx.js: the
+   * flow field instead of the jellyfish, no WebGPU), plus posters instead of
+   * recordings (§6, §7).
+   * Signals, any one is enough:
+   *  · the Network Information API (Chromium only): saveData, a 2g/3g
+   *    effective type, a downlink under 1.5 Mbit/s or an RTT over 450 ms;
+   *  · measured, for the browsers that do not have it (Safari, Firefox):
+   *    this deferred script only starts once the page's HTML and its CSS are
+   *    in, so if that took more than 1.8 s the connection is the problem
+   *    (a cold load on a decent line starts it in well under a second;
+   *    measured: ~2.4 s at 700 kbit/s, ~1.6-1.9 s at 1.6 Mbit/s);
+   *  · a weak device: 2 cores or fewer, or 2 GB of memory or less;
+   *  · ?lite=1 / ?lite=0 in the address, to see either version on purpose.
+   * Exposed as window.__tvTier = { lite, why } and as html.lite. */
+  var tier = (function () {
+    var q = /[?&]lite=([01])/.exec(location.search);
+    if (q) return { lite: q[1] === '1', why: 'url' };
+    var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    var why = '';
+    if (c && c.saveData) why = 'saveData';
+    else if (c && /^(slow-2g|2g|3g)$/.test(c.effectiveType || '')) why = c.effectiveType;
+    else if (c && c.downlink && c.downlink < 1.5) why = 'downlink ' + c.downlink;
+    else if (c && c.rtt && c.rtt > 450) why = 'rtt ' + c.rtt;
+    else if (window.performance && performance.now() > 1800) why = 'slow start ' + Math.round(performance.now());
+    else if ((navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || (navigator.deviceMemory && navigator.deviceMemory <= 2)) why = 'weak device';
+    return { lite: !!why, why: why, at: Math.round(window.performance ? performance.now() : 0) };
+  }());
+  window.__tvTier = tier;
+  if (tier.lite) html.classList.add('lite');
+  var lite = tier.lite;
+  /* posters are applied by script, as the video's scene comes near (the
+     browser fetches a poster the moment it sees the attribute, even with
+     preload="none": ten of them, 420 KB, used to be fetched before the
+     headline's own font). The generator writes data-poster; without script
+     a <noscript> still stands in for the video. */
+  var loadPoster = function (v) {
+    var p = v.getAttribute && v.getAttribute('data-poster');
+    if (p) { v.setAttribute('poster', p); v.removeAttribute('data-poster'); }
+  };
+
   /* --- 0. mobile menu: close the <details> disclosure after a link is
      clicked. Purely a nicety — the menu works perfectly without this (native
      <details>/<summary>, no JS required to open or close it). --- */
@@ -54,9 +101,22 @@
      trackpad jitter from flickering it. --- */
   if (navBar) {
     var lastY = window.scrollY, hrRaf = 0;
+    /* Inside the pinned project showcase the bar never comes back by itself:
+       the page moves there on its own (the scene's resting point, the project
+       timer, a hand-over) and an upward nudge of a few pixels used to bring the
+       bar down over the project names and the copy while someone was reading.
+       It returns when the visitor scrolls up past the top of the showcase, and
+       only then. */
+    var showcaseTrack = document.querySelector('[data-showcase] .showcase__track');
+    var inShowcase = function () {
+      if (!showcaseTrack || !document.querySelector('[data-showcase][data-showcase-live]')) return false;
+      var r = showcaseTrack.getBoundingClientRect();
+      return r.top <= 0 && r.bottom > (window.innerHeight || 800) * 0.5;
+    };
     var headroom = function () {
       hrRaf = 0;
       var y = window.scrollY, dy = y - lastY;
+      if (inShowcase() && !navBar.contains(document.activeElement)) { navBar.classList.add('nav--hidden'); lastY = y; return; }
       if (Math.abs(dy) < 6) return;
       var menuOpen = navToggle && navToggle.hasAttribute('open');
       navBar.classList.toggle('nav--hidden', dy > 0 && y > 140 && !menuOpen && !navBar.contains(document.activeElement));
@@ -298,8 +358,28 @@
     var wtCur = wtChars.map(function () { return 0; });   /* 0 = at rest, 1 = fully open */
     var wtPtr = { x: -1e5, y: -1e5, on: false };
     var gustT0 = 0, GUST_MS = 1700, wtRaf = 0, wtReady = false;
+    /* Changing a letter's weight/width re-shapes it and re-lays-out its line,
+       which is real work (tens of letters, every frame). So: values are
+       quantised (a handful of distinct instances per letter, which the font
+       cache then reuses instead of re-shaping a new one each frame), a letter
+       is only written when its value actually changed, and if the page cannot
+       keep up while the effect runs (slow frames, 10 in a row) the effect is
+       dropped for good and the letters return to rest: a title that stays
+       still is better than one that stutters. The lite tier never runs it. */
+    var wtW = wtChars.map(function () { return W_REST; }), wtD = wtChars.map(function () { return D_REST; });
+    var wtOff = lite, wtSlow = 0, wtLastNow = 0;
+    var wtStop = function () {
+      wtOff = true; gustT0 = 0; wtPtr.on = false;
+      for (var i = 0; i < wtChars.length; i++) { wtChars[i].style.removeProperty('--wg'); wtChars[i].style.removeProperty('--wd'); wtW[i] = W_REST; wtD[i] = D_REST; }
+    };
     var wtFrame = function (now) {
       wtRaf = 0;
+      if (wtOff) return;
+      if (wtLastNow && now - wtLastNow < 120) {
+        /* only judge frames that follow each other (not the gap after idling) */
+        if (now - wtLastNow > 28) { if (++wtSlow >= 10) { wtStop(); return; } } else if (wtSlow > 0) wtSlow--;
+      }
+      wtLastNow = now;
       var b = windTitle.getBoundingClientRect();
       var px = wtPtr.x - b.left, py = wtPtr.y - b.top, R = wtFs * 1.35;
       var gx = -1;
@@ -322,20 +402,33 @@
         var c = wtCur[i] + (target - wtCur[i]) * 0.16;
         if (Math.abs(c - wtCur[i]) > 0.001 || Math.abs(target - c) > 0.002) moving = true;
         wtCur[i] = c;
-        wtChars[i].style.setProperty('--wg', (W_REST + (W_OPEN - W_REST) * c).toFixed(1));
-        wtChars[i].style.setProperty('--wd', (D_REST + (D_OPEN - D_REST) * c).toFixed(2));
+        var nw = Math.round((W_REST + (W_OPEN - W_REST) * c) / 18) * 18, nd = Math.round((D_REST + (D_OPEN - D_REST) * c) / 2.5) * 2.5;
+        if (nw !== wtW[i]) { wtW[i] = nw; wtChars[i].style.setProperty('--wg', nw); }
+        if (nd !== wtD[i]) { wtD[i] = nd; wtChars[i].style.setProperty('--wd', nd); }
       }
-      if (moving || gustT0 || wtPtr.on) wtRaf = requestAnimationFrame(wtFrame);
+      if (moving || gustT0 || wtPtr.on) wtRaf = requestAnimationFrame(wtFrame); else wtLastNow = 0;
     };
-    var wtKick = function () { if (wtReady && !wtRaf) wtRaf = requestAnimationFrame(wtFrame); };
-    /* the arrival starts once Archivo itself is in (at most 1.2s) — started
-       on the fallback face, the letters used to jump width when the web
-       font swapped in mid-flight. Until then the title is held invisible by
-       the CSS (with its own fail-safe). */
+    var wtKick = function () { if (wtReady && !wtOff && !wtRaf) wtRaf = requestAnimationFrame(wtFrame); };
+    /* The title never waits for the network. Three cases, decided once, at
+       the moment this script runs (which, on a slow connection, can be
+       seconds after the page was first drawn):
+       · Archivo is already in (cache, or the preload won), and the CSS
+         fail-safe has not shown the title yet: the whole arrival plays —
+         letters blow in wide and thin and settle. Archivo itself is
+         preloaded in the head, so on a good connection this is the case.
+       · Archivo is not in yet, but the title is still held by the CSS: wait
+         for it at most 450 ms, then show the title as it is.
+       · The CSS fail-safe (0.6 s) has already shown the title in the
+         size-matched fallback face: leave it exactly where it is, never
+         hide and replay it (that blank-then-again was the glitch on a slow
+         first visit), and when Archivo arrives re-lock the lines on the
+         real face and let the gust cross.
+       The face swap itself moves nothing: the fallback is scaled to
+       Archivo's measured widths (telaventis.css). */
     var arrive = (wtChars.length * 14 + 60 + 1000), wtStarted = false;
     var startArrival = function () {
       if (wtStarted) return;
-      wtStarted = true;
+      wtStarted = true; wtMode = 'arrival';
       /* lock the lines NOW, one frame before any letter starts moving —
          layWords() measures the browser's own wrap at whatever width the
          letters currently render at, which right up to this point is
@@ -360,9 +453,6 @@
       windTitle.classList.add('wt-host');
       setTimeout(settleTitle, arrive);
     };
-    var fontIn = (document.fonts && document.fonts.load) ? document.fonts.load('750 64px Archivo') : Promise.resolve();
-    fontIn.then(startArrival, startArrival);
-    setTimeout(startArrival, 1200);
     var settleTitle = function () {
       windTitle.classList.add('wt-settled');
       windTitle.removeAttribute('data-ink-wait');
@@ -372,7 +462,27 @@
       gustT0 = performance.now();
       wtKick();
     };
-    if (pointerFine) {
+    var wtMode = '', plainTimer = 0;
+    var plainStart = function () {
+      if (wtStarted) return;
+      wtStarted = true; wtMode = 'plain';
+      layWords();
+      windTitle.classList.add('wt-host', 'wt-settled');   /* settled = no arrival animation: it simply shows */
+    };
+    var onFont = function () {
+      if (!wtStarted) { clearTimeout(plainTimer); startArrival(); }
+      else if (wtMode === 'plain') settleTitle();
+    };
+    var fonts = document.fonts;
+    var fontIn = (fonts && fonts.load) ? fonts.load('750 64px Archivo', rawTitle) : Promise.resolve();
+    var fontNow = true;
+    try { fontNow = !fonts || !fonts.check || fonts.check('750 64px Archivo', rawTitle); } catch (e) {}
+    var shownAlready = parseFloat(getComputedStyle(windTitle).opacity) > 0.5;
+    if (shownAlready) plainStart();
+    else if (fontNow) startArrival();
+    else plainTimer = setTimeout(plainStart, 450);
+    fontIn.then(onFont, onFont);
+    if (pointerFine && !lite) {
       var heroEl = document.querySelector('.hero');
       heroEl.addEventListener('pointermove', function (e) { wtPtr.x = e.clientX; wtPtr.y = e.clientY; wtPtr.on = true; wtKick(); }, { passive: true });
       heroEl.addEventListener('pointerleave', function () { wtPtr.on = false; wtKick(); });
@@ -485,7 +595,9 @@
     var scenes = Array.prototype.slice.call(show.querySelectorAll('[data-scene]'));
     var track = show.querySelector('.showcase__track');
     var sticky = show.querySelector('.showcase__sticky');
+    var rail = show.querySelector('.showcase__rail');
     var railItems = Array.prototype.slice.call(show.querySelectorAll('.showcase__rail li'));
+    var railLinks = Array.prototype.slice.call(show.querySelectorAll('.showcase__rail a'));
     var N = scenes.length;
     var cur = -1, WIPE = 1150, EASE = 'cubic-bezier(.65,0,.35,1)';
     show.style.setProperty('--scenes', N);
@@ -512,7 +624,7 @@
        has already fired. Doesn't touch scenes never scrolled to, so nothing
        here forces a video open that autoplay would already have covered. */
     var unlockVideos = function () {
-      var v = vidsOf(scenes[0])[0];
+      var v = lite ? null : vidsOf(scenes[0])[0];
       if (!v) return;
       var pr = v.play();
       if (pr && pr.then) pr.then(function () { v.pause(); }).catch(function () {});
@@ -522,21 +634,52 @@
       document.addEventListener(ev, unlockVideos, { capture: true, passive: true, once: true });
     });
     var showOn = false;
+    /* The scenes' posters, in order of need. Not at page load (they are four
+       sections down and were taking the headline's bandwidth), and not all
+       at once: a scene's own and the next two are fetched as the visitor
+       approaches, and — on the full version only — the rest trickle in once
+       the page has finished loading and the browser has nothing else to do.
+       The lite version never fetches ahead. */
+    var warmed = 0;
+    var warmPosters = function (upTo) {
+      for (var k = warmed; k <= Math.min(upTo, N - 1); k++) vidsOf(scenes[k]).forEach(loadPoster);
+      warmed = Math.max(warmed, Math.min(upTo, N - 1) + 1);
+    };
     var syncVideos = function () {
+      /* lite: the posters stand for the recordings — no 0.4–1.9 MB video per
+         scene on a connection that cannot afford it */
       scenes.forEach(function (sc, i) {
         vidsOf(sc).forEach(function (v) {
+          if (lite) return;
           if (i === cur && showOn && !document.hidden) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
           else if (!v.paused) v.pause();
-          if (i === cur + 1 && v.preload === 'none') v.preload = 'auto';
+          /* buffer the next scene only once the showcase is really on screen:
+             at page load `cur` is already 0, and this used to start the
+             second project's 1.2 MB of video on the first second of the visit */
+          if (showOn && i === cur + 1 && v.preload === 'none') v.preload = 'auto';
         });
       });
+      if (showOn) warmPosters(cur + 2);
     };
+    if (!lite) {
+      var whenIdle = function (fn, ms) {
+        setTimeout(function () { if (window.requestIdleCallback) window.requestIdleCallback(fn, { timeout: 4000 }); else fn(); }, ms);
+      };
+      var idleWarm = function () {
+        if (warmed >= N) return;
+        warmPosters(warmed);
+        whenIdle(idleWarm, 700);
+      };
+      var afterLoad = function () { whenIdle(idleWarm, 2500); };
+      if (document.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
+    }
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (es) { showOn = es[0].isIntersecting; syncVideos(); }, { threshold: 0.15 }).observe(sticky);
+      new IntersectionObserver(function (es) { showOn = es[0].isIntersecting; syncVideos(); syncTimer(); }, { threshold: 0.15 }).observe(sticky);
     } else { showOn = true; }
-    document.addEventListener('visibilitychange', function () { syncVideos(); });
+    document.addEventListener('visibilitychange', function () { syncVideos(); syncTimer(); });
     var paintRail = function () {
       railItems.forEach(function (li, i) { li.classList.toggle('is-on', i === cur); li.classList.toggle('is-past', i < cur); });
+      railLinks.forEach(function (a, i) { if (i === cur) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
       if (scenes[cur]) sticky.style.setProperty('--rail-fg', getComputedStyle(scenes[cur]).getPropertyValue('--fg'));
     };
     var riseName = function (sc, dir, delay) {
@@ -608,7 +751,29 @@
        of whether THIS particular hold actually tripped it: play() on a
        video already playing is a harmless no-op, so this costs nothing on
        the times nothing needed fixing and quietly resumes the times it did. */
-    var release = function () { heldY = null; clearTimeout(heldTimer); root.classList.remove('sc-held'); syncVideos(); };
+    /* The wheel / touch listeners that can cancel a scroll must be
+       { passive:false }, and a non-passive listener on the window makes the
+       browser wait for this script before it scrolls ANYTHING — at every
+       notch, on every part of the page, for the whole visit (it was how a
+       busy main thread froze scrolling far from the showcase). So the
+       blocking pair is attached only while a hold is actually running, and
+       removed with it; a passive pair, free, keeps lastInput honest the rest
+       of the time. */
+    var blocking = false;
+    var block = function (e) { lastInput = performance.now(); if (e.cancelable) e.preventDefault(); };
+    var setBlock = function (on) {
+      if (on === blocking) return;
+      blocking = on;
+      var m = on ? 'addEventListener' : 'removeEventListener';
+      window[m]('wheel', block, { passive: false });
+      window[m]('touchmove', block, { passive: false });
+    };
+    var release = function () {
+      heldY = null; clearTimeout(heldTimer); setBlock(false); root.classList.remove('sc-held'); syncVideos();
+      syncTimer();
+      /* a hold that ended on a visitor's gesture: the timer waits for stillness */
+      if (!show.classList.contains('is-timing')) { clearTimeout(quietT); quietT = setTimeout(syncTimer, 760); }
+    };
     /* released once the wipe is done and the gesture has been quiet for
        QUIET ms, re-checked until then */
     var tryRelease = function () {
@@ -623,20 +788,19 @@
       heldUntil = heldSince + ms;
       window.scrollTo({ top: heldY, behavior: 'instant' });
       root.classList.add('sc-held');
+      setBlock(true);
       clearTimeout(heldTimer);
       heldTimer = setTimeout(tryRelease, ms);
+      syncTimer();
     };
-    var gesture = function (e) {
-      lastInput = performance.now();
-      if (heldY !== null && e.cancelable) e.preventDefault();
-    };
-    window.addEventListener('wheel', gesture, { passive: false });
-    window.addEventListener('touchmove', gesture, { passive: false });
+    var gesture = function () { lastInput = performance.now(); userMoved(); };
+    window.addEventListener('wheel', gesture, { passive: true });
+    window.addEventListener('touchmove', gesture, { passive: true });
     var SCROLL_KEYS = { ' ': 1, Spacebar: 1, PageDown: 1, PageUp: 1, ArrowDown: 1, ArrowUp: 1 };
     window.addEventListener('keydown', function (e) {
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
       if (e.key === 'Home' || e.key === 'End') { jumpUntil = performance.now() + 2500; release(); return; }
-      if (SCROLL_KEYS[e.key]) { lastInput = performance.now(); if (heldY !== null) e.preventDefault(); }
+      if (SCROLL_KEYS[e.key] || e.key === 'Escape') { lastInput = performance.now(); userMoved(); if (heldY !== null && e.key !== 'Escape') e.preventDefault(); }
     });
     /* a jump through an in-page link passes through the section on its
        way: it is travel, not reading, so the hold stays off for the trip */
@@ -660,7 +824,8 @@
       scTick = 0;
       if (!primed0 && track.getBoundingClientRect().top < (window.innerHeight || 800) * 1.5) {
         primed0 = true;
-        vidsOf(scenes[0]).forEach(function (v) { if (v.preload === 'none') v.preload = 'auto'; });
+        warmPosters(1);
+        if (!lite) vidsOf(scenes[0]).forEach(function (v) { if (v.preload === 'none') v.preload = 'auto'; });
       }
       if (heldY !== null) {
         if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
@@ -685,6 +850,86 @@
       var d = want > cur ? 1 : -1;
       go(cur + d, d, false);
       hold(rest(cur), WIPE);
+    };
+    /* ---- the project bar -------------------------------------------------
+       Five links at the top of the pinned screen (telaventis.css: .showcase__rail,
+       generated by _outils/projets.py), and the current one is a timer: while
+       the section is really being looked at, its bar fills over --dwell (7 s,
+       a CSS animation: the stylesheet is the clock) and when it is full the
+       showcase moves on to the next project, the way a click on that project
+       would. Clicking a name goes straight to that project.
+       The timer runs only while the section is pinned on screen, the tab is
+       visible, no hand-over is in progress and the visitor has been still for
+       a moment (.is-timing); it waits while the pointer rests on the copy or
+       keyboard focus is in it (.is-reading: someone is reading). The moment
+       the visitor scrolls (wheel, touch, a scrolling key, the scrollbar) or
+       presses Escape it is over for this visit - the bars just show where you
+       are - exactly as for the jellyfish section's autoplay: whoever scrolls
+       knows how. Arriving by scrolling does not count (the stillness it waits
+       for), and clicking the bar does not stop it. It does not loop: on the
+       last project the bar fills and stays full. Reduced motion never gets
+       here (this whole block is skipped under it). */
+    var timerOn = true, timedY = 0, quietT = 0, hoverCopy = false, focusCopy = false;
+    show.setAttribute('data-timer', '');
+    var syncTimer = function () {
+      var on = timerOn && inside && heldY === null && !document.hidden && showOn && performance.now() - lastInput >= 700;
+      if (on !== show.classList.contains('is-timing')) { show.classList.toggle('is-timing', on); if (on) timedY = window.scrollY; }
+    };
+    var stopTimer = function () {
+      timerOn = false; clearTimeout(quietT);
+      show.removeAttribute('data-timer'); show.classList.remove('is-timing', 'is-reading');
+    };
+    var userMoved = function () {
+      if (!timerOn) return;
+      if (show.classList.contains('is-timing')) stopTimer();
+      else { clearTimeout(quietT); quietT = setTimeout(syncTimer, 760); }
+    };
+    var restOf = function (k) {
+      var seg = Math.max(1, track.offsetHeight - (window.innerHeight || 800)) / N;
+      return window.scrollY + track.getBoundingClientRect().top + (k + 0.5) * seg;
+    };
+    /* to any project, not only the next: the hand-over plays once, the scroll
+       is brought to that project's resting point and held until it is over */
+    var goTo = function (j) {
+      if (j === cur || j < 0 || j >= N || heldY !== null) return;
+      go(j, j > cur ? 1 : -1, false);
+      hold(restOf(j), WIPE);
+    };
+    /* the bar is the minimum time, not the whole of it: the recording on screen
+       is allowed to finish the loop it is in before the next project takes over
+       (the posters of the lite tier have no loop to wait for) */
+    var advanceAfterLoop = function (from) {
+      var v = !lite && scenes[from] && scenes[from].querySelector('.scene__desk video');
+      var left = (v && !v.paused && isFinite(v.duration) && v.duration > 0) ? (v.duration - v.currentTime) * 1000 : 0;
+      setTimeout(function () {
+        if (cur !== from || !timerOn) return;
+        if (!show.classList.contains('is-timing') || show.classList.contains('is-reading')) { advanceAfterLoop(from); return; }
+        goTo(from + 1);
+      }, Math.min(Math.max(left, 0) + 80, 30000));
+    };
+    if (rail) {
+      rail.addEventListener('animationend', function (e) {
+        if (e.animationName === 'rail-fill' && timerOn && show.classList.contains('is-timing') && cur < N - 1) advanceAfterLoop(cur);
+      });
+      rail.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a');
+        if (!a) return;
+        e.preventDefault(); e.stopPropagation();   /* not an in-page jump (the document-level handler would call it one) */
+        lastInput = performance.now();
+        goTo(railLinks.indexOf(a));
+      });
+    }
+    var setReading = function () { show.classList.toggle('is-reading', hoverCopy || focusCopy); };
+    sticky.addEventListener('pointerover', function (e) { hoverCopy = !!(e.target.closest && e.target.closest('.scene__copy')); setReading(); });
+    sticky.addEventListener('pointerleave', function () { hoverCopy = false; setReading(); });
+    sticky.addEventListener('focusin', function (e) { focusCopy = !!(e.target.closest && e.target.closest('.scene__copy')); setReading(); });
+    sticky.addEventListener('focusout', function () { focusCopy = false; setReading(); });
+    var followCore = follow;
+    follow = function () {
+      /* while the timer runs the page is still: a scroll that is not ours (the scrollbar, anything) is the visitor's */
+      if (show.classList.contains('is-timing') && heldY === null && Math.abs(window.scrollY - timedY) > 2) stopTimer();
+      followCore();
+      syncTimer();
     };
     window.addEventListener('scroll', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
     window.addEventListener('resize', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
@@ -717,7 +962,14 @@
    * and keeps it scrolled into sight when the bar overflows (phones). */
   var work = document.querySelector('[data-work]');
   if (work && 'IntersectionObserver' in window) {
-    if (!reduce) {
+    /* posters: the first project's at once, every other as it comes within
+       a screen and a half (they were all fetched at page load) */
+    var wvids = Array.prototype.slice.call(work.querySelectorAll('.cst__video'));
+    var pio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { loadPoster(e.target); pio.unobserve(e.target); } });
+    }, { rootMargin: '150% 0px' });
+    wvids.forEach(function (v) { pio.observe(v); });
+    if (!reduce && !lite) {
       var cvio = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           var v = e.target;
@@ -725,7 +977,7 @@
           else if (!v.paused) v.pause();
         });
       }, { threshold: 0.33 });
-      Array.prototype.forEach.call(work.querySelectorAll('.cst__video'), function (v) { cvio.observe(v); });
+      wvids.forEach(function (v) { cvio.observe(v); });
     }
     var bar = document.querySelector('[data-work-bar]');
     if (bar) {

@@ -65,6 +65,24 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; manifest-src 'self'; upgrade-insecure-requests
 
+# The three home pages ask for what their first screen cannot do without
+# BEFORE the HTML body arrives: Cloudflare turns a Link header into a
+# "103 Early Hints" response, so the browser starts the headline's font and
+# the sky that fills the wordmark while the server is still preparing the page
+# (the same two files are also <link rel="preload"> in every page's <head>,
+# which Pages cannot hint itself: it skips preloads that carry crossorigin or
+# fetchpriority). Both are fixed file names that never change, so unlike the
+# stylesheets (?v=NN) they can safely be named here.
+/
+  Link: </assets/fonts/archivo-latin.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin
+  Link: </assets/art/cumulus03.avif>; rel=preload; as=image; type="image/avif"; fetchpriority=high
+/en/
+  Link: </assets/fonts/archivo-latin.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin
+  Link: </assets/art/cumulus03.avif>; rel=preload; as=image; type="image/avif"; fetchpriority=high
+/it/
+  Link: </assets/fonts/archivo-latin.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin
+  Link: </assets/art/cumulus03.avif>; rel=preload; as=image; type="image/avif"; fetchpriority=high
+
 # Every file in assets/ is either content-hashed by convention (the
 # ?v=NN query string bumped by hand on every edit — see the <link>/<script>
 # tags in any page) or genuinely static (fonts, art, icons). Either way the

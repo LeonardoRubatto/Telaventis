@@ -26,6 +26,11 @@ cas, etc.) reste écrit à la main. La méthode complète est dans PROJETS.md.
 """
 import html, json, os, re, shutil, sys
 
+# la console Windows (cp1252) ne sait pas écrire le ✓ : sans ceci, « verifier » plante au moment de répondre
+for _f in (sys.stdout, sys.stderr):
+    if hasattr(_f, 'reconfigure'):
+        _f.reconfigure(encoding='utf-8')
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, '_outils', 'projets.json')
 LANGS = {'fr': '', 'en': 'en/', 'it': 'it/'}
@@ -33,11 +38,11 @@ AV1 = 'video/webm; codecs=&quot;av01.0.05M.08&quot;'
 
 L = {
     'fr': dict(pb='Le problème&nbsp;:', rp='La réponse&nbsp;:', coul='Couleurs', typo='Typographies',
-               cas='Voir l’étude de cas', joue='La page d’accueil de {n}, en ligne — ouvrir l’étude de cas'),
+               cas='Voir l’étude de cas', joue='La page d’accueil de {n}, en ligne — ouvrir l’étude de cas', rail='Projets'),
     'en': dict(pb='The problem:', rp='The response:', coul='Colours', typo='Typefaces',
-               cas='See the case study', joue='{n}’s home page, live — open the case study'),
+               cas='See the case study', joue='{n}’s home page, live — open the case study', rail='Projects'),
     'it': dict(pb='Il problema:', rp='La risposta:', coul='Colori', typo='Caratteri',
-               cas='Vedi il caso studio', joue='La home page di {n}, online — apri il caso studio'),
+               cas='Vedi il caso studio', joue='La home page di {n}, online — apri il caso studio', rail='Progetti'),
 }
 A_REDIGER = 'À RÉDIGER'
 
@@ -68,10 +73,17 @@ def style(p):
 def video(pre, k, kind, cls, vt=False):
     w, h = (1280, 800) if kind == 'desk' else (360, 780)
     v = f' style="view-transition-name:shot-{k}"' if vt else ''
+    poster = f'{pre}assets/video/{k}-{kind}-poster.webp'
+    # data-poster, not poster: a browser fetches a poster the moment it sees
+    # the attribute, even with preload="none" - ten of them were taking the
+    # headline's bandwidth on a slow first visit. telaventis.js applies them
+    # as each scene nears (loadPoster); without script, the <noscript> still
+    # takes the video's place (telaventis.css hides the video then).
     return (f'<video class="{cls}" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" '
-            f'width="{w}" height="{h}" poster="{pre}assets/video/{k}-{kind}-poster.webp"{v}>'
+            f'width="{w}" height="{h}" data-poster="{poster}"{v}>'
             f'<source src="{pre}assets/video/{k}-{kind}.webm" type="{AV1}">'
-            f'<source src="{pre}assets/video/{k}-{kind}.mp4" type="video/mp4"></video>')
+            f'<source src="{pre}assets/video/{k}-{kind}.mp4" type="video/mp4"></video>'
+            f'<noscript><img class="{cls}" src="{poster}" width="{w}" height="{h}" alt=""></noscript>')
 
 
 # ---------------------------------------------------------------- accueil --
@@ -110,8 +122,13 @@ def scene(p, lg, pre):
 
 
 def vitrine(P, lg, pre):
-    rail = ''.join(f'<li style="--ac:{p["couleurs"]["accent"]}">{esc(p["textes"][lg]["categorie"])}</li>' for p in P)
-    return ''.join(scene(p, lg, pre) for p in P) + f'\n        <ol class="showcase__rail" aria-hidden="true">{rail}</ol>\n        '
+    # the bar at the top of the pinned screen: one link per project, in the
+    # project's own accent. Clickable (telaventis.js §6 goes to the scene), and
+    # the current one fills like a timer, then hands over to the next.
+    # Hidden until the script has pinned the section (no JS: the scenes are
+    # simply stacked and the links would only point down the same page).
+    rail = ''.join(f'<li style="--ac:{p["couleurs"]["accent"]}"><a href="#scene-{p["cle"]}">{esc(p["textes"][lg]["categorie"])}</a></li>' for p in P)
+    return ''.join(scene(p, lg, pre) for p in P) + f'\n        <ol class="showcase__rail" aria-label="{L[lg]["rail"]}">{rail}</ol>\n        '
 
 
 # ---------------------------------------------------------------- travaux --

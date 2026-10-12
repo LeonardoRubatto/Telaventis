@@ -42,17 +42,31 @@
   var ACT_END=.30, ACT_MS=2600, QUIET=180, HOLD_MAX=ACT_MS+2000;
   var root=document.documentElement;
   var heldY=null, heldSince=0, lastInput=0, jumpUntil=0;
+  /* the scroll-cancelling wheel/touch listeners must be non-passive, and a
+     non-passive listener on the window makes the browser wait for the main
+     thread before scrolling anything, for the whole visit — so that pair is
+     attached only while a hold runs; a passive pair keeps lastInput honest
+     the rest of the time */
+  var blocking=false;
+  var block=function(e){lastInput=performance.now();if(e.cancelable)e.preventDefault();};
+  var setBlock=function(on){
+    if(on===blocking)return; blocking=on;
+    var m=on?'addEventListener':'removeEventListener';
+    window[m]('wheel',block,{passive:false});
+    window[m]('touchmove',block,{passive:false});
+  };
   var hold=function(y){
     heldY=Math.round(y); heldSince=performance.now();
     window.scrollTo({top:heldY,behavior:'instant'});
     root.classList.add('moka-held');
+    setBlock(true);
   };
-  var release=function(){heldY=null;root.classList.remove('moka-held');};
-  var gesture=function(e){lastInput=performance.now();if(heldY!==null&&e.cancelable)e.preventDefault();};
+  var release=function(){heldY=null;setBlock(false);root.classList.remove('moka-held');};
+  var gesture=function(){lastInput=performance.now();};
   var jumping=function(){return performance.now()<jumpUntil;};
   if(!reduce){
-    window.addEventListener('wheel',gesture,{passive:false});
-    window.addEventListener('touchmove',gesture,{passive:false});
+    window.addEventListener('wheel',gesture,{passive:true});
+    window.addEventListener('touchmove',gesture,{passive:true});
     var SCROLL_KEYS={' ':1,Spacebar:1,PageDown:1,PageUp:1,ArrowDown:1,ArrowUp:1};
     window.addEventListener('keydown',function(e){
       if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable)return;
@@ -345,20 +359,26 @@
       var im=new Image();
       im.decoding='async';
       im.onload=function(){f.img=im;f.res=0;kick();};
-      im.src=src.currentSrc||src.src;
+      /* the mosaic never shows more than ~420 px of a picture: the 640 px file
+         is plenty, whatever size the page's own copy of it chose */
+      im.src=(src.getAttribute('src')||'').replace(/-(?:960|1536)\.webp/,'-640.webp');
     };
     f.src=src; f.load=load;
     frags.push(f);
   });
-  /* the page images are lazy; the depth layer needs its pictures a little
-     before the story arrives, so once the story is within three screens it
-     asks for them itself (not at page load — they are not the hero's) */
+  /* the page images are lazy; the depth layer needs its pictures well before
+     the story arrives (they are drawn the moment it does, and a fragment
+     whose picture is not in yet is simply missing from the opening), so
+     once the story is within nine screens — i.e. while the section before
+     it is being read — it asks for them itself (not at page load: they are
+     not the hero's) */
   var primed=false;
   var prime=function(){
     primed=true;
     frags.forEach(function(f){
-      var s=f.src;
-      if(s.complete&&s.naturalWidth)f.load(); else { s.addEventListener('load',f.load,{once:true}); s.loading='eager'; }
+      /* its own small copy, not the page's: the page's image stays lazy and
+         loads (at the size the layout wants) when the browser is shown */
+      f.load();
     });
   };
   var STEPS=[12,24,48,96,192,420];
@@ -381,7 +401,7 @@
     var vh=window.innerHeight||800;
     var p=story._mokaP;
     if(p==null)p=clamp(-r.top/Math.max(1,track.offsetHeight-vh),0,1);
-    if(!primed&&r.top<vh*3)prime();
+    if(!primed&&r.top<vh*9)prime();   /* the era section before it is ~7.4 screens tall: start while it is read, not when the story is upon us */
     var onScreen=r.top<vh&&r.bottom>0;
     /* while the opening act plays on its own clock (the hold, above),
        nothing scrolls, so keep watching: played backwards, it comes back */

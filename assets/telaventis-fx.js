@@ -23,6 +23,39 @@
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq('(prefers-reduced-motion: reduce)');
 
+  /* The connection tier, decided once by telaventis.js (§ "connection
+     tier") before this file runs, and never changed until the next reload.
+     "lite" runs the version phones get — in #digital-era: the flow field
+     instead of the jellyfish, no WebGPU, no SVG text warp, a coarser bubble
+     grid, the shorter track — on whatever screen it is. */
+  var lite = !!(window.__tvTier && window.__tvTier.lite);
+  var compactView = lite || mq('(max-width:759px)');
+  /* The phone rules for #digital-era live in telaventis-fx.css inside one
+     @media (max-width:759px) block. For lite on a wide screen the same rules
+     are needed without the width condition: that block is copied out of the
+     loaded stylesheet (nothing to fetch, nothing duplicated in the source)
+     and re-applied as @media all, last in the cascade, exactly where the
+     original sits. */
+  if (lite && !mq('(max-width:759px)')) {
+    try {
+      var compactCss = '';
+      [].forEach.call(doc.styleSheets, function (sh) {
+        if (!sh.href || !/telaventis-fx\.css/.test(sh.href)) return;
+        [].forEach.call(sh.cssRules, function (r) {
+          if (r.type === 4 && r.media && /max-width:\s*759px/.test(r.media.mediaText)) compactCss += r.cssText.replace(/^@media[^{]*/, '@media all ');
+        });
+      });
+      if (compactCss) {
+        var compactEl = doc.createElement('style');
+        compactEl.textContent = compactCss;
+        doc.head.appendChild(compactEl);
+      }
+    } catch (e) { /* a stylesheet we may not read: the section keeps its desktop look, still correct */ }
+  }
+  /* when the visitor last scrolled — the WebGPU jellyfish waits for stillness */
+  var lastScrollAt = 0;
+  window.addEventListener('scroll', function () { lastScrollAt = performance.now(); }, { passive: true });
+
   /* document.currentScript is only valid during this file's own synchronous
      first run — captured here, at the top, because the one place that
      needs it (the WebGPU loader, in §3b) only knows it wants the value
@@ -757,7 +790,7 @@
        flower/bubble, and — built the same way, just left unrevealed until
        3b says otherwise — the rest of the sentence, which converts in place
        later in the scroll. */
-    var mobileGlyphs = mq('(max-width:759px)');
+    var mobileGlyphs = compactView;
     var makeKeyGlyph = function (el, kind) {
       var canvas = doc.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
@@ -921,11 +954,12 @@
       if (!track || !panels.length) return;
       var n = panels.length;
       /* same breakpoint as this section's own CSS (max-width:759px in
-         telaventis-fx.css) — the couple of mobile-only cuts below (the
+         telaventis-fx.css) or the lite tier (see compactView, top of file) —
+         the couple of mobile-only cuts below (the
          WebGPU jellyfish, the SVG text warp) both trade a purely
          decorative extra for real per-frame cost on exactly the class of
          device least able to absorb it. */
-      var isMobileEra = mq('(max-width:759px)');
+      var isMobileEra = compactView;
       /* Panel boundaries as fractions of the whole track, not a flat 1/n
          each — mobile only, and only for the 3-panel shape this section
          actually ships (falls back to even thirds otherwise, rather than
@@ -1423,6 +1457,7 @@
          what stays on screen, because it was never removed. */
       var gpu = null;      /* { canvas, setView, dispose } once ready */
       var gpuLoading = false;
+      var gpuArmed = false;   /* the page is loaded, idle and still: loading may begin */
       /* [camera position, look-at] per panel. Aurelia's background/light
          (assets/aurelia/, background.js's fogFunction + lights.js) is lit
          from straight overhead, and the fog colour is literally the view
@@ -1530,6 +1565,7 @@
 
             var container = doc.createElement('div');
             container.className = 'era__aurora era__aurora--gpu';
+            container.style.opacity = '0';   /* fades in over the 2D jellyfish once it is really drawing (.era__aurora's own opacity transition) */
             era.querySelector('.era__sticky').insertBefore(container, era.querySelector('.era__stage'));
 
             /* Console only — never a visible element on the page. A visitor
@@ -1550,6 +1586,7 @@
                  one ever throws mid-flight, dispose() below falls straight
                  back to a fully intact fallback with nothing to rebuild */
               auroraCanvas.style.opacity = '0';
+              requestAnimationFrame(function () { requestAnimationFrame(function () { container.style.opacity = '1'; }); });
               camGoal = GPU_SCENES[Math.max(0, target) % GPU_SCENES.length];
               cam = null;   /* the spring (below) starts from rest at this vantage */
             }).catch(function (err) {
@@ -1567,21 +1604,35 @@
           });
         };
 
-        /* Fired immediately — not waited on scroll proximity. The bundle is
-           real (a physics bake plus real shader compilation on top of the
-           download), and every millisecond of that has to happen before
-           the section is ready either way; starting it the moment the page
-           is capable of running it, rather than the moment the visitor
-           happens to scroll near it, is what "loads fast" actually means
-           here — there is no way to make the work itself smaller from
-           outside the module, only earlier.
-           render(), below, ALSO calls loadGpu() every frame once the
-           section is approaching on screen — loadGpu() itself is a no-op
-           past its first real call (guarded by gpuLoading/gpu above), so
-           that second call site costs nothing; it exists purely as a
-           backstop in case this first attempt ever throws before it can
-           start the request at all. */
-        loadGpu();
+        /* Not at page load, and not on scroll proximity either. The module is
+           real work — 426 KB over the wire, then a physics bake and shader
+           compilation that blocks the main thread for the better part of a
+           second (630 ms measured on a 16-core desktop, several times that
+           on an ordinary laptop) — and it used to start in the very first
+           second, in the middle of the hero's own entrance and of the
+           visitor's first scroll, while the headline's font was still in
+           flight. So: only on the full tier (lite never gets here: compactView
+           excludes it), only once the page has finished loading, only when the
+           browser has nothing else to do, and only when the visitor has been
+           still for a moment; a still-scrolling visitor is waited out. The 2D
+           jellyfish is on screen the whole time, and this one fades in over
+           it. loadGpu() is a no-op past its first call, so render()'s own
+           call (guarded by gpuArmed) is only a backstop. */
+        var armGpu = function () {
+          var tryLoad = function () {
+            if (doc.hidden || performance.now() - lastScrollAt < 1000) { setTimeout(tryLoad, 1000); return; }
+            gpuArmed = true;
+            loadGpu();
+          };
+          tryLoad();
+        };
+        var afterLoad = function () {
+          setTimeout(function () {
+            if (window.requestIdleCallback) window.requestIdleCallback(armGpu, { timeout: 6000 });
+            else armGpu();
+          }, 1800);
+        };
+        if (doc.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
       }
       } else {
       /* ---- the flow field: Alex Andrix's actual technique, tamed --------
@@ -2345,9 +2396,19 @@
          rest (keys, the first wheel/touch event). */
       var lockY = null, lockTimer = 0;
       var SCROLL_KEYS = { ' ': 1, Spacebar: 1, PageDown: 1, PageUp: 1, ArrowDown: 1, ArrowUp: 1, End: 1, Home: 1 };
+      /* a non-passive wheel/touchmove listener on the window makes the
+         browser wait for this script before it scrolls ANYTHING, anywhere on
+         the page, for as long as it is attached: so it is attached only
+         while the hold runs (lockScroll / unlockScroll, below) */
       var stopIt = function (e) { if (lockY !== null && e.cancelable) e.preventDefault(); };
-      window.addEventListener('wheel', stopIt, { passive: false });
-      window.addEventListener('touchmove', stopIt, { passive: false });
+      var stopOn = false;
+      var setStop = function (on) {
+        if (on === stopOn) return;
+        stopOn = on;
+        var m = on ? 'addEventListener' : 'removeEventListener';
+        window[m]('wheel', stopIt, { passive: false });
+        window[m]('touchmove', stopIt, { passive: false });
+      };
       window.addEventListener('keydown', function (e) {
         if (lockY !== null && SCROLL_KEYS[e.key] && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) e.preventDefault();
       });
@@ -2365,12 +2426,14 @@
       window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
       var unlockScroll = function () {
         lockY = null;
+        setStop(false);
         clearTimeout(lockTimer);
         html.classList.remove('fx-scroll-held');
       };
       var lockScroll = function (y) {
         lockY = Math.round(y);
         window.scrollTo({ top: lockY, behavior: 'instant' });
+        setStop(true);
         html.classList.add('fx-scroll-held');
         clearTimeout(lockTimer);
         lockTimer = setTimeout(unlockScroll, 4000);
@@ -2556,6 +2619,111 @@
       var STEP_COOLDOWN_MS = 1300;   /* >= MORPH_MS (3c): a new step never cuts a flight short */
       var lastStepAt = 0;
 
+      /* ---- 3e. the section moves on by itself, for whoever does not know it scrolls
+         "They often don't know you have to scroll": a visitor can sit on the
+         first phrase for as long as they like and never learn there are two
+         more, then a door, then the Moka story. So: the moment the section is
+         100% on screen (pinned) a phrase gets AUTO_DWELL ms, then the page
+         scrolls itself to the next one — a real scroll, moving the real scroll
+         position, so the trigger above, its thresholds and its cooldown, the
+         camera, the bubbles, the door and the Moka title all run through their
+         one and only code path, exactly as for a visitor's own wheel. NOTHING
+         about how a visitor's own scroll is read has changed (segBounds, HYST,
+         STEP_COOLDOWN_MS, the track heights, the hold at the door): with a
+         scroll, those rules apply as they always did; this only adds the scroll
+         that was missing. After the last phrase it carries on to the door, which
+         opens and plays the Moka title in once; there it stops: the title's
+         arrival is a one-shot, played whole, and autoplay is over for the visit.
+         A visitor's own scroll after the section is 100% on screen (wheel, touch,
+         a scrolling key, the scrollbar, Esc) ends it for good, until the next
+         reload: someone who scrolls knows how. The scrolling that brings them
+         to the section does not count: input in the ARRIVE_GRACE ms after the
+         section is pinned is the tail of that gesture (a trackpad's inertia),
+         and only pushes the start back. And if the section is a few percent short
+         of 100% (the visitor stopped at 95%) and they are still, the page is
+         eased the rest of the way, smoothly, so the section is whole. Reduced
+         motion never gets here (this module returned at its first line); a
+         hidden tab, a held page (the door) or an open door pause or end it.
+         Same on phones, where the backdrop is the flow field. */
+      var AUTO_DWELL = [3000, 3000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 (the last is a heading and a paragraph) */
+      var ARRIVE_GRACE = 900;                 /* ms after the section is pinned that still belong to the gesture that brought the visitor */
+      var ASSIST_TOP = 0.08;                  /* within this fraction of the screen of being whole, ease it the rest of the way */
+      var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false;
+      /* data-auto on the section says where autoplay is: idle (waiting for the
+         section to be pinned), count, move, off — for debugging and the test
+         harness */
+      var setAutoState = function (v) { if (v !== autoState) { autoState = v; era.setAttribute('data-auto', v); } };
+      var autoStop = function () {
+        autoOff = true; autoSince = 0; autoMove = null; assistMove = null;
+        setAutoState('off');
+      };
+      var userMoved = function () {
+        var now = performance.now();
+        userAt = now;
+        assistMove = null;                      /* a visitor who takes over an ease to 100% simply gets the page back */
+        if (autoOff) return;
+        if (autoMove || (autoSince && now - pinnedAt > ARRIVE_GRACE)) autoStop();
+      };
+      window.addEventListener('wheel', userMoved, { passive: true });
+      window.addEventListener('touchmove', userMoved, { passive: true });
+      window.addEventListener('keydown', function (e) {
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+        if (SCROLL_KEYS[e.key] || e.key === 'Escape') userMoved();
+      });
+      var lastSeenY = window.scrollY;
+      window.addEventListener('scroll', function () {
+        var y = window.scrollY;
+        /* while counting, the page is still: any movement that is not ours
+           (scrollbar drag, find-in-page, anything) is the visitor's — once the
+           arrival gesture's tail is over */
+        if (autoSince && !autoMove && !assistMove && lockY === null && performance.now() - pinnedAt > ARRIVE_GRACE && Math.abs(y - lastSeenY) > 2) autoStop();
+        lastSeenY = y;
+      }, { passive: true });
+      var glide = function (m, now) {
+        var u = clamp((now - m.t0) / m.dur, 0, 1);
+        window.scrollTo({ top: Math.round(m.from + (m.to - m.from) * easeInOutCubic(u)), behavior: 'instant' });
+        return u >= 1;
+      };
+      var autoTick = function (now, rect, vh, scrollable, tailPx) {
+        if (autoOff) return;
+        if (cutGoal) { autoStop(); return; }     /* the door has opened (by us or not): its own one-shot takes over, and autoplay is done */
+        var pinned = rect.top <= 2 && rect.bottom >= vh - 2;
+        if (pinned && !wasPinned) pinnedAt = now;
+        wasPinned = pinned;
+        if (autoMove) {
+          setAutoState('move');
+          if (lockY !== null) { autoMove = null; autoSince = 0; return; }
+          if (glide(autoMove, now)) { autoMove = null; autoSince = 0; }
+          return;
+        }
+        if (assistMove) {
+          if (lockY !== null || doc.hidden) { assistMove = null; return; }
+          if (glide(assistMove, now)) assistMove = null;
+          return;
+        }
+        if (!pinned) {
+          setAutoState('idle'); autoSince = 0;
+          /* almost whole, and the visitor has stopped: finish the job smoothly */
+          if (rect.top > 1 && rect.top <= vh * ASSIST_TOP && now - userAt >= 350 && lockY === null && !doc.hidden && !html.classList.contains('fx-scroll-held')) {
+            assistMove = { t0: now, from: window.scrollY, to: window.scrollY + rect.top, dur: 520 };
+          }
+          return;
+        }
+        if (target < 0 || lockY !== null || doc.hidden) { setAutoState('idle'); autoSince = 0; return; }
+        /* the phrase's time starts when it does: the moment the section is whole
+           for the first, the moment each next one takes over for the others
+           (and never before the arrival gesture's own input has died away) */
+        var origin = Math.max(pinnedAt, lastStepAt, userAt);
+        autoSince = origin || now;
+        setAutoState('count');
+        if (now - origin < AUTO_DWELL[Math.min(target, AUTO_DWELL.length - 1)]) return;
+        var trackTop = window.scrollY + rect.top, run = scrollable - tailPx, to;
+        if (target < n - 1) to = trackTop + run * (segBounds[target + 1] + segBounds[target + 2]) / 2;   /* the middle of the next phrase's stretch */
+        else to = trackTop + run + tailPx * (CUT_AT + 0.05);                                              /* just past the line that opens the door */
+        autoMove = { t0: now, from: window.scrollY, to: to, dur: clamp(900 + Math.abs(to - window.scrollY) / vh * 260, 1100, 2000) };
+        autoSince = 0;
+      };
+
       var render = function (now) {
         var rect = track.getBoundingClientRect();
         var vh = window.innerHeight || 800;
@@ -2565,7 +2733,7 @@
            finishes. Checked ahead of the onScreen early-return below on
            purpose, so it still gets a chance to fire on approach, not only
            once the stricter definition is already met. */
-        if (loadGpu && rect.top < vh * 1.8 && rect.bottom > 0) loadGpu();
+        if (loadGpu && gpuArmed && rect.top < vh * 1.8 && rect.bottom > 0) loadGpu();
         var onScreen = rect.top < vh && rect.bottom > 0;
         if (!onScreen || doc.hidden) return false;
 
@@ -2576,6 +2744,7 @@
           return window.scrollY + rect.top + (scrollable - tailPx) + tailPx * qq;
         });
         if (cue) cue.style.opacity = (1 - range(p, 0.02, 0.12)).toFixed(2);
+        autoTick(now, rect, vh, scrollable, tailPx);
 
         /* which panel the trigger currently says is active — a plain
            threshold read off segBounds (even thirds, or the weighted

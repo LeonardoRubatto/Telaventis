@@ -15,8 +15,12 @@
 <link rel="mask-icon" href="assets/mask-icon.svg?v=4" color="#16202B">
 <link rel="manifest" href="site.webmanifest">
 <meta name="msapplication-TileColor" content="#16202B">
-<link rel="stylesheet" href="assets/telaventis.css?v=45">
-<link rel="stylesheet" href="assets/telaventis-fx.css?v=35">
+<!-- what the first screen needs, asked for with the HTML instead of discovered later (the font is named inside the CSS, the sky inside a
+     background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
+<link rel="stylesheet" href="assets/telaventis.css?v=49">
+<link rel="stylesheet" href="assets/telaventis-fx.css?v=38">
 </head>
 <body>
 <a class="skip" href="#main">Aller au contenu</a>
@@ -88,7 +92,7 @@
   </div>
 </footer>
 
-<script src="assets/telaventis.js?v=29" defer></script>
-<script src="assets/telaventis-fx.js?v=46" defer></script>
+<script src="assets/telaventis.js?v=34" defer fetchpriority="high"></script>
+<script src="assets/telaventis-fx.js?v=50" defer fetchpriority="high"></script>
 </body>
 </html>

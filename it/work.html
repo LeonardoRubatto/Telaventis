@@ -36,8 +36,12 @@
 <link rel="mask-icon" href="../assets/mask-icon.svg?v=4" color="#16202B">
 <link rel="manifest" href="../site.webmanifest">
 <meta name="msapplication-TileColor" content="#16202B">
-<link rel="stylesheet" href="../assets/telaventis.css?v=45">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=35">
+<!-- what the first screen needs, asked for with the HTML instead of discovered later (the font is named inside the CSS, the sky inside a
+     background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
+<link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
+<link rel="stylesheet" href="../assets/telaventis.css?v=49">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=38">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -111,7 +115,7 @@
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-qualamantis.html" aria-label="La home page di Qualamantis, online — apri il caso studio">
-          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="../assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-desk.mp4" type="video/mp4"></video>
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="../assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="../assets/video/qualamantis-desk-poster.webp" width="1280" height="800" alt=""></noscript>
         </a>
         <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="../assets/work/qualamantis-d1-900.avif 900w, ../assets/work/qualamantis-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="../assets/work/qualamantis-d1-900.webp 900w, ../assets/work/qualamantis-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="../assets/work/qualamantis-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Il programma</figcaption></figure>
         <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="../assets/work/qualamantis-d2-900.avif 900w, ../assets/work/qualamantis-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="../assets/work/qualamantis-d2-900.webp 900w, ../assets/work/qualamantis-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="../assets/work/qualamantis-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>I servizi</figcaption></figure>
@@ -129,7 +133,7 @@
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-bde.html" aria-label="La home page di BDE Dauphine, online — apri il caso studio">
-          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="../assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-desk.mp4" type="video/mp4"></video>
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="../assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="../assets/video/bde-desk-poster.webp" width="1280" height="800" alt=""></noscript>
         </a>
         <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="../assets/work/bde-d1-900.avif 900w, ../assets/work/bde-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="../assets/work/bde-d1-900.webp 900w, ../assets/work/bde-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="../assets/work/bde-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Gli eventi</figcaption></figure>
         <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="../assets/work/bde-d2-900.avif 900w, ../assets/work/bde-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="../assets/work/bde-d2-900.webp 900w, ../assets/work/bde-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="../assets/work/bde-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Il marchio Les Nuits Dauphine</figcaption></figure>
@@ -146,7 +150,7 @@
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-wecalc.html" aria-label="La home page di wecalc.fr, online — apri il caso studio">
-          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="../assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-desk.mp4" type="video/mp4"></video>
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="../assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="../assets/video/wecalc-desk-poster.webp" width="1280" height="800" alt=""></noscript>
         </a>
         <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="../assets/work/wecalc-d1-900.avif 900w, ../assets/work/wecalc-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="../assets/work/wecalc-d1-900.webp 900w, ../assets/work/wecalc-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="../assets/work/wecalc-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Calcolatore IVA</figcaption></figure>
         <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="../assets/work/wecalc-d2-900.avif 900w, ../assets/work/wecalc-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="../assets/work/wecalc-d2-900.webp 900w, ../assets/work/wecalc-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="../assets/work/wecalc-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Costo del lavoro</figcaption></figure>
@@ -163,7 +167,7 @@
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-jeanne-randu.html" aria-label="La home page di Jeanne Randu, online — apri il caso studio">
-          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="../assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video>
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="../assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="../assets/video/jeanne-randu-desk-poster.webp" width="1280" height="800" alt=""></noscript>
         </a>
         <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="../assets/work/jeanne-randu-d1-900.avif 900w, ../assets/work/jeanne-randu-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="../assets/work/jeanne-randu-d1-900.webp 900w, ../assets/work/jeanne-randu-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="../assets/work/jeanne-randu-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Progetto — La Cave</figcaption></figure>
         <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="../assets/work/jeanne-randu-d2-900.avif 900w, ../assets/work/jeanne-randu-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="../assets/work/jeanne-randu-d2-900.webp 900w, ../assets/work/jeanne-randu-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="../assets/work/jeanne-randu-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Chi sono</figcaption></figure>
@@ -180,7 +184,7 @@
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-cave-antoine.html" aria-label="La home page di La Cave d’Antoine, online — apri il caso studio">
-          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="../assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-desk.mp4" type="video/mp4"></video>
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="../assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="../assets/video/cave-antoine-desk-poster.webp" width="1280" height="800" alt=""></noscript>
         </a>
         <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="../assets/work/cave-antoine-d1-900.avif 900w, ../assets/work/cave-antoine-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="../assets/work/cave-antoine-d1-900.webp 900w, ../assets/work/cave-antoine-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="../assets/work/cave-antoine-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>La Cave</figcaption></figure>
         <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="../assets/work/cave-antoine-d2-900.avif 900w, ../assets/work/cave-antoine-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="../assets/work/cave-antoine-d2-900.webp 900w, ../assets/work/cave-antoine-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="../assets/work/cave-antoine-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Passa a trovarci — contatti</figcaption></figure>
@@ -222,7 +226,7 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=29" defer></script>
-<script src="../assets/telaventis-fx.js?v=46" defer></script>
+<script src="../assets/telaventis.js?v=34" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=50" defer fetchpriority="high"></script>
 </body>
 </html>

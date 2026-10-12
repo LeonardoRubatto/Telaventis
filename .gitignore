@@ -1,3 +1,4 @@
 # outils de préparation : dépendances et captures brutes (reproductibles)
 _outils/node_modules/
 _outils/captures/
+_outils/lent-*.log

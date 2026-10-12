@@ -23,6 +23,12 @@ généré, ce qui est écrit à la main, et la méthode pas à pas.
    « réduire les animations ».
 8. Après une modification de `assets/*.css|js` : monter leur `?v=` dans toutes
    les pages. Vérifier à 1440 px et à 390 px avant de dire que c'est fini.
+9. **Le premier écran se mesure** : toute modification du `<head>`, du titre, du
+   mot TELAVENTIS ou de ce qui se charge avant eux se vérifie avec
+   `_outils/lent.py` + `_outils/mesurer.js` (MODE-EMPLOI §7). Les affiches de
+   vidéos sont écrites `data-poster` par le générateur, jamais `poster`. La
+   version (légère / complète) est choisie une fois par visite : ne pas la
+   rechoisir en cours de route.
 
 Pour tout travail de front-end, le Design Memory
 (`C:\.Leonardo\Project\design system (website elements template)`) se consulte

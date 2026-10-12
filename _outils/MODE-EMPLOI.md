@@ -131,7 +131,8 @@ la Search Console permet de demander une nouvelle exploration.
 ## 4. Où vit chaque effet
 
 `assets/telaventis.js` — sections numérotées en tête de fichier :
-0 menu mobile & barre qui se cache · 1 apparition des blocs · 2 encre au
+**version choisie (légère ou complète), décidée une seule fois au chargement,
+voir §7** · 0 menu mobile & barre qui se cache · 1 apparition des blocs · 2 encre au
 survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre) ·
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
 6 vitrine des projets (une scène plein écran par client, passage
@@ -159,6 +160,63 @@ qui ouvre sur l'exemple Moka (déclenchée, jamais tirée par le scroll), puis
 l'arrivée du titre Moka ; **pendant ces ~2,5 s le défilement est retenu**
 (« pas de speedrun », demandé par Leonardo) — sauf lors d'un saut par lien
 interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
+
+**3e — la section avance toute seule** (défilement automatique, pour qui ne sait
+pas qu'il faut défiler) : dès que la section est à 100 % de l'écran (épinglée),
+la phrase reste entière 3 s (4 s pour la dernière, qui est un titre et un
+paragraphe : `AUTO_DWELL`), puis la page défile d'elle-même vers la suivante —
+un vrai défilement (la position réelle bouge), donc le déclencheur, ses seuils
+(`segBounds`, `HYST`, `STEP_COOLDOWN_MS`, hauteurs de piste, retenue de la porte),
+la caméra, les bulles et le titre Moka passent par le même chemin qu'avec la
+molette. **Les règles de défilement du visiteur n'ont pas changé** : avec un
+défilement, ce sont celles d'origine ; l'automatique ajoute seulement le défilement
+qui manquait. Le temps de chaque phrase part à l'instant où elle prend la
+place (et pour la première, à l'instant où la section est entière). Après la
+dernière phrase la page va jusqu'à la porte, qui joue son titre Moka d'un seul
+coup ; c'est là que l'automatique s'arrête, pour la visite. Un défilement du
+visiteur **après** que la section est à 100 % (molette, doigt, touche, barre de
+défilement, Échap) lui rend la main pour de bon jusqu'au rechargement. Le
+défilement qui l'amène à la section ne compte pas : une entrée dans les 900 ms
+qui suivent (`ARRIVE_GRACE`, la queue d'un geste de pavé tactile) repousse
+seulement le départ. Et si la section est à moins de 8 % d'être entière (le
+visiteur s'est arrêté à ~95 %) et qu'il est immobile, la page est amenée en
+douceur à 100 % (`ASSIST_TOP`). État lisible dans `data-auto` sur la section
+(idle / count / move / off). Mouvement réduit : rien, la section n'est même pas
+épinglée. Le « Faites défiler » reste masqué (`display:none`), comme avant.
+Les écouteurs molette/toucher qui peuvent annuler un défilement (non passifs) ne
+sont posés que **pendant une retenue** (porte, vitrine, ouverture Moka) : posés
+en permanence, ils obligent le navigateur à attendre le script avant chaque
+cran de défilement, n'importe où sur la page.
+
+**La barre des projets (vitrine de l'accueil)** : en haut de l'écran épinglé, un
+lien par projet (`.showcase__rail`, générée par `projets.py` depuis les
+catégories de `projets.json`, libellé de la barre dans le dictionnaire `L`). Elle
+flotte au-dessus des scènes sans jamais entrer dans leur mise en page : leur
+taille ne change pas. Un clic va droit au projet (une seule transition jouée,
+le défilement amené au point de repos de ce projet, `goTo()`). La barre du projet
+courant est un minuteur : elle se remplit en 7 s (`--dwell`, une animation CSS
+`rail-fill` : la feuille de style est l'horloge), puis la vitrine passe au
+projet suivant (événement `animationend`). Le minuteur ne tourne que lorsque la
+vitrine est vraiment regardée (épinglée à l'écran, onglet visible, aucune
+transition en cours, visiteur immobile : `.is-timing`) et attend tant que le
+pointeur est sur le texte ou que le clavier y est (`.is-reading`). Dès que le
+visiteur défile (molette, doigt, touche, barre de défilement) ou presse Échap, il
+s'arrête pour la visite (`data-timer` disparaît, les barres indiquent seulement
+où l'on est) ; cliquer sur la barre ne l'arrête pas. Pas de boucle : sur le
+dernier projet la barre se remplit et reste pleine. L'en-tête du site ne redescend jamais de lui-même tant qu'on est dans la
+vitrine (`inShowcase()` dans le §0b de `telaventis.js`) : il revient quand le
+visiteur remonte au-dessus du début de la vitrine, et seulement alors. Le
+contenu des scènes est descendu d'une bande (`padding-top` du `.scene__inner`,
+puis de `.scene__copy` sur téléphone) pour laisser sa place à la barre sans
+changer la taille des scènes. Sans JavaScript la barre
+n'existe pas (scènes empilées). Rejouable avec `node _outils/vitrine.js <url>
+--scenario=timer|click|user|shots`.
+
+La méduse WebGPU (2 Mo de code, ~630 ms de fil principal bloqué même sur un
+PC à 16 cœurs) ne se charge plus au chargement de la page : seulement en
+version complète, une fois la page chargée, le navigateur au repos et le
+visiteur immobile ; elle apparaît en fondu par-dessus la méduse 2D, qui était
+à l'écran depuis le début.
 
 Trois points de vigilance sur la section 3b (méduses/champ de bulles) :
 - **Lisibilité des mots en bulles sur téléphone** : le halo par bulle (le
@@ -247,3 +305,78 @@ Publication : ce dossier est une copie de travail ; la production est le dépôt
 GitHub relié à Cloudflare Pages (un push sur `main` publie). La
 Content-Security-Policy (`_headers`) interdit tout script tiers : un nouvel
 effet doit être écrit dans les fichiers du site, pas chargé depuis un CDN.
+
+---
+
+## 7. Connexion lente : la version choisie, et comment la mesurer
+
+Le site doit rester agréable sur une mauvaise connexion, à froid, sans cache —
+pas seulement sur la fibre ou au second passage. Deux idées commandent tout :
+
+**Le premier écran ne dépend de rien d'autre que de lui-même.** Le titre est
+visible dès la première image, dans une police de repli réglée sur les largeurs
+d'Archivo (`@font-face 'Archivo Fallback'`, chiffres mesurés par
+`_outils/metrics.py`) : quand Archivo arrive, rien ne bouge. L'animation du titre
+ne se joue que si Archivo est déjà là (cache, préchargement) ; sinon le titre
+reste où il est, puis le coup de vent passe quand la police est arrivée. Le mot
+TELAVENTIS (bandeau, en-tête, pied de page) a sous le ciel un fond uni et un
+aperçu flou de 332 octets (`--sky-lqip`) : le mot est entier dès la première
+image, le vrai ciel se précise par-dessus. La police et le ciel sont préchargés
+(`<link rel="preload">` dans chaque page, et `Link:` dans `_headers` pour les
+trois accueils : Cloudflare en fait des « 103 Early Hints »). Tout ce qui est
+plus bas dans la page attend : affiches des vidéos (`data-poster`, appliquées
+par `loadPoster()` à l'approche — le générateur les écrit ainsi, et un
+`<noscript>` garde l'image sans JavaScript), vidéos, méduse WebGPU, images de
+l'histoire Moka.
+
+**L'apparition du titre est fluide parce qu'elle ne fait travailler que le
+compositeur.** Elle animait les axes de la police (graisse et largeur) de 49
+lettres à la fois : à chaque image, chaque lettre était recomposée à un nouveau
+réglage et toute la ligne remise en page (10 à 23 ms par image sur un PC rapide,
+40 à 90 ms sur un portable ordinaire) : c'était la saccade. Elle n'anime plus que
+l'opacité et la position (`wt-arrive`). Le coup de vent et l'effet du pointeur,
+eux, animent bien les axes, mais par paliers (quelques réglages par lettre, que
+la police met en cache), seulement quand une valeur change, et s'arrêtent d'eux-mêmes
+si la page n'arrive plus à suivre (10 images lentes de suite : `wtStop`). En
+version légère, ni coup de vent ni effet du pointeur. `node _outils/fluidite.js
+<url> --cpu=4` mesure les images perdues et le script responsable.
+
+**Une seule version par visite.** `telaventis.js` décide au tout début, une fois,
+si la visite est « légère » : `saveData`, type effectif 2g/3g, débit < 1,5 Mbit/s
+ou latence > 450 ms (Chrome) ; sinon, pour Safari/Firefox qui n'ont pas cette
+API, le script lui-même démarre plus de 1,8 s après le début de la navigation ;
+ou appareil faible (≤ 2 cœurs ou ≤ 2 Go). Le résultat est gardé jusqu'au
+rechargement (`window.__tvTier`, classe `html.lite`) : jamais de méduse qui
+apparaît puis disparaît. La version légère est celle des téléphones — champ de
+bulles au lieu de la méduse, pas de WebGPU, pas de déformation du texte, grille
+de bulles plus grossière, piste plus courte — sur n'importe quel écran
+(`compactView` dans `telaventis-fx.js` ; les règles CSS du téléphone sont
+recopiées sans leur condition de largeur, rien à dupliquer à la main), plus des
+affiches à la place des vidéos (accueil et page Travaux). **Pour voir l'une ou l'autre : `?lite=1` ou
+`?lite=0` dans l'adresse.**
+
+**Mesurer.** Dans deux terminaux :
+
+```bash
+python _outils/lent.py 3g            # serveur lent : 700 kbit/s, 400 ms (ou « 4g » : 1,6 Mbit/s, 300 ms)
+cd _outils && npm install            # une fois
+node mesurer.js http://127.0.0.1:8762/index.html            # ordinateur ; --mobile pour un téléphone
+node mesurer.js http://127.0.0.1:8762/index.html --film=out  # garde des images à 1, 2, 3, 5, 8 s
+node parcours.js http://127.0.0.1:8742/index.html --scenario=auto   # joue la section des méduses
+```
+
+(`mesurer.js` / `parcours.js` utilisent le Chromium de playwright-core ; si la
+version installée n'est pas celle attendue : `CHROMIUM=<chemin du .exe>`.)
+Objectifs, à 1,6 Mbit/s sans cache : premier écran lisible en moins de 2 s,
+décalage de mise en page (CLS) sous 0,1, aucune vidéo ni affiche de la vitrine
+demandée avant la fin du chargement, aucune erreur dans la console. Mesures de
+référence de ce travail (ordinateur, 1,6 Mbit/s, sans cache, version complète) :
+premier affichage 1,65 s, CLS 0,009, 237 Ko reçus avant le premier affichage,
+aucune vidéo ni affiche de la vitrine avant la fin du chargement. `parcours.js` rejoue la section des méduses :
+`auto` (doit aller jusqu'au titre Moka puis s'arrêter), `user` et `user-late`
+(doivent rendre la main au premier geste et ne plus se relancer), `fling` (une
+molette vive ne doit jamais déclencher le défilement automatique).
+
+Avant d'ajouter quoi que ce soit au premier écran : le mesurer ainsi. Un ajout
+qui se charge avant le titre ou le ciel se paie en secondes sur ceux qui en ont
+le plus besoin.

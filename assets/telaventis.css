@@ -30,6 +30,17 @@
   src:url('fonts/sourceserif4-latin.woff2') format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
+/* Fallback faces: the system font a visitor sees while the real one is still
+   on its way, scaled and spaced to match it, so that when Archivo / Source
+   Serif arrive nothing in the page moves (it used to jump: CLS 0.58 on a slow
+   connection). The numbers are measured, not guessed: size-adjust is the
+   ratio of the two fonts' average advance width over the site's own text
+   (_outils/metrics.py), ascent/descent are the web font's vertical metrics
+   divided by that ratio. One face per weight band, because a fallback has
+   to be bold where the real font is (the headline is 750). */
+@font-face{font-family:'Archivo Fallback';font-weight:100 599;src:local('Arial'),local('ArialMT'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:98.25%;ascent-override:89.37%;descent-override:21.37%;line-gap-override:0%}
+@font-face{font-family:'Archivo Fallback';font-weight:600 900;src:local('Arial Bold'),local('Arial-BoldMT'),local('Helvetica Bold'),local('Liberation Sans Bold'),local('Arimo Bold');size-adjust:100.65%;ascent-override:87.24%;descent-override:20.86%;line-gap-override:0%}
+@font-face{font-family:'Source Serif Fallback';font-weight:200 900;src:local('Georgia'),local('Gelasio');size-adjust:101%;ascent-override:102.6%;descent-override:33.2%;line-gap-override:0%}
 
 :root{
   --ink:#16202B;
@@ -43,8 +54,8 @@
   --line:rgba(22,32,43,.18);
   --line-soft:rgba(22,32,43,.12);
   --line-dark:rgba(237,233,226,.18);
-  --sans:'Archivo',Helvetica,Arial,sans-serif;
-  --serif:'Source Serif 4',Georgia,serif;
+  --sans:'Archivo','Archivo Fallback',Helvetica,Arial,sans-serif;
+  --serif:'Source Serif 4','Source Serif Fallback',Georgia,serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
   /* one motion vocabulary for the whole site: --ease for anything entering
      or settling, --ease-in for anything leaving (exits run faster than
@@ -53,6 +64,10 @@
   --ease-in:cubic-bezier(.4,0,1,1);
   /* height of the sticky bar — the hero is sized against it so the
      wordmark band lands exactly on the fold */
+  /* the sky painting, 44px wide and blurred by the browser's own smoothing (332 bytes):
+     painted under the real image inside the letters so the wordmark is whole
+     from the first paint, and the sky resolves over it when it arrives */
+  --sky-lqip:url('data:image/webp;base64,UklGRkQBAABXRUJQVlA4IDgBAADQBgCdASosABkAPsFYpU4npSMiJWsw8BgJYwC+xvFn0ZyS1qTfo6o5t0i+NTuXFReE2GgBOYRZjAfxUFnutQAA90cVcS7baatW5RJoQ+Gfvt8tUyk3pvhxz0thgXQ4kikjSe7t9aCX026XcWaS0rbPqxLJNS2GEwcTiRk39NKwdACnaaJIkfPIJN6Ts6i/N8/Gbd7hUjWRnRsq5OGSwVPgcIrwVLTH9x6AOmZ2KUiewnJETTBPdjMYXa8uhZRv3Cg/Mbq2VBXggZb97o948AfIz3mAs91sTpU3sCQx6vYgEMrhP4pe3gzYVlHrYzFGoEFxgjvjIVHK/HW+orJHRhzVnEZT75yYmosraadM3PLuDZyicXaqcarHmMWxsVAn1Z5j1G/wSyBG2jAlQIcyurbMw6xMhyEPwAA=');
   --nav-h:63px;
   interpolate-size:allow-keywords;
 }
@@ -149,7 +164,8 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .nav__brand-bottom{
   position:absolute;inset:0;display:block;
   clip-path:polygon(0 72%,100% 16%,100% 100%,0 100%);
-  background-image:linear-gradient(100deg,rgba(22,32,43,.4) 0%,rgba(22,32,43,.06) 100%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg'));
+  background-color:#6a839b;
+  background-image:linear-gradient(100deg,rgba(22,32,43,.4) 0%,rgba(22,32,43,.06) 100%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg')),var(--sky-lqip);
   background-size:420% 1500%;background-position:46% 40%;
   filter:grayscale(.22) saturate(1.08) contrast(1.12);
   -webkit-background-clip:text;background-clip:text;
@@ -350,8 +366,8 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .hero__aside{animation:hero-up .9s var(--ease) .3s both}
 
 /* ---- the headline's weather (telaventis.js §2c) ---------------------------
-   Two registered properties so the arrival can interpolate the font's own
-   axes; the script takes them over, per letter, once the arrival is done. */
+   Two registered properties holding the font's own axes, per letter; the
+   script drives them (gust, pointer) once the arrival is done. */
 @property --wg{syntax:'<number>';inherits:false;initial-value:750}
 @property --wd{syntax:'<number>';inherits:false;initial-value:100}
 .wt{display:block}
@@ -359,10 +375,18 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .wt-w{display:inline-block;white-space:nowrap}
 .wt-c{display:inline-block;font-variation-settings:"wght" var(--wg),"wdth" var(--wd)}
 .wt-host:not(.wt-settled) .wt-c{animation:wt-arrive 1s var(--ease) both;animation-delay:calc(var(--i) * 14ms + 60ms)}
+/* The arrival animates opacity and transform ONLY, so it runs on the
+   compositor, off the main thread. It used to interpolate the font's own axes
+   (--wg / --wd) on 49 letters at once: every frame re-shaped every letter at a
+   new weight and width and re-laid-out the whole headline (a 10-23 ms layout
+   per frame at full CPU speed, 40-90 ms on an ordinary laptop: the stutter in
+   the headline's appearance). The "blown in wide" feel is kept with a slight
+   scaleX that relaxes to 1; the real axes are only driven afterwards (the gust,
+   the pointer), quantised, and only while the page keeps up (telaventis.js §2c). */
 @keyframes wt-arrive{
-  from{opacity:0;--wg:340;--wd:125;transform:translateY(.16em)}
+  from{opacity:0;transform:translateY(.16em) scaleX(1.16)}
   60%{opacity:1}
-  to{opacity:1;--wg:750;--wd:100;transform:none}
+  to{opacity:1;transform:none}
 }
 /* the per-letter version replaces the block entrance of the whole title */
 .hero .h-hero.wt-host{animation:none}
@@ -406,9 +430,10 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .hero__band-bottom{
   position:absolute;top:0;left:0;right:0;
   clip-path:polygon(0 var(--cut-l),100% var(--cut-r),100% 100%,0 100%);
-  background-image:linear-gradient(100deg,rgba(22,32,43,.34) 0%,rgba(22,32,43,.02) 70%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg'));
-  background-size:100% 100%,120% auto;
-  background-position:0 0,var(--sky-x,50%) var(--sky-y,42%);
+  background-color:#6a839b;
+  background-image:linear-gradient(100deg,rgba(22,32,43,.34) 0%,rgba(22,32,43,.02) 70%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg')),var(--sky-lqip);
+  background-size:100% 100%,120% auto,120% auto;
+  background-position:0 0,var(--sky-x,50%) var(--sky-y,42%),var(--sky-x,50%) var(--sky-y,42%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   filter:saturate(1.12) contrast(1.12);
   transform:translate(var(--slip),calc(var(--slip) * -.08));
@@ -961,6 +986,9 @@ a.proj__shot-wrap{display:block;cursor:pointer}
   font-size:clamp(120px,21vw,380px);line-height:.8;letter-spacing:var(--nls);color:var(--fg);opacity:.055}
 .scene__shots{--rx:0deg;--ry:0deg;position:absolute;z-index:1;right:max(var(--gut),calc((100% - 1320px)/2 + var(--gut)));top:50%;width:calc(var(--cw) * .56);
   transform:translateY(-50%) perspective(1600px) rotateX(var(--rx)) rotateY(var(--ry));transform-style:preserve-3d;display:block}
+/* posters are applied by script as the showcase nears (data-poster); without it the
+   <noscript> still of the same file takes the video's place */
+html:not(.js) video[data-poster]{display:none}
 .scene__desk img,.scene__desk video{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 50px 90px -40px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.85)}
 .scene__phone{position:absolute;right:-5%;bottom:-13%;width:21%;transform:translateZ(60px) rotate(5deg)}
 .scene__phone img,.scene__phone video{display:block;width:100%;height:auto;border-radius:14px;border:3px solid #fff;box-shadow:0 26px 50px -18px rgba(0,0,0,.6)}
@@ -989,7 +1017,9 @@ a.proj__shot-wrap{display:block;cursor:pointer}
 /* each client's name in its own typeface: the rules are generated from
    _outils/projets.json into the projets:debut … projets:fin block at the end */
 
-/* progress rail: five names, the current one filled in its own accent */
+/* the project bar: five names at the top of the pinned screen, each a link to
+   its scene; the current one fills in its own accent like a timer and, when it
+   is full, the showcase moves on to the next (telaventis.js §6) */
 .showcase__rail{display:none}
 
 /* ---- live (pinned) ---- */
@@ -1020,14 +1050,36 @@ html.sc-held body{touch-action:none}
 html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:0;left:0;width:100%}
 .showcase[data-showcase-live] .showcase__rail{
   display:grid;grid-template-columns:repeat(var(--scenes,5),minmax(0,1fr));gap:12px;
-  position:absolute;z-index:5;left:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));right:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));bottom:clamp(16px,3vh,30px);
-  margin:0;padding:0;list-style:none;font-size:12px;color:var(--rail-fg,var(--cream));transition:color .6s ease;pointer-events:none}
-.showcase__rail li{position:relative;padding-top:10px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .5s ease}
-.showcase__rail li::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:currentColor;opacity:.25}
-.showcase__rail li::after{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--ac);transform:scaleX(0);transform-origin:left;transition:transform .9s var(--ease)}
+  position:absolute;z-index:5;left:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));right:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));
+  /* off the edge, and clear of the copy under it: the scenes keep their
+     size, the bar floats over the empty top of each (it is never part of
+     their layout) */
+  top:clamp(20px,3.8vh,36px);
+  --dwell:7s;
+  margin:0;padding:0;list-style:none;font-size:12px;color:var(--rail-fg,var(--cream));transition:color .6s ease}
+.showcase__rail li{position:relative;opacity:.55;transition:opacity .5s ease}
+.showcase__rail li:hover{opacity:.85}
 .showcase__rail li.is-on{opacity:1}
-.showcase__rail li.is-on::after,.showcase__rail li.is-past::after{transform:scaleX(1)}
-.showcase__rail li.is-past::after{opacity:.5}
+/* the link is the whole cell, bar included (the bar's own pixels are not what
+   you aim at) */
+.showcase__rail a{display:block;padding:14px 0 6px;margin-top:-4px;color:inherit;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent}
+.showcase__rail a:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:2px}
+.showcase__rail li::before,.showcase__rail li::after{content:"";position:absolute;left:0;top:0;height:2px;pointer-events:none}
+.showcase__rail li::before{right:0;background:currentColor;opacity:.25}
+.showcase__rail li::after{width:100%;background:var(--ac);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--ease)}
+.showcase__rail li.is-past::after{transform:scaleX(1);opacity:.5}
+/* the current one is simply full (the bar's resting state — what a visitor
+   who scrolls for themselves sees, and what is left when the timer is over)… */
+.showcase__rail li.is-on::after{transform:scaleX(1)}
+/* …and while the timer runs it fills over --dwell instead: it starts empty
+   when the scene arrives, the animation is paused unless the section is
+   really being looked at (.is-timing: pinned on screen, tab visible, no hand-
+   over in progress, visitor still) and while the pointer rests on the copy
+   (.is-reading: someone is reading it), and when it ends the script moves on
+   (animationend). It is the clock: nothing else counts the seconds. */
+@keyframes rail-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.showcase[data-timer] .showcase__rail li.is-on::after{transform:scaleX(0);transition:none;animation:rail-fill var(--dwell,7s) linear forwards;animation-play-state:paused}
+.showcase[data-timer].is-timing:not(.is-reading) .showcase__rail li.is-on::after{animation-play-state:running}
 
 .showcase-after{padding-top:clamp(28px,4vw,48px)}
 .showcase-after .proj-more{margin-top:0}
@@ -1057,8 +1109,11 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
   .scene__desk{display:block;width:min(100%,calc(var(--pw) * 3.6))}
   .scene__phone{z-index:2;left:auto;right:2%;top:0;bottom:auto;width:var(--pw);transform:rotate(4deg)}
   .scene__ghost{bottom:auto;top:clamp(56px,8svh,80px);opacity:.045}
+  /* phones: bars only (no room for names), but a finger-sized target: the link
+     reaches 14px above and below its 2px bar */
   .showcase[data-showcase-live] .showcase__rail{gap:6px;font-size:0}
-  .showcase__rail li{padding-top:0;height:2px}
+  .showcase__rail li{height:2px}
+  .showcase__rail a{position:absolute;inset:-14px 0;padding:0;margin:0}
   .showcase:not([data-showcase-live]) .scene__inner{padding-bottom:48px}
 }
 @media (max-width:999px) and (max-height:800px){.scene__name + .scene__text{display:none}}
@@ -1069,6 +1124,19 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
   .scene__copy{flex:0 0 42%;padding:48px 0 40px var(--gut)}
   .scene__text,.scene__spec{display:none}
   .scene__shots{flex:1;align-self:center;margin:0 var(--gut);--pw:min(13vw,24svh)}
+}
+/* The project bar floats over the top of the pinned screen (above), so the
+   content is moved down to leave it room: the bar sits in its own band instead
+   of in the margin of the copy, and the scene keeps its size — only where its
+   content is centred changes. Desktop: the content box starts below the band;
+   phones: the copy starts lower. */
+.showcase[data-showcase-live] .scene__inner{padding-top:clamp(44px,8vh,84px)}
+@media (max-width:999px){
+  .showcase[data-showcase-live] .scene__inner{padding-top:0}
+  .showcase[data-showcase-live] .scene__copy{padding-top:clamp(96px,13svh,132px)}
+}
+@media (max-width:999px) and (max-height:560px) and (orientation:landscape){
+  .showcase[data-showcase-live] .scene__copy{padding-top:60px}
 }
 @media (max-width:999px) and (max-height:700px){.scene__spec{display:none}}
 @media (max-width:999px) and (max-height:640px){.scene__text{display:none}}
@@ -1130,8 +1198,9 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
 .foot__word--top{position:relative;margin-bottom:-.055em;color:rgba(237,233,226,.94);clip-path:polygon(0 0,100% 0,100% 16%,0 72%)}
 .foot__word--bottom{position:absolute;top:0;left:0;right:0;
   clip-path:polygon(0 72%,100% 16%,100% 100%,0 100%);
-  background-image:linear-gradient(100deg,rgba(22,32,43,.1),rgba(22,32,43,0) 70%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg'));
-  background-size:100% 100%,120% auto;background-position:0 0,50% 58%;
+  background-color:#6a839b;
+  background-image:linear-gradient(100deg,rgba(22,32,43,.1),rgba(22,32,43,0) 70%),image-set(url('art/cumulus03.avif') type('image/avif'),url('art/cumulus03.webp') type('image/webp'),url('art/cumulus03.jpg') type('image/jpeg')),var(--sky-lqip);
+  background-size:100% 100%,120% auto,120% auto;background-position:0 0,50% 58%,50% 58%;
   -webkit-background-clip:text;background-clip:text;color:transparent;filter:saturate(1.15) contrast(1.1)}
 @supports not ((background-clip:text) or (-webkit-background-clip:text)){
   .foot__word--top{clip-path:none}.foot__word--bottom{display:none}
@@ -1148,9 +1217,12 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
 
 /* the headline is split by script into letters (§2c); until then it is held
    invisible — but only when scripts are on and motion is wanted, and only for
-   1.5s at most, after which it shows no matter what */
+   0.6s at most (counted from the moment this stylesheet applies), after which
+   it shows, in the size-matched fallback face, whatever the script is doing:
+   on a slow connection the script and the font come much later than that, and
+   the title used to be blank until they did (telaventis.js §2c) */
 @media (prefers-reduced-motion: no-preference){
-  html.js .hero .h-hero:not(.wt-host){opacity:0;animation:wt-failsafe .01s linear 1.8s forwards}
+  html.js .hero .h-hero:not(.wt-host){opacity:0;animation:wt-failsafe .01s linear .6s forwards}
   @keyframes wt-failsafe{to{opacity:1}}
 }
 

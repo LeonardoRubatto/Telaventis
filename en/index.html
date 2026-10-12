@@ -39,13 +39,17 @@
 <link rel="manifest" href="../site.webmanifest">
 <meta name="msapplication-TileColor" content="#16202B">
 
-<link rel="stylesheet" href="../assets/telaventis.css?v=45">
+<!-- what the first screen needs, asked for with the HTML instead of discovered later (the font is named inside the CSS, the sky inside a
+     background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
+<link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
+<link rel="stylesheet" href="../assets/telaventis.css?v=49">
 <!-- MOKA experiment (scroll-driven Atelier Moka case study) — delete this
      <link>, the <section id="direction-lab">…</section> below, and the
      matching <script> near </body> to remove it with zero effect on the
      rest of the site. -->
 <link rel="stylesheet" href="../assets/moka-lab.css?v=14">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=35">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=38">
 
 <script type="application/ld+json">
 {
@@ -208,9 +212,9 @@
               <div class="moka-page" data-moka-page>
                 <section class="moka-page__hero">
                   <picture class="moka-page__hero-image">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-storefront-640.avif 640w, ../assets/moka/atelier-moka-storefront-960.avif 960w, ../assets/moka/atelier-moka-storefront-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-storefront-640.webp 640w, ../assets/moka/atelier-moka-storefront-960.webp 960w, ../assets/moka/atelier-moka-storefront-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-storefront-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-storefront-640.avif 640w, ../assets/moka/atelier-moka-storefront-960.avif 960w, ../assets/moka/atelier-moka-storefront-1536.avif 1536w" sizes="(min-width: 1000px) 60vw, 85vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-storefront-640.webp 640w, ../assets/moka/atelier-moka-storefront-960.webp 960w, ../assets/moka/atelier-moka-storefront-1536.webp 1536w" sizes="(min-width: 1000px) 60vw, 85vw">
+      <img src="../assets/moka/atelier-moka-storefront-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture>
                   <div class="moka-page__hero-shade"></div>
                   <div class="moka-page__hero-copy">
@@ -228,25 +232,25 @@
 
                 <section class="moka-page__gallery">
                   <div class="moka-page__gallery-main"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-interior-wide-640.avif 640w, ../assets/moka/atelier-moka-interior-wide-960.avif 960w, ../assets/moka/atelier-moka-interior-wide-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-interior-wide-640.webp 640w, ../assets/moka/atelier-moka-interior-wide-960.webp 960w, ../assets/moka/atelier-moka-interior-wide-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-interior-wide-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-interior-wide-640.avif 640w, ../assets/moka/atelier-moka-interior-wide-960.avif 960w, ../assets/moka/atelier-moka-interior-wide-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-interior-wide-640.webp 640w, ../assets/moka/atelier-moka-interior-wide-960.webp 960w, ../assets/moka/atelier-moka-interior-wide-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-interior-wide-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                   <div class="moka-page__gallery-copy"><p>Inside</p><h3>Coffee, daylight, nothing to hide.</h3></div>
                   <div class="moka-page__gallery-small moka-page__gallery-small--coffee"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-coffee-detail-640.avif 640w, ../assets/moka/atelier-moka-coffee-detail-960.avif 960w, ../assets/moka/atelier-moka-coffee-detail-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-coffee-detail-640.webp 640w, ../assets/moka/atelier-moka-coffee-detail-960.webp 960w, ../assets/moka/atelier-moka-coffee-detail-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-coffee-detail-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-coffee-detail-640.avif 640w, ../assets/moka/atelier-moka-coffee-detail-960.avif 960w, ../assets/moka/atelier-moka-coffee-detail-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-coffee-detail-640.webp 640w, ../assets/moka/atelier-moka-coffee-detail-960.webp 960w, ../assets/moka/atelier-moka-coffee-detail-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-coffee-detail-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                   <div class="moka-page__gallery-small moka-page__gallery-small--action"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-counter-action-640.avif 640w, ../assets/moka/atelier-moka-counter-action-960.avif 960w, ../assets/moka/atelier-moka-counter-action-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-counter-action-640.webp 640w, ../assets/moka/atelier-moka-counter-action-960.webp 960w, ../assets/moka/atelier-moka-counter-action-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-counter-action-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-counter-action-640.avif 640w, ../assets/moka/atelier-moka-counter-action-960.avif 960w, ../assets/moka/atelier-moka-counter-action-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-counter-action-640.webp 640w, ../assets/moka/atelier-moka-counter-action-960.webp 960w, ../assets/moka/atelier-moka-counter-action-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-counter-action-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                   <div class="moka-page__material"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-material-detail-640.avif 640w, ../assets/moka/atelier-moka-material-detail-960.avif 960w, ../assets/moka/atelier-moka-material-detail-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-material-detail-640.webp 640w, ../assets/moka/atelier-moka-material-detail-960.webp 960w, ../assets/moka/atelier-moka-material-detail-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-material-detail-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-material-detail-640.avif 640w, ../assets/moka/atelier-moka-material-detail-960.avif 960w, ../assets/moka/atelier-moka-material-detail-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-material-detail-640.webp 640w, ../assets/moka/atelier-moka-material-detail-960.webp 960w, ../assets/moka/atelier-moka-material-detail-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-material-detail-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                 </section>
 
@@ -257,19 +261,19 @@
                     <div class="moka-page__facts"><span>Every day<strong>07:00 — 18:00</strong></span><span>Address<strong>18 rue des Lilas · Lyon</strong></span></div>
                   </div>
                   <div class="moka-page__pastries"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-pastries-640.avif 640w, ../assets/moka/atelier-moka-pastries-960.avif 960w, ../assets/moka/atelier-moka-pastries-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-pastries-640.webp 640w, ../assets/moka/atelier-moka-pastries-960.webp 960w, ../assets/moka/atelier-moka-pastries-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-pastries-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-pastries-640.avif 640w, ../assets/moka/atelier-moka-pastries-960.avif 960w, ../assets/moka/atelier-moka-pastries-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-pastries-640.webp 640w, ../assets/moka/atelier-moka-pastries-960.webp 960w, ../assets/moka/atelier-moka-pastries-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-pastries-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                   <div class="moka-page__menu-photo"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-table-menu-640.avif 640w, ../assets/moka/atelier-moka-table-menu-960.avif 960w, ../assets/moka/atelier-moka-table-menu-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-table-menu-640.webp 640w, ../assets/moka/atelier-moka-table-menu-960.webp 960w, ../assets/moka/atelier-moka-table-menu-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-table-menu-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-table-menu-640.avif 640w, ../assets/moka/atelier-moka-table-menu-960.avif 960w, ../assets/moka/atelier-moka-table-menu-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-table-menu-640.webp 640w, ../assets/moka/atelier-moka-table-menu-960.webp 960w, ../assets/moka/atelier-moka-table-menu-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-table-menu-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                   <div class="moka-page__qr-photo"><picture class="moka-media">
-      <source type="image/avif" srcset="../assets/moka/atelier-moka-qr-menu-640.avif 640w, ../assets/moka/atelier-moka-qr-menu-960.avif 960w, ../assets/moka/atelier-moka-qr-menu-1536.avif 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <source type="image/webp" srcset="../assets/moka/atelier-moka-qr-menu-640.webp 640w, ../assets/moka/atelier-moka-qr-menu-960.webp 960w, ../assets/moka/atelier-moka-qr-menu-1536.webp 1536w" sizes="(min-width: 1000px) 70vw, 94vw">
-      <img src="../assets/moka/atelier-moka-qr-menu-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="../assets/moka/atelier-moka-qr-menu-640.avif 640w, ../assets/moka/atelier-moka-qr-menu-960.avif 960w, ../assets/moka/atelier-moka-qr-menu-1536.avif 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <source type="image/webp" srcset="../assets/moka/atelier-moka-qr-menu-640.webp 640w, ../assets/moka/atelier-moka-qr-menu-960.webp 960w, ../assets/moka/atelier-moka-qr-menu-1536.webp 1536w" sizes="(min-width: 1000px) 38vw, 62vw">
+      <img src="../assets/moka/atelier-moka-qr-menu-960.webp" width="1536" height="1024" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture></div>
                 </section>
 
@@ -314,10 +318,10 @@
                 <span class="scene__ghost" aria-hidden="true">Qualamantis</span>
                 <a class="scene__shots" href="project-qualamantis.html" tabindex="-1" aria-hidden="true">
                   <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="../assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-desk.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="../assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/qualamantis-desk-poster.webp" width="1280" height="800" alt=""></noscript>
                   </div>
                   <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="../assets/video/qualamantis-phone-poster.webp"><source src="../assets/video/qualamantis-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-phone.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="../assets/video/qualamantis-phone-poster.webp"><source src="../assets/video/qualamantis-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/qualamantis-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/qualamantis-phone-poster.webp" width="360" height="780" alt=""></noscript>
                   </div>
                 </a>
               </div>
@@ -342,10 +346,10 @@
                 <span class="scene__ghost" aria-hidden="true">BDE <span class="name-outline">Dauphine</span></span>
                 <a class="scene__shots" href="project-bde.html" tabindex="-1" aria-hidden="true">
                   <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="../assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-desk.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="../assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/bde-desk-poster.webp" width="1280" height="800" alt=""></noscript>
                   </div>
                   <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="../assets/video/bde-phone-poster.webp"><source src="../assets/video/bde-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-phone.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="../assets/video/bde-phone-poster.webp"><source src="../assets/video/bde-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/bde-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/bde-phone-poster.webp" width="360" height="780" alt=""></noscript>
                   </div>
                 </a>
               </div>
@@ -370,10 +374,10 @@
                 <span class="scene__ghost" aria-hidden="true">wecalc.fr</span>
                 <a class="scene__shots" href="project-wecalc.html" tabindex="-1" aria-hidden="true">
                   <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="../assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-desk.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="../assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/wecalc-desk-poster.webp" width="1280" height="800" alt=""></noscript>
                   </div>
                   <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="../assets/video/wecalc-phone-poster.webp"><source src="../assets/video/wecalc-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-phone.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="../assets/video/wecalc-phone-poster.webp"><source src="../assets/video/wecalc-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/wecalc-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/wecalc-phone-poster.webp" width="360" height="780" alt=""></noscript>
                   </div>
                 </a>
               </div>
@@ -398,10 +402,10 @@
                 <span class="scene__ghost" aria-hidden="true">Jeanne Randu</span>
                 <a class="scene__shots" href="project-jeanne-randu.html" tabindex="-1" aria-hidden="true">
                   <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="../assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="../assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/jeanne-randu-desk-poster.webp" width="1280" height="800" alt=""></noscript>
                   </div>
                   <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="../assets/video/jeanne-randu-phone-poster.webp"><source src="../assets/video/jeanne-randu-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-phone.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="../assets/video/jeanne-randu-phone-poster.webp"><source src="../assets/video/jeanne-randu-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/jeanne-randu-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/jeanne-randu-phone-poster.webp" width="360" height="780" alt=""></noscript>
                   </div>
                 </a>
               </div>
@@ -426,10 +430,10 @@
                 <span class="scene__ghost" aria-hidden="true">La Cave d’Antoine</span>
                 <a class="scene__shots" href="project-cave-antoine.html" tabindex="-1" aria-hidden="true">
                   <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" poster="../assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="../assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-desk.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="../assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="../assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/cave-antoine-desk-poster.webp" width="1280" height="800" alt=""></noscript>
                   </div>
                   <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" poster="../assets/video/cave-antoine-phone-poster.webp"><source src="../assets/video/cave-antoine-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-phone.mp4" type="video/mp4"></video>
+                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="../assets/video/cave-antoine-phone-poster.webp"><source src="../assets/video/cave-antoine-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="../assets/video/cave-antoine-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="../assets/video/cave-antoine-phone-poster.webp" width="360" height="780" alt=""></noscript>
                   </div>
                 </a>
               </div>
@@ -448,7 +452,7 @@
               </div>
             </div></div>
           </article>
-        <ol class="showcase__rail" aria-hidden="true"><li style="--ac:#BC4827">Consulting firm</li><li style="--ac:#C8102E">Event platform</li><li style="--ac:#C8B27D">Online tool</li><li style="--ac:#C9BDA9">Portfolio</li><li style="--ac:#E4C780">Restaurant &amp; bar</li></ol>
+        <ol class="showcase__rail" aria-label="Projects"><li style="--ac:#BC4827"><a href="#scene-qualamantis">Consulting firm</a></li><li style="--ac:#C8102E"><a href="#scene-bde">Event platform</a></li><li style="--ac:#C8B27D"><a href="#scene-wecalc">Online tool</a></li><li style="--ac:#C9BDA9"><a href="#scene-jeanne-randu">Portfolio</a></li><li style="--ac:#E4C780"><a href="#scene-cave-antoine">Restaurant &amp; bar</a></li></ol>
         <!-- /projets:vitrine --></div>
     </div>
   </section>
@@ -523,7 +527,7 @@
       <a class="btn" href="digital-menu.html">See the solution</a>
       <picture class="menu-cta__media">
         <source type="image/webp" srcset="../assets/menu-qr/menu-qr-transparent-640.webp 640w, ../assets/menu-qr/menu-qr-transparent-960.webp 960w, ../assets/menu-qr/menu-qr-transparent-1536.webp 1536w" sizes="(min-width:760px) 640px, 100vw">
-        <img src="../assets/menu-qr/menu-qr-transparent-960.webp" width="1536" height="1024" alt="Online menu accessed via a QR code" loading="lazy" decoding="async">
+        <img src="../assets/menu-qr/menu-qr-transparent-960.webp" width="1536" height="1024" alt="Online menu accessed via a QR code" loading="lazy" decoding="async" fetchpriority="low">
       </picture>
     </div>
   </section>
@@ -618,7 +622,7 @@
     <picture class="finale__art" aria-hidden="true">
       <source type="image/avif" srcset="../assets/art/cafe-delight.avif">
       <source type="image/webp" srcset="../assets/art/cafe-delight.webp">
-      <img src="../assets/art/cafe-delight.jpg" width="1295" height="774" alt="" loading="lazy" decoding="async">
+      <img src="../assets/art/cafe-delight.jpg" width="1295" height="774" alt="" loading="lazy" decoding="async" fetchpriority="low">
     </picture>
     <div class="wrap finale__in">
       <h2 class="h-page finale__title" data-reveal>Tell me what your site needs to do.</h2>
@@ -663,10 +667,10 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=29" defer></script>
-<script src="../assets/telaventis-fx.js?v=46" defer></script>
+<script src="../assets/telaventis.js?v=34" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=50" defer fetchpriority="high"></script>
 <!-- MOKA experiment — remove this line together with the CSS <link> and
      the #direction-lab section to deactivate it. -->
-<script src="../assets/moka-lab.js?v=18" defer></script>
+<script src="../assets/moka-lab.js?v=19" defer></script>
 </body>
 </html>
