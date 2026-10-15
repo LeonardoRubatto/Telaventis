@@ -371,3 +371,13 @@ la méduse WebGPU (`assets/aurelia/`, holtsetio / Aurelia, MIT), la méduse 2D d
 le champ de bulles des téléphones (Alex Andrix, tag `champ-de-bulles-mobile`) et
 la déformation du texte, la version « légère » et sa détection, le texte sous la dernière
 phrase. Les crédits de `mentions-legales.html` ont été mis à jour (Aurelia n'y figure plus).
+
+**Barre d'outils des téléphones (15 octobre).** La scène épinglée de `#digital-era` est
+`100dvh` (pour toujours toucher le bord réel de l'écran), mais la hauteur dvh change quand la
+barre d'Safari se replie pendant le défilement : tout ce qui y était centré (la phrase) glissait
+d'environ la moitié du changement pendant que les bulles restaient en place, puis revenaient d'un
+coup (« petit saccadement »). Maintenant : le cadre du texte (`.era__stage`) fait `100svh` collé en
+haut, le dégradé et les canvas (`era__aurora`, `era__ripple`, `era__morph`) font `100lvh` (jamais
+réalloués), et un vol de bulles en cours suit les mots s'ils bougent (`retarget` dans
+`telaventis-fx.js`). Test : `node _outils/bulles-barre.js <url> --barre --rest` (part des bulles
+hors des mots, image par image) ; l'ancienne version donne ~60 % pendant ~170 ms, la nouvelle 0 %.

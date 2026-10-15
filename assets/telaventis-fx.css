@@ -188,18 +188,18 @@
    always-on ::before ground (the CSS-only layer that is all there is where WebGL2
    is missing) and below the panels. No blur on it: it is a field of colour, not
    a drawing. */
-.era__aurora{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;opacity:1;transition:opacity .8s ease}
+.era__aurora{position:absolute;top:0;left:0;z-index:1;width:100%;height:100svh;height:100lvh;display:block;opacity:1;transition:opacity .8s ease}   /* lvh: never re-allocated while a toolbar moves */
 /* over the gradient the phrase needs a quiet ground: a soft dark pool right under
    the text, so the bright veins of
    colour never pass behind a word at full strength */
-.era--grad[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+.era--grad[data-era-live] .era__sticky::after{content:"";position:absolute;top:0;left:0;right:0;height:100svh;z-index:2;pointer-events:none;
   background:radial-gradient(62% 36% at 50% 47%,rgba(7,11,16,.46),rgba(7,11,16,.22) 55%,transparent 82%)}
 /* small bubbles trailing the cursor over the backdrop itself — same sprites
    and idea as hovering a bubble word, just spawned at the pointer instead
    of sampled from a glyph. Its own z-index between the backdrop (1) and the
    text (.era__stage, bumped to 3); never intercepts the pointer, it only ever
    reads where the pointer already is. */
-.era__ripple{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
+.era__ripple{position:absolute;top:0;left:0;z-index:2;width:100%;height:100svh;height:100lvh;display:block;pointer-events:none}
 
 /* ---- the cut (3d in telaventis-fx.js) ------------------------------------
    A cream layer over the whole pinned scene, clipped to a spindle-shaped
@@ -261,7 +261,13 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 }
 
 .era__stage{position:relative;z-index:3;width:100%;min-width:0}
-.era[data-era-live] .era__stage{height:100%}
+.era[data-era-live] .era__stage{height:100svh;align-self:start}
+/* The text frame is exactly as tall as the SHORTEST viewport (toolbars out), pinned to
+   the top of the scene. The scene itself (the sticky box) is dvh, so that it always
+   reaches the screen's true edge; but a phone's toolbar sliding in or out changes dvh
+   in the middle of a scroll, and anything centred in it (the phrase, the bubbles' own
+   resting places) used to slide by half the change while the bubbles stayed behind,
+   then snap back. Centred in a box whose height never changes, the words do not move. */
 
 /* One flat wrapper per panel — no background layer, no outer/inner mask.
    You asked to drop the section-swap mechanic in favour of something
@@ -356,7 +362,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 /* the metamorphosis canvas: one layer over the whole stage, above the text,
    carrying every bubble from one phrase's words to the next's; the per-word
    canvases step aside for the length of the flight */
-.era__morph{position:absolute;inset:0;z-index:4;width:100%;height:100%;display:block;pointer-events:none}
+.era__morph{position:absolute;top:0;left:0;z-index:4;width:100%;height:100svh;height:100lvh;display:block;pointer-events:none}
 /* the per-word canvases are samplers only while live — the field draws */
 .era[data-era-live] .era__w canvas{display:none}
 /* the couple of words that are flower/bubble from the very start — sized

@@ -1313,7 +1313,7 @@
          changes the height the text is centred in; a font landing; a rotation), they
          are put back on the words instead of staying where the words used to be */
       var sigOf = function (i) {
-        var b = sticky.getBoundingClientRect(), sg = [b.left | 0, b.top | 0, b.width | 0, b.height | 0];
+        var b = sticky.getBoundingClientRect(), sg = [b.left | 0, b.top | 0, b.width | 0];
         if (kinds[i]) words[i].forEach(function (w) { if (w.key) { var r = w.el.getBoundingClientRect(); sg.push(r.left | 0, r.top | 0); } });
         else if (headings[i]) { var hr = headings[i].getBoundingClientRect(); sg.push(hr.left | 0, hr.top | 0); }
         return sg.join(',');
@@ -1366,8 +1366,27 @@
           };
         }
         live = []; liveOf = -1;
-        morph = { parts: parts, t0: now, to: to, toHeading: !kinds[to], dur: rising ? MORPH_MS * 1.3 : MORPH_MS };
+        morph = { parts: parts, t0: now, to: to, toHeading: !kinds[to], dur: rising ? MORPH_MS * 1.3 : MORPH_MS, sig: sigOf(to) };
         return true;
+      };
+
+      /* the words moved while the bubbles were on their way (a rotation, a font
+         landing, the page reflowing): the flight's destinations follow them, so the
+         landing is where the words are and there is nothing to snap back */
+      var retarget = function () {
+        var m = morph; if (!m.sig) return;
+        var sg = sigOf(m.to);
+        if (sg === m.sig) return;
+        m.sig = sg;
+        var nd = cloudOf(m.to);
+        if (!nd.length) return;
+        var rank = function (u, v) { return (u.x + u.y * 0.35) - (v.x + v.y * 0.35); };
+        nd.sort(rank);
+        for (var k = 0; k < m.parts.length; k++) {
+          var q = m.parts[k], b = nd[Math.floor(k * nd.length / m.parts.length)];
+          q.cx += b.x - q.x; q.cy += b.y - q.y;
+          q.x = b.x; q.y = b.y;
+        }
       };
 
       /* land whatever is in flight, instantly and in place */
@@ -1396,6 +1415,7 @@
         morphCtx.clearRect(0, 0, w, h);
         var t = now / 1000, k, q;
         if (morph) {
+          if ((fieldTick & 3) === 0) retarget();
           var T = (now - morph.t0) / morph.dur;
           /* into the heading: the bubbles give way to the real letters as
              they rise (the heading's own fx-split, triggered at ~55%) */
@@ -1575,7 +1595,7 @@
             sp: a.sp, delay: Math.random() * 0.25, ph: Math.random() * 6.283 };
         }
         live = []; liveOf = -1;
-        morph = { parts: parts, t0: now, to: n - 1, toHeading: true, dur: 1150 };
+        morph = { parts: parts, t0: now, to: n - 1, toHeading: true, dur: 1150 };   /* (no sig: its targets are the slit, not words) */
       };
       /* ---- no speedrun: the door and the title play out whole ----------
          Once the slit starts to open, scroll is held — wheel, touch and the
