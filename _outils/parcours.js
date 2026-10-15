@@ -34,8 +34,8 @@ if (!url) { console.error('usage : node parcours.js <url> [--mobile] [--scenario
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(url + '', { waitUntil: 'load' });
   await page.waitForTimeout(2500);
-  const info = await page.evaluate(() => ({ sea: !!document.querySelector('.era__sea'), trackH: document.querySelector('.era__track').offsetHeight, vh: innerHeight }));
-  console.log(info.sea ? 'fond : champ de bulles' : 'fond : dégradé', 'piste', info.trackH, 'px, écran', info.vh);
+  const info = await page.evaluate(() => ({ trackH: document.querySelector('.era__track').offsetHeight, vh: innerHeight }));
+  console.log('fond : dégradé', 'piste', info.trackH, 'px, écran', info.vh);
 
   const snap = () => page.evaluate(() => {
     const era = document.querySelector('#digital-era'), top = era.getBoundingClientRect().top + scrollY;

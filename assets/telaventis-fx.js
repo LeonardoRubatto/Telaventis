@@ -23,11 +23,9 @@
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq('(prefers-reduced-motion: reduce)');
 
-  /* One version for everybody (the old "light tier" is gone): in #digital-era a
-     phone gets the flow field, a coarser bubble grid and the shorter track;
-     every other screen gets the animated gradient. */
+  /* One version for everybody: in #digital-era the backdrop is the animated gradient on every screen; a phone only gets a coarser bubble grid and the shorter track. */
   var phoneScreen = mq('(max-width:759px)');
-  var compactView = phoneScreen;   /* one version for everybody: the phone's (flow field) on a phone, the desktop's (gradient) elsewhere */
+  var compactView = phoneScreen;
 
   var clamp = function (n, a, b) { return n < a ? a : n > b ? b : n; };
   var range = function (p, a, b) { return clamp((p - a) / (b - a), 0, 1); };
@@ -914,13 +912,10 @@
       if (!track || !panels.length) return;
       var n = panels.length;
       /* same breakpoint as this section's own CSS (max-width:759px in
-         telaventis-fx.css): a phone gets the flow field, a coarser particle
-         grid and the shorter track — decorative extras traded for per-frame
-         cost on exactly the class of device least able to absorb it. */
+         telaventis-fx.css): a phone gets a coarser particle grid, fewer
+         bubbles and the shorter track; the backdrop is the same animated
+         gradient everywhere. */
       var isMobileEra = compactView;
-      /* The desktop backdrop (the animated gradient) now runs on phones too, by request: the flow field is kept in this file
-         but no longer mounted. Everything else the phone version adapts (track length, glyph sizes) is unchanged. */
-      var useSea = false;
       /* Panel boundaries as fractions of the whole track, not a flat 1/n
          each — mobile only, and only for the 3-panel shape this section
          actually ships (falls back to even thirds otherwise, rather than
@@ -991,14 +986,10 @@
         return { x: ptr.x - r.left, y: ptr.y - r.top, r: rad, active: true };
       };
 
-      /* ---- background layer: gradient (desktop) or flow field (mobile) ---
-         Exactly one of these two branches ever mounts — decided once here by
-         isMobileEra. render() and the panel-change trigger further down are
-         shared by both and only ever call drawGrad/renderRipple OR
-         renderSea; `var` hoists every one of those names to this whole
-         callback's scope, so referencing whichever pair did NOT run is simply
-         undefined, never a ReferenceError. */
-      if (!useSea) {
+      /* ---- background layer: the animated gradient + the cursor's bubbles ---
+         (the flow field that phones used to have is gone; see the git tag
+         champ-de-bulles-mobile for it) */
+      {
       /* ---- the animated gradient: the desktop backdrop ---------------------------
          "Animated Gradient" (Harsh Jadhav, Componentry, MIT; design-memory item
          backgrounds/animated-gradient) — its fragment shader, unchanged in the
@@ -1213,410 +1204,6 @@
         rippleParticles = kept;
       };
 
-      } else {
-      /* ---- the flow field: Alex Andrix's actual technique, tamed --------
-         codepen.io is not reachable from where this file is written, so
-         the very first pass here guessed at what "jgyWww" showed and
-         built an invented painted backdrop instead — wrong, and replaced
-         outright by this block. What runs below is verified against a
-         derivative that reproduces the real pen line-for-line and credits
-         it explicitly (github.com/rolandkorgowski, gist
-         9f1ce287db6c7efebb3e8b5ec49d1b2a, itself "inspired in very large
-         part by Alex Andrix's work… https://codepen.io/alexandrix/pen/
-         jgyWww"). The real pen — titled "A random world of Turbulence",
-         after earth.nullschool.net's wind map — is not jellyfish or
-         bubbles at all: a handful of invisible "eddies" (vortices) sum
-         into one velocity field; a swarm of particles drifts through it,
-         each drawn every frame as a short line from its last position to
-         its new one. createEddy/createParticle/move below are that
-         source's own maths, unchanged (radial pull toward each eddy's
-         radius + angular spin around it, falling off with distance —
-         see move() for the exact terms).
-         What changed, and why:
-         · The source's canvas is NEVER cleared — strokes accumulate
-           forever, which is fine for a standalone demo but would
-           eventually paint solid over the body text sitting on top of
-           it. FADE below stands in for that: a translucent ink wash
-           painted under every new stroke each frame, so old strokes
-           dim by degrees instead of staying at full strength — trails
-           still read as flowing threads, the canvas never climbs toward
-           opaque.
-         · Hue is still driven by particle speed exactly as the source
-           computes it — only the RANGE moved, from the full 0–360°
-           rainbow down to a band between this site's own coral and the
-           teal era__sticky::before already glows with, and lightness is
-           capped mid-tone rather than bright — "not too bright" was the
-           brief, and constraining the same speed-driven hue shift to two
-           brand hues gets there without giving up what made the source
-           read as alive.
-         · Reseeded — a fresh set of eddies AND a fresh particle swarm —
-           on every panel change, the same trigger as everything else in
-           this section; the source only ever reseeds on click or resize,
-           since it has no panels to react to. The still-fading old
-           trails already on the canvas cross-fade into the new field on
-           their own, for free, because FADE dims them regardless of
-           which simulation state produced them.
-         · Eddy/particle counts (7/1700) are higher than the source's own
-           5/1000 — this canvas is now a whole WORLD larger than any one
-           viewport (see PAN_MARGIN_X/Y below), not a phone-width strip,
-           so it needs more of both to read as dense wherever the camera
-           happens to be sitting, not just in whichever corner was built
-           first. Getting a filled-in look at all also needed a much
-           slower fade (see FADE below) — density alone with a fast fade
-           still faded each stroke before enough of its neighbours had
-           overlapped it. */
-      var eraSticky = era.querySelector('.era__sticky');
-      var seaWrap = doc.createElement('div');
-      seaWrap.className = 'era__sea';
-      seaWrap.setAttribute('aria-hidden', 'true');
-      var seaCanvas = doc.createElement('canvas');
-      seaCanvas.className = 'era__sea-canvas';
-      seaWrap.appendChild(seaCanvas);
-      eraSticky.insertBefore(seaWrap, era.querySelector('.era__stage'));
-      var seaCtx = seaCanvas.getContext('2d');
-
-      var NB_EDDIES = 7, NB_PARTICLES = 1700, LIFETIME = 420;
-      /* Pulled back from an even slower first try (2%/frame): left running
-         a few seconds, that settled into exactly what the source pen's own
-         screenshot shows — two tight, saturated vortices on an otherwise
-         mostly BLACK canvas, because particles keep drifting off toward
-         the eddies and the fade is slow enough that everywhere else has
-         time to go fully dark before fresh particles (reborn at random
-         positions — see createParticle) refill it. ~4.5%/frame (~0.25s
-         half-life) is the middle point: still several times slower than
-         the original 9%/7.5% passes, so strokes still overlap into real
-         grooves instead of thin scattered lines, but fast enough that
-         emptier patches keep getting refreshed before they go black —
-         dense texture across the whole field, not two blobs on a void.
-         Still a live fade, never a static painting: --panel-fg/
-         --panel-shadow-rgb below keep sampling the real pixels each
-         frame, so text contrast keeps adapting regardless. */
-      var FADE = 'rgba(18,26,34,.045)';
-      var HUE_LO = 22, HUE_HI = 200;   /* --coral-2 to the era__sticky::before teal */
-
-      var dimx = 0, dimy = 0, eddies = [], particles = [], seaBuilt = false, seaDpr = 1;
-
-      /* alea/intAlea/createEddy/createParticle/move: the source's own
-         functions (same names, same signatures), only the constants
-         feeding them and the hue mapping at the very end of move() are
-         this site's. */
-      var alea = function (a, b) { return b === undefined ? a * Math.random() : a + (b - a) * Math.random(); };
-      var intAlea = function (a, b) { if (b === undefined) { b = a; a = 0; } return Math.floor(a + (b - a) * Math.random()); };
-
-      var createEddy = function () {
-        return {
-          x: alea(dimx), y: alea(dimy),
-          coeffR: 0.001 * alea(0.7, 1.3),          /* coefficient for radial velocity */
-          radius: 90 + alea(-30, 30),               /* radius where angular velocity is max — smaller than the source's 150±50: this canvas is a phone-width strip, not a fullscreen window */
-          coeffA1: 10000 * alea(0.8, 1.2),          /* coefficient in exponent for angular velocity */
-          coeffA2: 0.01 * alea(0.8, 1.2),           /* multiplying coefficient for angular velocity */
-          dir: Math.random() > 0.5 ? 1 : -1         /* direction of rotation */
-        };
-      };
-
-      var createParticle = function () {
-        /* hue fixed per particle at birth — coral or teal, never anything
-           between: interpolating hue itself from 22° to 200° at render
-           time was tried first and rejected, because the short way round
-           the wheel between those two crosses yellow and green, which
-           read as neither brand colour. Keeping each thread a single
-           consistent hue and letting speed drive brightness instead (see
-           move()) keeps the palette to exactly the two colours intended. */
-        return {
-          x: alea(-40, dimx + 40), y: alea(-40, dimy + 40),
-          hue: (Math.random() < 0.5 ? HUE_LO : HUE_HI) + alea(-8, 8),
-          TTL: intAlea(LIFETIME * 0.8, LIFETIME * 1.2)
-        };
-      };
-
-      var reseed = function () {
-        eddies = [];
-        for (var i = 0; i < NB_EDDIES; i++) eddies.push(createEddy());
-        particles = [];
-        for (var j = 0; j < NB_PARTICLES; j++) {
-          var p = createParticle();
-          p.TTL = intAlea(LIFETIME);   /* staggered, so this reseed doesn't die/respawn every particle in lockstep once TTL starts running out */
-          particles.push(p);
-        }
-      };
-
-      var seaHasActivated = false;
-
-      /* ---- one continuous world, a moving window onto it ----------------
-         Earlier passes tried "nudging" by teleporting every eddy and
-         particle to a new spot: technically cheap, but it reads exactly
-         like what it is — a cut, not a pan. What actually reads as
-         movement is the opposite trick: the SIMULATION never jumps at
-         all, only the WINDOW looking at it does. So the canvas itself is
-         built much bigger than any one viewport (PAN_MARGIN_X/Y below,
-         layered on top of the pre-existing SEA_HEADROOM), the field runs
-         across that whole world continuously exactly as it always did —
-         same reseed() on real resize, same never-reseed on phrase change,
-         nothing about moveSea/createParticle/createEddy below changes —
-         and seaWrap (overflow:hidden, see the CSS) crops it down to the
-         viewport. A phrase change just slides the canvas element itself
-         under that crop via a CSS transform, panSea() below, so the
-         already-drawn trail comes along for the ride instead of staying
-         behind to fade out — the whole point being that there is nothing
-         to fade out any more, because nothing was reset. */
-      var PAN_MARGIN_X = 0.5, PAN_MARGIN_Y = 0.28;
-      var SEA_HEADROOM = 1.25;
-      var viewW = 0, viewH = 0, seaCanvasW = 0, seaCanvasH = 0;
-      var camX = -1, camY = -1;   /* -1 sentinel: "not yet placed" — buildSea centres it on the very first build instead of pinning the top-left corner */
-      var setCam = function (x, y, animate) {
-        camX = x; camY = y;
-        seaCanvas.style.transition = animate ? 'transform 1100ms cubic-bezier(.22,.9,.24,1)' : 'none';
-        seaCanvas.style.transform = 'translate3d(' + (-camX) + 'px,' + (-camY) + 'px,0)';
-      };
-      /* Called once per phrase change (from applyState, below, gated to
-         isMobileEra) — picks a new spot inside the same world and glides
-         the camera there. Never picks somewhere too close to the current
-         spot to actually notice; falls back to whatever the last try found
-         if six attempts in a row all land too close (a handful of pixels
-         of headroom, not expected to matter in practice). */
-      var panSea = function () {
-        var maxX = dimx - viewW, maxY = dimy - viewH;
-        if (maxX <= 4 && maxY <= 4) return;
-        var minDist = Math.min(maxX, maxY) * 0.35;
-        var nx = camX, ny = camY;
-        for (var tries = 0; tries < 6; tries++) {
-          var tx = alea(0, maxX), ty = alea(0, maxY);
-          if (Math.hypot(tx - camX, ty - camY) >= minDist) { nx = tx; ny = ty; break; }
-          nx = tx; ny = ty;
-        }
-        setCam(nx, ny, true);
-      };
-
-      /* The canvas is deliberately built TALLER and WIDER than the
-         viewport that asked for it — SEA_HEADROOM for the vertical safety
-         margin against a mobile address bar collapsing/expanding mid-
-         scroll (unrelated to panning: a pure height change here never
-         needs a rebuild, see onResize below), PAN_MARGIN_X/Y on top of
-         that for the room panSea actually pans around inside. Setting
-         .width/.height always wipes a canvas's pixel buffer — there is no
-         way to resize one and keep what is drawn on it — so a genuine
-         rebuild (real resize, not a pan) still restarts the field, same
-         as always; it just now needs to happen far less often, since most
-         of what used to force a rebuild (needing a "different view") is
-         handled by moving the window instead. */
-      /* Warm-start, run in slices instead of one synchronous burst: 80
-         iterations of moveSea() over 1700 particles × 7 eddies measured at
-         500ms+ of unbroken main-thread work on ordinary hardware — run
-         inline, that single task blocked the thread for the length of a
-         page load, which on a real phone (slower CPU than this) is long
-         enough to freeze whatever else is trying to render at the same
-         moment, the cross-document view-transition's own sweep included
-         (a clip-path animation needs the main thread free to advance a
-         frame; blocked, it just holds its last frame — the "flash" that
-         was reported). Each slice spends WARM_BUDGET_MS of wall-clock
-         time (not a fixed count), so it adapts to the device instead of
-         assuming this machine's speed: a fast one finishes in a couple of
-         frames, a slow one takes more frames of the same short bite, but
-         neither ever blocks longer than that bite. A rebuild (resize)
-         cancels whatever slice was still pending, so it never keeps
-         warming a canvas that no longer exists at those dimensions. */
-      var WARM_BUDGET_MS = 4, warmRaf = 0;
-      var stopWarm = function () { if (warmRaf) { cancelAnimationFrame(warmRaf); warmRaf = 0; } };
-      var warmSlice = function (remaining) {
-        warmRaf = 0;
-        var t0 = performance.now();
-        while (remaining > 0 && performance.now() - t0 < WARM_BUDGET_MS) { moveSea(); remaining--; }
-        if (remaining > 0) warmRaf = requestAnimationFrame(function () { warmSlice(remaining); });
-      };
-      var buildSea = function (keepField) {
-        var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
-        if (!w || !h) return false;
-        stopWarm();
-        var worldW = Math.round(w * (1 + PAN_MARGIN_X));
-        var worldH = Math.round(Math.max(h * SEA_HEADROOM * (1 + PAN_MARGIN_Y), seaCanvasH));
-        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        seaDpr = dpr;
-        dimx = worldW; dimy = worldH;
-        seaCanvas.style.width = worldW + 'px';
-        seaCanvas.style.height = worldH + 'px';
-        seaCanvas.width = Math.round(worldW * dpr);
-        seaCanvas.height = Math.round(worldH * dpr);
-        seaCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        seaCtx.lineWidth = 1.6;
-        seaCtx.fillStyle = '#16202B';   /* opaque ink to start — nothing behind this canvas should ever show through on the very first frame */
-        seaCtx.fillRect(0, 0, worldW, worldH);
-        if (!keepField) reseed();
-        /* Warm-start: run a burst of simulation frames right now, before
-           this canvas is ever shown (sliced, see above). Reassigning
-           .width/.height just above always wipes the pixel buffer back to
-           the flat fill colour — unavoidable, canvases don't support
-           resizing without it — so without this, only the patch of world
-           the visitor happens to be looking at ever accumulates trails;
-           panSea can then swipe the camera onto a part of the world that
-           hasn't been painted over yet, showing a flat, untextured patch
-           of the raw fill colour instead of the field. Particles already
-           spawn across the WHOLE world (see createParticle), not just the
-           visible patch, so running moveSea() ahead of the first real
-           frame textures all of it at once — panning anywhere afterwards
-           lands on a part of the world that already has a field, not a
-           blank corner still waiting its turn. Sliced across frames, a
-           scroll that reaches this section before the warm-up has finished
-           simply finds a field that is still filling in — every real
-           frame calls moveSea() too (renderSea, below), so it keeps
-           catching up on its own regardless. */
-        warmSlice(80);
-        viewW = w; viewH = h; seaCanvasW = worldW; seaCanvasH = worldH;
-        var cx = camX < 0 ? (worldW - w) / 2 : clamp(camX, 0, worldW - w);
-        var cy = camY < 0 ? (worldH - h) / 2 : clamp(camY, 0, worldH - h);
-        setCam(cx, cy, false);
-        return true;
-      };
-
-      /* the source's move(), per particle: sum every eddy's radial + angular
-         contribution, advance the particle, stroke old→new, then colour
-         that stroke by how far it just moved. */
-      var moveSea = function () {
-        seaCtx.fillStyle = FADE;
-        seaCtx.fillRect(0, 0, dimx, dimy);
-        for (var k = 0; k < NB_PARTICLES; k++) {
-          var part = particles[k];
-          if (part.TTL <= 0) { part = createParticle(); particles[k] = part; }
-          var px = part.x, py = part.y;
-          for (var e = 0; e < eddies.length; e++) {
-            var ed = eddies[e];
-            var dx = px - ed.x, dy = py - ed.y;
-            var r = Math.hypot(dx, dy); if (r < 0.001) r = 0.001;
-            var s = dy / r, c = dx / r;
-            var deltar = r - ed.radius;
-            var av = ed.coeffA2 * Math.exp(-deltar * deltar / ed.coeffA1) * ed.dir;  /* angular velocity */
-            var rv = -deltar * ed.coeffR;                                            /* radial velocity */
-            part.x += rv * c - av * r * s;
-            part.y += rv * s + av * r * c;
-          }
-          part.TTL--;
-          var speed = Math.hypot(px - part.x, py - part.y);
-          /* the source's stroke is coloured by that frame's speed (hue =
-             min(speed*100,300)); here hue is fixed per particle (see
-             createParticle) and speed drives LIGHTNESS instead — same
-             underlying idea, "motion reads as brighter", without ever
-             producing a hue this palette doesn't own. 0.7 is tuned
-             against this field's actual per-frame speeds (roughly
-             0.3–1.5px, measured) so the range is used, not clipped at
-             one end; capped at 66% so the fastest stroke still stays
-             mid-tone, never pastel-bright.
-             Floor raised from an earlier 26% to 34%: near-stationary
-             particles (deltar≈0 both very close to an eddy's centre and
-             far past its ring — see move() above) are also exactly where
-             particles pile up densest, since the field keeps drawing
-             more of them there. At the old 26% floor, that pile-up of
-             near-minimum-lightness strokes read as a solid black patch
-             right at each vortex's core — "too dense = black" was really
-             "too dense AND too dark at once", not the fade. Raising the
-             floor means even the slowest, most-overlapped cluster still
-             paints as a muted colour, never black. */
-          var light = 34 + Math.min(speed * 0.7, 1) * 32;
-          seaCtx.beginPath();
-          seaCtx.moveTo(px, py);
-          seaCtx.lineTo(part.x, part.y);
-          seaCtx.strokeStyle = 'hsl(' + part.hue.toFixed(0) + ',44%,' + light.toFixed(0) + '%)';
-          seaCtx.stroke();
-        }
-      };
-
-      /* ---- live contrast: read the pixels actually behind the active
-         phrase, not a guess about what the palette "should" produce.
-         A static background could be sampled once and trusted; this one
-         can't — particles genuinely pile up brighter wherever several of
-         them happen to pass at once, so a patch under the text can drift
-         lighter at any moment regardless of the fixed hue/lightness caps
-         above. Reading the true pixels is what makes "readable" a
-         guarantee instead of a hope. Threshold and both outcomes are the
-         same cream/ink pairing every other backdrop on this site already
-         uses for light-on-dark vs dark-on-light text; --panel-fg is set
-         on the <section> itself so it cascades to whichever panel is
-         actually showing (.era__mix, .era__w--key, .era__phrase, .era__note
-         in telaventis-fx.css all read it, with var(--cream) as the
-         resting-state fallback if this never runs at all). */
-      var sampleActiveTextFg = function () {
-        var activeText = era.querySelector('.era__panel.is-active .era__mix, .era__panel.is-active .era__phrase');
-        if (!activeText) return;
-        var cr = seaCanvas.getBoundingClientRect();
-        var tr = activeText.getBoundingClientRect();
-        var x0 = Math.max(0, tr.left - cr.left), y0 = Math.max(0, tr.top - cr.top);
-        var ww = Math.min(tr.width, cr.width - x0), hh = Math.min(tr.height, cr.height - y0);
-        if (ww <= 4 || hh <= 4) return;
-        var sx = Math.round(x0 * seaDpr), sy = Math.round(y0 * seaDpr);
-        var sw = Math.max(1, Math.round(ww * seaDpr)), sh = Math.max(1, Math.round(hh * seaDpr));
-        var data;
-        try { data = seaCtx.getImageData(sx, sy, sw, sh).data; } catch (e) { return; }
-        var stride = Math.max(4, Math.round(16 * seaDpr));
-        var sum = 0, n = 0;
-        for (var y = 0; y < sh; y += stride) {
-          for (var x = 0; x < sw; x += stride) {
-            var idx = (y * sw + x) * 4;
-            sum += (0.2126 * data[idx] + 0.7152 * data[idx + 1] + 0.0722 * data[idx + 2]) / 255;
-            n++;
-          }
-        }
-        if (!n) return;
-        var dark = (sum / n) < 0.5;
-        era.style.setProperty('--panel-fg', dark ? 'var(--cream)' : 'var(--ink)');
-        era.style.setProperty('--panel-fg-rgb', dark ? '237,233,226' : '22,32,43');
-        era.style.setProperty('--panel-shadow-rgb', dark ? '10,16,22' : '237,233,226');
-      };
-
-      /* idx is ignored (the field itself is the whole backdrop, there is
-         nothing panel-specific to look up); `pending` is what matters.
-         true = the trigger just stepped one leg of a longer catch-up and
-         the true scroll position (raw) still hasn't been reached, so
-         this call is skipped outright — reseeding here would be exactly
-         the flicker being fixed. false = target has actually caught up
-         to raw, i.e. the scroll has genuinely settled on this panel (the
-         common case — one step, immediately settled — reaches this
-         branch on its very first and only call), so this is the one
-         real reseed for wherever the visitor ended up. Net effect: a
-         single fast fling across the whole track still only ever
-         reseeds once, right at the end, not once per intermediate step. */
-      /* No setSeaScene(): the field is NOT reseeded when the scroll moves
-         from one phrase to the next. Reseeding swaps every eddy and every
-         particle at once, which is exactly the "different positions" flash
-         being reported — and unlike the source demo (which only ever
-         reseeds on an explicit click or a resize) there is nothing here
-         that needs it: the field is a continuously living backdrop, not a
-         per-panel illustration. Panel changes are carried entirely by the
-         text crossfade above. Seeded once, then left alone. */
-
-      var seaNeedsReseed = true;   /* true for the very first build; after that, only a genuine width change (set by onResize, below) asks for another — a height-only resize (mobile address-bar collapse) does not */
-      var seaFrame = 0;
-      var renderSea = function () {
-        if (!seaBuilt) {
-          seaBuilt = buildSea(!seaNeedsReseed);
-          seaNeedsReseed = false;
-          if (!seaBuilt) return;
-        }
-        moveSea();
-        /* every 4th frame (~15×/s at 60fps) — frequent enough that a
-           brightening patch under the text gets caught well within a
-           blink, cheap enough (getImageData forces a GPU→CPU readback)
-           to not be worth paying for on every single frame */
-        seaFrame++;
-        if (seaFrame % 4 === 0) sampleActiveTextFg();
-      };
-
-      onResize(function () {
-        if (!eraSticky) return;
-        var w = eraSticky.clientWidth, h = eraSticky.clientHeight;
-        /* The common mobile case — the address bar sliding in or out
-           mid-scroll — changes height only, and thanks to SEA_HEADROOM the
-           new height still fits inside the canvas that is already drawn. So
-           there is nothing to do at all: no rebuild, no wipe, no reseed. The
-           field just keeps running, which is the whole point. Compared
-           against viewW/viewH (the viewport this was last built for), not
-           seaCanvasW/H (the world buffer itself, deliberately bigger). */
-        if (w === viewW && h <= seaCanvasH) return;
-        /* A genuine WIDTH change (rotation, desktop window resize) is a real
-           layout change and does start over, exactly as the source demo does
-           on resize. A height change big enough to outgrow the headroom only
-           needs the canvas re-made at the larger size — the field itself
-           carries over untouched. */
-        if (Math.abs(w - viewW) > 2) seaNeedsReseed = true;
-        seaBuilt = false;
-      });
       }
 
       /* How long a departed panel's bubble words keep dissolving after the
@@ -1934,7 +1521,7 @@
         var leanTo = e > 0.0005 ? 'scale(' + (1 + e * 0.16).toFixed(4) + ')' : '';
         for (var ci = 0; ci < sticky.children.length; ci++) {
           var kid = sticky.children[ci];
-          if (/\bera__(stage|aurora|ripple|sea|morph)\b/.test(kid.className)) kid.style.transform = leanTo;
+          if (/\bera__(stage|aurora|ripple|morph)\b/.test(kid.className)) kid.style.transform = leanTo;
         }
         if (e <= 0.0005) { cut.style.visibility = 'hidden'; return; }
         cut.style.visibility = 'visible';
@@ -2175,15 +1762,6 @@
         panels[i].setAttribute('aria-hidden', state === 'active' ? 'false' : 'true');
         panels[i].style.pointerEvents = state === 'active' ? '' : 'none';
 
-        /* every fresh phrase after the first pans the mobile camera to a
-           new spot in the same world (see panSea above) — not on the very
-           first activation, which is the section arriving on screen, not
-           a phrase change. */
-        if (useSea && state === 'active') {
-          if (seaHasActivated) panSea();
-          seaHasActivated = true;
-        }
-
         if (kinds[i] && state === 'active') {
           /* fresh entry, either direction: replay from the start. Only the
              couple of key words show as particles here — the rest stays
@@ -2224,32 +1802,6 @@
            already (otherwise the first build simply uses the real fonts) */
         if (warmed) scheduleWarm(true);
       });
-
-      /* Seed the mobile field NOW, while the visitor is still up on the
-         hero, rather than lazily on the first frame the section is actually
-         on screen. Two reasons, both about the arrival being settled before
-         anyone can see it:
-         · The pinned layout only exists once [data-era-live] is set, one
-           line above — which is why this sits here and not inside the
-           mobile branch itself: only from this point does .era__sticky have
-           its real 100dvh box to measure.
-         · Building lazily meant the very first frame of the field was drawn
-           at whatever instant the section scrolled into view, i.e. in the
-           middle of the arriving scroll, and any panel step that same
-           gesture triggered landed on top of it. Deciding it up front makes
-           the first phrase's backdrop a fact before the scroll starts, so
-           there is nothing left to re-decide on the way in.
-         renderSea() keeps its own lazy build as a fallback for the one case
-         this cannot cover: a layout that still measures 0 here (display
-         none, a font/layout pass not yet flushed), where seaBuilt stays
-         false and the first on-screen frame builds it exactly as before. */
-      if (useSea && typeof buildSea === 'function' && !seaBuilt) {
-        setTimeout(function () {
-          if (seaBuilt) return;
-          seaBuilt = buildSea(false);
-          if (seaBuilt) seaNeedsReseed = false;
-        }, Math.max(0, WARM_AT + 400 - performance.now()));   /* after the headline, like the key words; renderSea() builds it itself if the section is reached first */
-      }
 
       var target = -1;
       /* Two problems, one fix: on a fast flick `raw` can land several
@@ -2296,7 +1848,7 @@
          eased the rest of the way, smoothly, so the section is whole. Reduced
          motion never gets here (this module returned at its first line); a
          hidden tab, a held page (the door) or an open door pause or end it.
-         Same on phones, where the backdrop is the flow field. */
+         Same on phones. */
       var AUTO_DWELL = [3000, 4000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 */
       var QUIET_GAP = 250;                    /* ms without any input once the section is whole: the gesture that brought the visitor is over (a trackpad's inertia can run for more than a second — a fixed grace period cancelled autoplay for people who did nothing) */
       var ASSIST_TOP = 0.08;                  /* within this fraction of the screen of being whole, ease it the rest of the way */
@@ -2327,8 +1879,10 @@
         var y = window.scrollY;
         /* while counting, the page is still: any movement that is not ours
            (scrollbar drag, find-in-page, anything) is the visitor's — once the
-           arrival gesture's tail is over */
-        if (autoSince && !autoMove && !assistMove && lockY === null && quietSeen && Math.abs(y - lastSeenY) > 2) autoStop();
+           arrival gesture's tail is over, and not while a phone's momentum is still
+           carrying the page (iOS and Android keep scrolling for a second or two after
+           the finger has left, with no touch event to say so) */
+        if (autoSince && !autoMove && !assistMove && lockY === null && quietSeen && performance.now() - userAt > 2500 && Math.abs(y - lastSeenY) > 2) autoStop();
         lastSeenY = y;
       }, { passive: true });
       var glide = function (m, now) {
@@ -2436,8 +1990,7 @@
           }
         }
         if (!(cut && cutGoal && cutOpen > 0.6)) {
-          if (useSea) { if (renderSea) renderSea(now); }
-          else { drawGrad(now); renderRipple(now); }
+          drawGrad(now); renderRipple(now);
         }
         renderField(now);
 

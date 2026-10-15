@@ -190,7 +190,7 @@
    a drawing. */
 .era__aurora{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;opacity:1;transition:opacity .8s ease}
 /* over the gradient the phrase needs a quiet ground: a soft dark pool right under
-   the text (the phone has the same, for the flow field), so the bright veins of
+   the text, so the bright veins of
    colour never pass behind a word at full strength */
 .era--grad[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
   background:radial-gradient(62% 36% at 50% 47%,rgba(7,11,16,.46),rgba(7,11,16,.22) 55%,transparent 82%)}
@@ -200,21 +200,6 @@
    text (.era__stage, bumped to 3); never intercepts the pointer, it only ever
    reads where the pointer already is. */
 .era__ripple{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
-
-/* ---- the flow field: mobile-only backdrop ---------------------------------
-   Desktop has the gradient (.era__aurora / .era__ripple, just above); on
-   mobile neither of those mounts at all (telaventis-fx.js, the
-   isMobileEra branch in §3b) — replaced by Alex Andrix's actual "A random
-   world of Turbulence" technique (codepen jgyWww), a live particle/eddy
-   velocity-field simulation, redrawn every frame at a viewport-sized canvas
-   (not the oversized panned picture an earlier pass here guessed at and
-   got wrong — see the long comment in telaventis-fx.js for exactly what
-   was verified and what changed). See mentions-legales.html for the credit.
-   Same z-index slot as .era__aurora — the two are mutually exclusive by
-   device (never both mounted at once), so there is no stacking conflict to
-   resolve between them. */
-.era__sea{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
-.era__sea-canvas{position:absolute;top:0;left:0;display:block;will-change:transform}
 
 /* ---- the cut (3d in telaventis-fx.js) ------------------------------------
    A cream layer over the whole pinned scene, clipped to a spindle-shaped
@@ -256,7 +241,6 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 .era[data-era-live] .era__stage,
 .era[data-era-live] .era__aurora,
 .era[data-era-live] .era__ripple,
-.era[data-era-live] .era__sea,
 .era[data-era-live] .era__morph{transform-origin:50% 55%;will-change:transform}
 .era[data-era-live] .era__cue{opacity:calc(1 - var(--cut,0) * 4)}
 /* the section the cut hands over to: its title now lives in the cut */
@@ -427,72 +411,25 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
      here too. */
   .era[data-era-live] .era__track{height:628svh}   /* 448 + 180 for the pause and the cut */
   .era__body{padding:clamp(74px,12vh,98px) 22px clamp(58px,10vh,76px)}
-  /* Nothing here is fx-type any more — no particle canvas exists on mobile
-     at all (see the isMobileEra branch in telaventis-fx.js §3b), so every
-     word in the phrase is always just the plain DOM text underneath. What
-     used to differentiate the couple of [data-fx-key] words was a
-     different canvas and a fixed coral colour; now it's typography only —
-     a bigger, tilted, serif-italic setting of the same colour as the rest
-     of the sentence — because that colour is no longer a fixed guess: it's
-     --panel-fg, sampled by buildSea() in the JS off the actual patch of
-     the generated seascape sitting behind THIS panel, so it stays legible
-     wherever the pan happens to put it, not just against one assumed dark
-     background. --panel-shadow-rgb is the same sampling's inverse, so the
-     shadow always darkens against light text and lightens against dark
-     text instead of one shadow colour fighting whichever it landed on. */
+  /* A phone: the same phrases at a size that fits (the key words are the
+     bubble words, drawn on the shared canvas; their text stays underneath for
+     the no-script / reduced-motion page). The backdrop is the animated
+     gradient, dark everywhere, so the type is simply cream. */
   .era__mix{
-    font-size:35px;font-weight:400;   /* a light weight is for a big screen: on a phone, over a moving field, it needs the body */
-    color:var(--panel-fg,var(--cream));
-    text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
+    font-size:35px;font-weight:400;   /* a light weight is for a big screen: on a phone it needs the body */
+    color:var(--cream);
+    text-shadow:0 1px 3px rgba(10,16,22,.9),0 2px 20px rgba(10,16,22,.85);
   }
-  /* same identity as the desktop bubble words (var(--sans), weight 800) —
-     no particle canvas to carry a flourish on mobile, so this used to
-     borrow an italic serif tilt + coral glow to compensate. Dropped: it
-     read as a decorative sticker effect rather than this site's own
-     typography. Plain bold sans, sized off .era__mix like before, is both
-     closer to the desktop treatment and reads as more deliberate. */
   .era__w--key{
     font-family:var(--sans);font-weight:800;letter-spacing:-.02em;
     font-size:1.72em;font-size:min(1.72em,calc((100vw - 60px) * .18));line-height:1;
-    color:var(--panel-fg,var(--cream));
-    text-shadow:0 1px 2px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 14px rgba(var(--panel-shadow-rgb,10,16,22),.6);
+    color:var(--cream);
     display:inline-block;
   }
-  /* the flow field is bright and busy right where the phrase sits: a soft
-     dark pool under the text (between the field and the words) keeps the
-     bubble words legible without dimming the rest of the scene */
-  .era[data-era-live] .era__sticky::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
-    background:radial-gradient(75% 34% at 50% 46%,rgba(8,11,16,.5),rgba(8,11,16,.22) 55%,transparent 80%)}
-  /* bubbles on the flow field: a soft dark halo keeps the word legible
-     over the brightest streaks */
-  /* …not enough on its own where the field's brightest streaks run right
-     through the word rather than around it (reported twice over: "cherche"
-     and "rencontrer" all but disappearing into the current under them,
-     still true after the first, gentler pool below — measured: its centre
-     only ever reached .68 opacity and fell off to nothing well before the
-     word's own edges, so most of a word this wide sat under a pool at .34
-     or less, barely dimmed at all). A bubble word is already at a
-     disadvantage a solid glyph never had: it's a sparse scatter of small
-     dots, not a filled shape, so the eye has far less of the letter itself
-     to lock onto against a background making the exact same kind of marks
-     (the field's own curved streaks) at a similar scale — dimming alone
-     doesn't fix a pattern competing with another pattern, only removing
-     the competing pattern does. So this is no longer a soft gradient fading
-     out near the middle: solid-dark through 65% of the word's own box,
-     still near-solid to 85%, only actually fading in the last 15% — a
-     dark plate the word sits on, not a glow behind it. */
-  .era__w--key{position:relative}
-  /* (no plate under the bubble words any more: they stand on their own) */
-  .era__note{
-    font-size:15.5px;
-    color:rgba(var(--panel-fg-rgb,237,233,226),.76);
-  }
-  /* panel 3's plain heading gets the same sampled colour — it sits over
-     the identical seascape, just without any [data-fx-key] words in it */
   .era__phrase{
     font-weight:450;
-    color:var(--panel-fg,var(--cream));
-    text-shadow:0 1px 3px rgba(var(--panel-shadow-rgb,10,16,22),.9),0 2px 20px rgba(var(--panel-shadow-rgb,10,16,22),.85);
+    color:var(--cream);
+    text-shadow:0 1px 3px rgba(10,16,22,.9),0 2px 20px rgba(10,16,22,.85);
   }
 }
 
@@ -511,7 +448,6 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
   .era{background:#fff;color:#000}
   .era__sticky::before{display:none}
   .era__aurora{display:none !important}
-  .era__sea{display:none !important}
   .era__mix,.era__note,.era__phrase{color:#000}
   .era__w--key{color:#000}
   /* if the script did run, undo the pin so all three panels print */

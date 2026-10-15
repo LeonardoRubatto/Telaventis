@@ -211,18 +211,12 @@ changer la taille des scènes. Sans JavaScript la barre
 n'existe pas (scènes empilées). Rejouable avec `node _outils/vitrine.js <url>
 --scenario=timer|click|user|shots`.
 
-Deux points de vigilance sur la section 3b (champ de bulles / dégradé) :
-- **Lisibilité des mots en bulles.** Un mot en bulles est une texture éparse, pas un
-  aplat : il perd contre un fond qui fait le même genre de traits (les courants du
-  champ de bulles sur téléphone). Il n'y a plus de plaque sombre sous chaque mot (retirée
-  à la demande de Leonardo : « pas d'ombres sous les écritures en bulles ») ; seul reste un
-  halo général doux sous la phrase (`.era__sticky::after` sur téléphone, `.era--grad` avec
-  le dégradé). Si une phrase devient illisible, c'est d'abord la couleur du fond qu'il
-  faut revoir, pas une ombre qu'il faut rajouter.
-- **Sur téléphone**, l'amorçage du champ de bulles (`buildSea`) tourne par tranches
-  (`warmSlice`, un budget de temps par image plutôt qu'un nombre fixe de cycles : 80 cycles
-  d'un coup bloquaient ~550 ms de fil principal, assez pour geler une transition CSS), et
-  seulement après le titre du hero.
+Point de vigilance sur la section 3b : la **lisibilité des mots en bulles**. Un mot en
+bulles est une texture éparse, pas un aplat : il perd contre un fond qui fait le même genre
+de traits. Il n'y a plus de plaque sombre sous chaque mot (retirée à la demande de
+Leonardo : « pas d'ombres sous les écritures en bulles ») ; seul reste un halo général doux
+sous la phrase (`.era--grad`). Si une phrase devient illisible, c'est d'abord la couleur du
+fond qu'il faut revoir, pas une ombre qu'il faut rajouter.
 
 `assets/moka-lab.js` — l'histoire Atelier Moka, et à la fin « du bruit au
 signal » (les photos pixelisées que la caméra traverse). L'ouverture de
@@ -300,7 +294,7 @@ c'est l'**ordre de chargement** — le hero d'abord, tout le reste après :
   garde l'image sans JavaScript), les vidéos (la scène courante et la suivante seulement),
   les images de l'histoire Moka (en 640 px pour la mosaïque).
 - **Repoussé après le titre :** l'échantillonnage des mots-clés des bulles (~270 ms, un
-  mot par tâche, `WARM_AT`), le champ de bulles mobile, la première mesure de l'histoire
+  mot par tâche, `WARM_AT`), la première mesure de l'histoire
   Moka. La section méduses ne dessine rien tant qu'elle n'est pas vraiment à l'écran
   (marge de 48 px), ni pendant la porte (`doorBusy`).
 - **Le défilement n'est jamais freiné pour rien :** les écouteurs molette/toucher non
@@ -322,8 +316,8 @@ sous la phrase (`.era--grad`). Mesuré sur images réelles du fond seul (`mesure
 + `analyser-degrade.py`) : le texte crème a au pire 8,3:1 derrière lui, 13,6:1 en moyenne ;
 aucun motif de blocs ; grain de 0,3 niveau sur 255. Mesuré en fenêtre Chrome réelle (carte
 Intel intégrée) : 60 images/s dans la section, porte comprise. Sans WebGL2, rien n'est
-dessiné : le fond CSS de la section (`.era__sticky::before`) reste. Téléphone : le champ de
-bulles (Alex Andrix), inchangé.
+dessiné : le fond CSS de la section (`.era__sticky::before`) reste. Téléphone : le même dégradé (le champ de
+bulles : le même dégradé, avec une piste plus courte et une grille de bulles plus grossière.
 
 **Mesurer.** Dans deux terminaux :
 
@@ -373,6 +367,7 @@ le mesurer ainsi.
   la page Studio, « En ce moment »).
 
 **Retirés, récupérables dans l'historique git (tag `meduses-webgpu-et-version-legere`) :**
-la méduse WebGPU (`assets/aurelia/`, holtsetio / Aurelia, MIT), la méduse 2D de secours et
+la méduse WebGPU (`assets/aurelia/`, holtsetio / Aurelia, MIT), la méduse 2D de secours,
+le champ de bulles des téléphones (Alex Andrix, tag `champ-de-bulles-mobile`) et
 la déformation du texte, la version « légère » et sa détection, le texte sous la dernière
 phrase. Les crédits de `mentions-legales.html` ont été mis à jour (Aurelia n'y figure plus).

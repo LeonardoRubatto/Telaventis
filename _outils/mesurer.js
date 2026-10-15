@@ -63,7 +63,7 @@ if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--film=doss
       paint: window.__m.paint, lcp: window.__m.lcp, cls: window.__m.cls,
       clsTotal: +window.__m.cls.reduce((a, b) => a + b[1], 0).toFixed(4),
       load: Math.round(nav.loadEventEnd), htmlClass: document.documentElement.className,
-      title: h && h.className, gpu: !!document.querySelector('.era__aurora--gpu'), sea: !!document.querySelector('.era__sea'),
+      title: h && h.className,
       eraLive: document.querySelector('[data-era]') && document.querySelector('[data-era]').hasAttribute('data-era-live'),
       trackH: document.querySelector('.era__track') && document.querySelector('.era__track').offsetHeight,
     };
@@ -72,7 +72,7 @@ if (!url) { console.error('usage : node mesurer.js <url> [--mobile] [--film=doss
   const upto = t => kb(reqs.filter(r => r.t <= t).reduce((a, r) => a + r.len, 0));
   const fcp = m.paint['first-contentful-paint'] || 0, lcp = (m.lcp[m.lcp.length - 1] || [0])[0];
   console.log(JSON.stringify({ viewport: mobile ? '390x844' : '1440x900', tier: m.tier, htmlClass: m.htmlClass, fcp, lcp, lcpEl: (m.lcp[m.lcp.length - 1] || [])[1], clsTotal: m.clsTotal, cls: m.cls, load: m.load,
-    KB_beforeFCP: upto(fcp), KB_beforeLCP: upto(lcp), KB_beforeLoad: upto(m.load), titleClass: m.title, eraLive: m.eraLive, trackH: m.trackH, gpu: m.gpu, sea: m.sea, errors }, null, 1));
+    KB_beforeFCP: upto(fcp), KB_beforeLCP: upto(lcp), KB_beforeLoad: upto(m.load), titleClass: m.title, eraLive: m.eraLive, trackH: m.trackH, errors }, null, 1));
   console.log('\nfichiers > 20 Ko, dans l\'ordre d\'arrivée :');
   reqs.filter(r => r.len > 20000).forEach(r => console.log(String(r.t).padStart(6), 'ms', String(kb(r.len)).padStart(5), 'Ko', r.u));
   await browser.close();
