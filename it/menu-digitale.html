@@ -40,8 +40,8 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="../assets/telaventis.css?v=50">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=49">
+<link rel="stylesheet" href="../assets/telaventis.css?v=83">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=82">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -81,47 +81,105 @@
 </header>
 
 <main id="main">
-  <section class="wrap" style="padding-top:clamp(48px,6.5vw,92px);padding-bottom:clamp(32px,4vw,54px);">
-    <p class="eyebrow">Anche per la ristorazione</p>
-    <h1 class="h-page" data-reveal style="margin-top:18px;font-size:clamp(34px,5.6vw,72px);max-width:16ch;">Un menu digitale, mostrato tramite QR code su ogni tavolo.</h1>
-    <p class="lede" style="margin-top:22px;max-width:600px;">Lo stesso principio di un sito a una pagina, applicato al menu di un ristorante, caffè o bar: i clienti scansionano un codice sul tavolo e vedono il menu del giorno direttamente nel loro browser — niente da installare, niente da scaricare.</p>
-    <div class="btn-row" style="margin-top:28px;">
-      <a class="btn" href="contact.html">Parliamo di un menu digitale</a>
+  <!-- The page, in the order a restaurateur asks the questions: what is it (the picture says it), what does it look like
+       and how do I run it (a working demo: change a price, the phone follows), what do I get, how does it happen, what does it cost. -->
+  <section class="wrap qr-hero">
+    <div class="qr-hero__copy">
+      <h1 class="h-page" data-reveal style="font-size:clamp(34px,5.2vw,70px);max-width:15ch;">Un menu digitale, mostrato tramite QR code su ogni tavolo.</h1>
+      <p class="lede" style="margin-top:22px;max-width:520px;" data-reveal>Lo stesso principio di un sito a una pagina, applicato al menu di un ristorante, caffè o bar: i clienti scansionano un codice sul tavolo e vedono il menu del giorno direttamente nel loro browser — niente da installare, niente da scaricare.</p>
+      <div class="btn-row" style="margin-top:30px;" data-reveal>
+        <a class="btn" href="contact.html">Parliamo di un menu digitale</a>
+        <a class="link" href="#cout">Quanto costa?</a>
+      </div>
     </div>
+    <picture class="qr-hero__media" data-reveal>
+      <source type="image/webp" srcset="../assets/menu-qr/menu-qr-transparent-640.webp 640w, ../assets/menu-qr/menu-qr-transparent-960.webp 960w, ../assets/menu-qr/menu-qr-transparent-1536.webp 1536w" sizes="(min-width:900px) 56vw, 100vw">
+      <img src="../assets/menu-qr/menu-qr-transparent-960.webp" width="1536" height="1024" alt="Menu online consultato tramite QR code" decoding="async">
+    </picture>
   </section>
 
-  <section class="section section--tight">
-    <div class="wrap split split--wide-left split--divided" style="--split-left:1.1fr;">
-      <div data-reveal>
-        <h2 class="h3">Cosa ottieni</h2>
-        <dl class="facts facts--grid2" style="margin-top:20px;">
-          <div class="fact"><dt class="fact__k">Sempre aggiornato</dt><dd class="fact__v" style="margin:0;">Un prezzo o un piatto del giorno si modifica in una semplice tabella, il menu si aggiorna ovunque.</dd></div>
-          <div class="fact"><dt class="fact__k">Senza app</dt><dd class="fact__v" style="margin:0;">Il QR code apre una normale pagina web nel browser del cliente.</dd></div>
-          <div class="fact"><dt class="fact__k">Un codice per tavolo</dt><dd class="fact__v" style="margin:0;">Pronto da stampare, punta sempre allo stesso menu aggiornato.</dd></div>
-          <div class="fact"><dt class="fact__k">Più lingue</dt><dd class="fact__v" style="margin:0;">Francese, inglese o italiano, come il resto di un sito Telaventis.</dd></div>
-        </dl>
+  <section class="section--panel qr-demo-band">
+    <div class="wrap">
+      <div class="qr-demo-head" data-reveal>
+        <h2 class="h2" style="font-size:clamp(28px,3.8vw,54px);max-width:16ch;">Un prezzo cambia, il menu del cliente segue.</h2>
+        <p class="body-serif">A destra, ciò che vedono i clienti dopo aver scansionato il codice. A sinistra, un esempio di modifica: cambiate un prezzo o togliete la spunta a un piatto finito, e guardate il menu seguire. Nella realtà ci dite cosa cambia e Telaventis aggiorna il menu.</p>
       </div>
-      <div data-reveal>
-        <h2 class="h3">Come si realizza</h2>
-        <div class="grid steps" style="margin-top:20px;">
-          <div class="step"><span class="step__n">01</span><span class="step__t">Il menu viene strutturato</span><p class="body-serif">Piatti, prezzi, categorie e lingue, organizzati insieme a te.</p></div>
-          <div class="step"><span class="step__n">02</span><span class="step__t">La pagina viene scritta</span><p class="body-serif">Una pagina veloce, leggibile da telefono, nell'identità del tuo locale.</p></div>
-          <div class="step"><span class="step__n">03</span><span class="step__t">Il QR code viene generato</span><p class="body-serif">Pronto da stampare su ogni tavolo o espositore.</p></div>
-          <div class="step"><span class="step__n">04</span><span class="step__t">Aggiorni tu stesso</span><p class="body-serif">Una semplice tabella basta per cambiare un prezzo o un piatto del giorno.</p></div>
+      <div class="qr-demo" data-qr-demo data-lang="it">
+        <table class="qr-sheet">
+          <thead><tr><th scope="col">Piatto</th><th scope="col">Prezzo (€)</th><th scope="col">Disp.</th></tr></thead>
+          <tbody>
+          <tr data-id="espresso"><th scope="row" data-fr="Espresso" data-en="Espresso" data-it="Espresso">Espresso</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="2,50" aria-label="Prezzo (€) : Espresso" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Espresso"></td></tr>
+          <tr data-id="flat"><th scope="row" data-fr="Flat white" data-en="Flat white" data-it="Flat white">Flat white</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="4,20" aria-label="Prezzo (€) : Flat white" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Flat white"></td></tr>
+          <tr data-id="cold"><th scope="row" data-fr="Cold brew" data-en="Cold brew" data-it="Cold brew">Cold brew</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="4,80" aria-label="Prezzo (€) : Cold brew" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Cold brew"></td></tr>
+          <tr data-id="croissant"><th scope="row" data-fr="Croissant" data-en="Croissant" data-it="Cornetto">Cornetto</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="2,20" aria-label="Prezzo (€) : Cornetto" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Cornetto"></td></tr>
+          <tr data-id="tarte"><th scope="row" data-fr="Tarte du jour" data-en="Tart of the day" data-it="Torta del giorno">Torta del giorno</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="5,50" aria-label="Prezzo (€) : Torta del giorno" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Torta del giorno"></td></tr>
+          <tr data-id="cookie"><th scope="row" data-fr="Cookie noisette" data-en="Hazelnut cookie" data-it="Cookie alla nocciola">Cookie alla nocciola</th><td><input class="qr-sheet__p" type="text" inputmode="decimal" value="3,00" aria-label="Prezzo (€) : Cookie alla nocciola" autocomplete="off"></td><td><input class="qr-sheet__ok" type="checkbox" checked aria-label="Disp. : Cookie alla nocciola"></td></tr>
+          </tbody>
+        </table>
+        <div class="qr-phone" role="group" aria-label="Anteprima del menu su un telefono">
+          <div class="qr-phone__bar"><span class="qr-phone__brand">Atelier Moka</span><span class="qr-phone__langs"><button type="button" data-lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button><button type="button" data-lang="it" aria-pressed="true">IT</button></span></div>
+          <div class="qr-phone__tabs" role="tablist"><button type="button" class="qr-phone__tab" role="tab" data-cat="0" aria-selected="true" data-fr="Cafés" data-en="Coffees" data-it="Caffè">Caffè</button><button type="button" class="qr-phone__tab" role="tab" data-cat="1" aria-selected="false" data-fr="Pâtisseries" data-en="Pastries" data-it="Dolci">Dolci</button></div>
+          <ul class="qr-phone__list" data-cat="0">
+            <li class="qr-dish" data-id="espresso"><span class="qr-dish__n" data-fr="Espresso" data-en="Espresso" data-it="Espresso">Espresso</span><span class="qr-dish__p">2,50 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+            <li class="qr-dish" data-id="flat"><span class="qr-dish__n" data-fr="Flat white" data-en="Flat white" data-it="Flat white">Flat white</span><span class="qr-dish__p">4,20 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+            <li class="qr-dish" data-id="cold"><span class="qr-dish__n" data-fr="Cold brew" data-en="Cold brew" data-it="Cold brew">Cold brew</span><span class="qr-dish__p">4,80 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+          </ul>
+          <ul class="qr-phone__list" data-cat="1">
+            <li class="qr-dish" data-id="croissant"><span class="qr-dish__n" data-fr="Croissant" data-en="Croissant" data-it="Cornetto">Cornetto</span><span class="qr-dish__p">2,20 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+            <li class="qr-dish" data-id="tarte"><span class="qr-dish__n" data-fr="Tarte du jour" data-en="Tart of the day" data-it="Torta del giorno">Torta del giorno</span><span class="qr-dish__p">5,50 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+            <li class="qr-dish" data-id="cookie"><span class="qr-dish__n" data-fr="Cookie noisette" data-en="Hazelnut cookie" data-it="Cookie alla nocciola">Cookie alla nocciola</span><span class="qr-dish__p">3,00 €</span><span class="qr-dish__o" data-fr="épuisé" data-en="sold out" data-it="esaurito">esaurito</span></li>
+          </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section--tight section--sunk">
-    <div class="wrap" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between;">
-      <div>
-        <h2 class="h2" style="font-size:clamp(24px,2.9vw,36px);">Quanto costa?</h2>
-        <p class="body-serif" style="margin-top:8px;max-width:58ch;">Un menu digitale si tratta come un sito a una pagina, ma più semplice: a partire da 490 €, in un'unica soluzione. A differenza di un abbonamento a un software di menu preconfezionato, questo viene costruito per il tuo locale e resta tuo — niente altro da pagare, a meno che tu non scelga la gestione mensile, a 9 €. Il perimetro esatto è sempre fissato per iscritto prima di iniziare.</p>
-      </div>
-      <a class="btn" href="contact.html">Contattaci</a>
+  <section class="section--tight qr-gets">
+    <div class="wrap">
+      <h2 class="h3" data-reveal>Cosa ottieni</h2>
+      <ul class="qr-bens" data-reveal>
+        <li class="qr-ben"><h3 class="qr-ben__t">Sempre aggiornato.</h3><p class="qr-ben__p">Cambia un prezzo o un piatto del giorno? Ditelo e il menu viene aggiornato ovunque — senza ristampare il QR code.</p></li>
+        <li class="qr-ben"><h3 class="qr-ben__t">Senza app.</h3><p class="qr-ben__p">Il QR code apre una normale pagina web nel browser del cliente.</p></li>
+        <li class="qr-ben"><h3 class="qr-ben__t">Un codice per tavolo.</h3><p class="qr-ben__p">Pronto da stampare, punta sempre allo stesso menu aggiornato.</p></li>
+        <li class="qr-ben"><h3 class="qr-ben__t">Più lingue.</h3><p class="qr-ben__p">Francese, inglese o italiano, come il resto di un sito Telaventis.</p></li>
+      </ul>
     </div>
   </section>
+
+  <section class="section--dark seam qr-how">
+    <div class="wrap qr-how__in">
+      <div class="qr-how__head" data-reveal>
+        <h2 class="h2" style="font-size:clamp(30px,4.2vw,60px);">Come si realizza</h2>
+        <p class="body-serif">Dal menu di carta al QR code, in quattro passi.</p>
+      </div>
+      <ol class="qr-steps" data-reveal>
+          <li class="qr-step"><span class="qr-step__n" aria-hidden="true">1</span><div><h3 class="qr-step__t">Il menu viene strutturato</h3><p class="body-serif">Piatti, prezzi, categorie e lingue, organizzati insieme a te.</p></div></li>
+          <li class="qr-step"><span class="qr-step__n" aria-hidden="true">2</span><div><h3 class="qr-step__t">La pagina viene scritta</h3><p class="body-serif">Una pagina veloce, leggibile da telefono, nell'identità del tuo locale.</p></div></li>
+          <li class="qr-step"><span class="qr-step__n" aria-hidden="true">3</span><div><h3 class="qr-step__t">Il QR code viene generato</h3><p class="body-serif">Pronto da stampare su ogni tavolo o espositore.</p></div></li>
+          <li class="qr-step"><span class="qr-step__n" aria-hidden="true">4</span><div><h3 class="qr-step__t">Ci dite cosa cambia</h3><p class="body-serif">Un prezzo, un piatto del giorno, una lingua: scrivete e Telaventis aggiorna il menu.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="tier-row tier-row--cream seam" id="cout" data-reveal>
+    <div class="wrap tier-row__in">
+      <div>
+        <p class="tier-row__eyebrow">A partire da</p>
+        <p class="tier-row__price">490<span>€</span></p>
+        <p class="tier-row__note">in un'unica soluzione · gestione mensile opzionale, 9&nbsp;€ al mese</p>
+      </div>
+      <div>
+        <h2 class="h3">Quanto costa?</h2>
+        <p class="tier-row__lead">Un menu digitale si tratta come un sito a una pagina, ma più semplice. A differenza di un abbonamento a un software di menu preconfezionato, questo viene costruito per il tuo locale e resta tuo.</p>
+        <ul class="tier-row__list">
+          <li>Un solo prezzo, pagato una volta</li>
+          <li>Niente altro da pagare, a meno che tu non scelga la gestione mensile a 9&nbsp;€</li>
+          <li>Il perimetro esatto è fissato per iscritto prima di iniziare</li>
+        </ul>
+        <a class="link" href="contact.html">Contattaci</a>
+      </div>
+    </div>
+  </div>
 </main>
 
 <footer class="foot">
@@ -146,6 +204,7 @@
     <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
+      <a class="foot__mono" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">LinkedIn</a>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Note legali &amp; crediti</a>
     </div>
   </div>
@@ -155,7 +214,7 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=38" defer fetchpriority="high"></script>
-<script src="../assets/telaventis-fx.js?v=64" defer fetchpriority="high"></script>
+<script src="../assets/telaventis.js?v=71" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
 </body>
 </html>

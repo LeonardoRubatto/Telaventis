@@ -9,8 +9,8 @@
  *  3   hero band: the diagonal cut steepens and slips with scroll, the sky
  *      in the letters follows the pointer
  *  5   live proof: this page's own numbers (Performance API)
- *  6   home showcase: one full-screen scene per client project
- *  7   work page: live recordings play in view, index follows the scroll
+ *  7   work page AND the home showcase (same blocks): recordings play in
+ *      view, the bar follows the scroll and marks the project in view
  *  4   contact form: Web3Forms in place, plain POST fallback
  * The client projects themselves (scenes, work blocks, footer links) are
  * generated from _outils/projets.json — see _outils/MODE-EMPLOI.md.
@@ -78,22 +78,9 @@
      trackpad jitter from flickering it. --- */
   if (navBar) {
     var lastY = window.scrollY, hrRaf = 0;
-    /* Inside the pinned project showcase the bar never comes back by itself:
-       the page moves there on its own (the scene's resting point, the project
-       timer, a hand-over) and an upward nudge of a few pixels used to bring the
-       bar down over the project names and the copy while someone was reading.
-       It returns when the visitor scrolls up past the top of the showcase, and
-       only then. */
-    var showcaseTrack = document.querySelector('[data-showcase] .showcase__track');
-    var inShowcase = function () {
-      if (!showcaseTrack || !document.querySelector('[data-showcase][data-showcase-live]')) return false;
-      var r = showcaseTrack.getBoundingClientRect();
-      return r.top <= 0 && r.bottom > (window.innerHeight || 800) * 0.5;
-    };
     var headroom = function () {
       hrRaf = 0;
       var y = window.scrollY, dy = y - lastY;
-      if (inShowcase() && !navBar.contains(document.activeElement)) { navBar.classList.add('nav--hidden'); lastY = y; return; }
       if (Math.abs(dy) < 6) return;
       var menuOpen = navToggle && navToggle.hasAttribute('open');
       navBar.classList.toggle('nav--hidden', dy > 0 && y > 140 && !menuOpen && !navBar.contains(document.activeElement));
@@ -102,6 +89,17 @@
     window.addEventListener('scroll', function () { if (!hrRaf) hrRaf = requestAnimationFrame(headroom); }, { passive: true });
     navBar.addEventListener('focusin', function () { navBar.classList.remove('nav--hidden'); });
   }
+
+  /* --- 0c. the hero's scroll cue leaves with the first scroll (CSS: html.is-scrolled) --- */
+  (function () {
+    var on = false;
+    var check = function () {
+      var now = window.scrollY > 40;
+      if (now !== on) { on = now; html.classList.toggle('is-scrolled', on); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    check();
+  }());
 
   /* --- 1. staggered reveal on entry --------------------------------------- */
   var targets = document.querySelectorAll('[data-reveal]');
@@ -574,383 +572,6 @@
     else window.addEventListener('load', function () { setTimeout(fillProof, 0); });
   }
 
-  /* --- 6. showcase: one scene per project ------------------------------------
-   * The section pins (CSS, gated on [data-showcase-live], set here), scroll
-   * position picks the scene, and each change plays the "Animated
-   * Continuous Sections" hand-over (GreenSock codepen XWzRraJ, after
-   * BrianCross PoWapLP) with the Web Animations API instead of GSAP: the
-   * incoming scene's outer mask travels in from the scroll direction while
-   * its inner layer travels the opposite way (so the scene is uncovered in
-   * place, not pushed), both backdrops drift 15% against the motion, and
-   * the name rises letter by letter out of its mask (fx-split's manual
-   * mode, telaventis-fx.js §1). Scroll only ever TRIGGERS a change — the
-   * wipe runs on its own clock — and one gesture plays one scene, never
-   * two (the hold, below).
-   * Hidden scenes are `inert`: nothing in them can be focused or read. */
-  var show = document.querySelector('[data-showcase]');
-  if (show && !reduce && 'animate' in Element.prototype) {
-    var scenes = Array.prototype.slice.call(show.querySelectorAll('[data-scene]'));
-    var track = show.querySelector('.showcase__track');
-    var sticky = show.querySelector('.showcase__sticky');
-    var rail = show.querySelector('.showcase__rail');
-    var railItems = Array.prototype.slice.call(show.querySelectorAll('.showcase__rail li'));
-    var railLinks = Array.prototype.slice.call(show.querySelectorAll('.showcase__rail a'));
-    var N = scenes.length;
-    var cur = -1, WIPE = 1150, EASE = 'cubic-bezier(.65,0,.35,1)';
-    show.style.setProperty('--scenes', N);
-    show.setAttribute('data-showcase-live', '');
-    scenes.forEach(function (sc) { sc.setAttribute('inert', ''); });
-
-    var nameOf = function (sc) { return sc.querySelector('.scene__name'); };
-    /* each scene's screens are recordings of the live site; only the current
-       scene's play, only while the showcase is on screen and the tab is
-       visible, and the next scene's are asked to buffer ahead of time */
-    var vidsOf = function (sc) { return sc ? Array.prototype.slice.call(sc.querySelectorAll('video')) : []; };
-    /* iOS Safari (and any browser under a strict autoplay policy — Low
-       Power Mode, or Settings > Safari > Auto-Play set to "Never Auto-
-       Play") can flatly refuse a play() that isn't tied to a genuine user
-       gesture: the promise just rejects, syncVideos()'s own catch already
-       swallows that silently, and the scene is left sitting on its
-       poster with nothing to say why. Once a video HAS played inside a
-       real gesture, WebKit's own "media needs a user action" gate opens
-       for the rest of the document — not just that one element — so this
-       primes it with exactly one: the very first touchstart / pointerdown
-       / keydown anywhere on the page tries play() on the first scene's
-       own video, then pauses it straight back before a frame could be
-       seen moving. One-shot, and it never runs at all once one of these
-       has already fired. Doesn't touch scenes never scrolled to, so nothing
-       here forces a video open that autoplay would already have covered. */
-    var unlockVideos = function () {
-      var v = lite ? null : vidsOf(scenes[0])[0];
-      if (!v) return;
-      var pr = v.play();
-      if (pr && pr.then) pr.then(function () { v.pause(); }).catch(function () {});
-      else if (!v.paused) v.pause();
-    };
-    ['touchstart', 'pointerdown', 'keydown'].forEach(function (ev) {
-      document.addEventListener(ev, unlockVideos, { capture: true, passive: true, once: true });
-    });
-    var showOn = false;
-    /* The scenes' posters, in order of need. Not at page load (they are four
-       sections down and were taking the headline's bandwidth), and not all
-       at once: a scene's own and the next two are fetched as the visitor
-       approaches, and — on the full version only — the rest trickle in once
-       the page has finished loading and the browser has nothing else to do.
-       The lite version never fetches ahead. */
-    var warmed = 0;
-    var warmPosters = function (upTo) {
-      for (var k = warmed; k <= Math.min(upTo, N - 1); k++) vidsOf(scenes[k]).forEach(loadPoster);
-      warmed = Math.max(warmed, Math.min(upTo, N - 1) + 1);
-    };
-    var syncVideos = function () {
-      /* lite: the posters stand for the recordings — no 0.4–1.9 MB video per
-         scene on a connection that cannot afford it */
-      scenes.forEach(function (sc, i) {
-        vidsOf(sc).forEach(function (v) {
-          if (lite) return;
-          if (i === cur && showOn && !document.hidden) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
-          else if (!v.paused) v.pause();
-          /* buffer the next scene only once the showcase is really on screen:
-             at page load `cur` is already 0, and this used to start the
-             second project's 1.2 MB of video on the first second of the visit */
-          if (showOn && i === cur + 1 && v.preload === 'none') v.preload = 'auto';
-        });
-      });
-      if (showOn) warmPosters(cur + 2);
-    };
-    if (!lite) {
-      var whenIdle = function (fn, ms) {
-        setTimeout(function () { if (window.requestIdleCallback) window.requestIdleCallback(fn, { timeout: 4000 }); else fn(); }, ms);
-      };
-      var idleWarm = function () {
-        if (warmed >= N) return;
-        warmPosters(warmed);
-        whenIdle(idleWarm, 700);
-      };
-      var afterLoad = function () { whenIdle(idleWarm, 2500); };
-      if (document.readyState === 'complete') afterLoad(); else window.addEventListener('load', afterLoad);
-    }
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (es) { showOn = es[0].isIntersecting; syncVideos(); syncTimer(); }, { threshold: 0.15 }).observe(sticky);
-    } else { showOn = true; }
-    document.addEventListener('visibilitychange', function () { syncVideos(); syncTimer(); });
-    var paintRail = function () {
-      railItems.forEach(function (li, i) { li.classList.toggle('is-on', i === cur); li.classList.toggle('is-past', i < cur); });
-      railLinks.forEach(function (a, i) { if (i === cur) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
-      if (scenes[cur]) sticky.style.setProperty('--rail-fg', getComputedStyle(scenes[cur]).getPropertyValue('--fg'));
-    };
-    var riseName = function (sc, dir, delay) {
-      var nm = nameOf(sc);
-      if (!nm) return;
-      nm.style.setProperty('--fx-dir', String(dir));
-      nm.classList.remove('is-in', 'fx-done');
-      void nm.offsetWidth;
-      setTimeout(function () { nm.classList.add('is-in'); }, delay);
-    };
-    var go = function (j, dir, instant) {
-      var i = cur;
-      if (j === i) return;
-      cur = j;
-      var B = scenes[j], A = i >= 0 ? scenes[i] : null;
-      B.classList.add('is-current');
-      B.classList.remove('is-leaving');
-      B.removeAttribute('inert');
-      paintRail();
-      syncVideos();
-      if (instant) { riseName(B, 1, 80); if (A) { A.classList.remove('is-current'); A.setAttribute('inert', ''); } return; }
-      var opts = { duration: WIPE, easing: EASE };
-      B.querySelector('.scene__outer').animate([{ transform: 'translateY(' + (100 * dir) + '%)' }, { transform: 'translateY(0)' }], opts);
-      B.querySelector('.scene__inner').animate([{ transform: 'translateY(' + (-100 * dir) + '%)' }, { transform: 'translateY(0)' }], opts);
-      B.querySelector('.scene__bg').animate([{ transform: 'translateY(' + (15 * dir) + '%)' }, { transform: 'translateY(0)' }], opts);
-      riseName(B, dir, WIPE * 0.2);
-      if (A) {
-        A.classList.remove('is-current');
-        A.classList.add('is-leaving');
-        A.setAttribute('inert', '');
-        var out = A.querySelector('.scene__bg').animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + (-15 * dir) + '%)' }], { duration: WIPE, easing: EASE, fill: 'forwards' });
-        out.onfinish = function () {
-          out.cancel();
-          if (scenes[cur] !== A) { A.classList.remove('is-leaving'); var nm = nameOf(A); if (nm) nm.classList.remove('is-in'); }
-        };
-      }
-    };
-
-    /* one gesture, one scene. A wheel, a trackpad or a finger all carry on
-       by themselves (momentum / inertia) over two or three screens, so a
-       plain threshold every screen played scenes the visitor had not asked
-       for — "a scroll a bit long and it goes down two projects" — often
-       after the gesture had ended, and a strong one left the section before
-       they had played. Here, as for the Moka door (telaventis-fx.js §3d, "no
-       speedrun"): each scene has a resting point in the middle of its own
-       stretch of scroll (telaventis.css: SEG per scene), half a stretch
-       either way from the next one — a deliberate gesture, never a nudge.
-       Crossing into another scene's stretch plays exactly one hand-over,
-       brings the scroll back to that scene's resting point and holds it
-       until the wipe has finished AND the gesture has stopped (no wheel or
-       touch for QUIET ms — the tail of a trackpad's inertia is still the
-       same gesture, not a new one); the section arriving on screen does the
-       same on its first or last scene, so a scroll from above or below
-       lands on it instead of flying through. Never during a jump (an
-       in-page link, Home/End); the hold always ends by HOLD_MAX. */
-    var HOLD_ARRIVE = 500, QUIET = 180, HOLD_MAX = 3000;
-    var root = document.documentElement;
-    var scTick = 0, heldY = null, heldUntil = 0, heldSince = 0, heldTimer = 0, lastInput = 0, inside = false, jumpUntil = 0;
-    /* Releasing flips .showcase__sticky back from position:fixed to its
-       normal sticky (sc-held's own CSS) — a real repositioning of the very
-       element the current scene's <video> lives inside, and iOS Safari has
-       been known to pause a video outright across exactly that kind of
-       layout change, not just visually hiccup it (reported: a video that
-       played fine on the FIRST pass through the showcase going silent on a
-       later one — re-entering after having scrolled past once is exactly
-       the path that re-triggers a hold, see the `!inside` branch below,
-       where the very first pass does not). Calling syncVideos() again
-       right as the hold lifts is the cheap, unconditional fix regardless
-       of whether THIS particular hold actually tripped it: play() on a
-       video already playing is a harmless no-op, so this costs nothing on
-       the times nothing needed fixing and quietly resumes the times it did. */
-    /* The wheel / touch listeners that can cancel a scroll must be
-       { passive:false }, and a non-passive listener on the window makes the
-       browser wait for this script before it scrolls ANYTHING — at every
-       notch, on every part of the page, for the whole visit (it was how a
-       busy main thread froze scrolling far from the showcase). So the
-       blocking pair is attached only while a hold is actually running, and
-       removed with it; a passive pair, free, keeps lastInput honest the rest
-       of the time. */
-    var blocking = false;
-    var block = function (e) { lastInput = performance.now(); if (e.cancelable) e.preventDefault(); };
-    var setBlock = function (on) {
-      if (on === blocking) return;
-      blocking = on;
-      var m = on ? 'addEventListener' : 'removeEventListener';
-      window[m]('wheel', block, { passive: false });
-      window[m]('touchmove', block, { passive: false });
-    };
-    var release = function () {
-      heldY = null; clearTimeout(heldTimer); setBlock(false); root.classList.remove('sc-held'); syncVideos();
-      syncTimer();
-      /* a hold that ended on a visitor's gesture: the timer waits for stillness */
-      if (!show.classList.contains('is-timing')) { clearTimeout(quietT); quietT = setTimeout(syncTimer, 760); }
-    };
-    /* released once the wipe is done and the gesture has been quiet for
-       QUIET ms, re-checked until then */
-    var tryRelease = function () {
-      var now = performance.now();
-      if (heldY === null) return;
-      if (now - heldSince >= HOLD_MAX || (now >= heldUntil && now - lastInput >= QUIET)) { release(); return; }
-      heldTimer = setTimeout(tryRelease, Math.max(40, Math.max(heldUntil, lastInput + QUIET) - now));
-    };
-    var hold = function (y, ms) {
-      heldY = Math.round(y);
-      heldSince = performance.now();
-      heldUntil = heldSince + ms;
-      window.scrollTo({ top: heldY, behavior: 'instant' });
-      root.classList.add('sc-held');
-      setBlock(true);
-      clearTimeout(heldTimer);
-      heldTimer = setTimeout(tryRelease, ms);
-      syncTimer();
-    };
-    var gesture = function () { lastInput = performance.now(); userMoved(); };
-    window.addEventListener('wheel', gesture, { passive: true });
-    window.addEventListener('touchmove', gesture, { passive: true });
-    var SCROLL_KEYS = { ' ': 1, Spacebar: 1, PageDown: 1, PageUp: 1, ArrowDown: 1, ArrowUp: 1 };
-    window.addEventListener('keydown', function (e) {
-      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
-      if (e.key === 'Home' || e.key === 'End') { jumpUntil = performance.now() + 2500; release(); return; }
-      if (SCROLL_KEYS[e.key] || e.key === 'Escape') { lastInput = performance.now(); userMoved(); if (heldY !== null && e.key !== 'Escape') e.preventDefault(); }
-    });
-    /* a jump through an in-page link passes through the section on its
-       way: it is travel, not reading, so the hold stays off for the trip */
-    document.addEventListener('click', function (e) {
-      var a = e.target.closest && e.target.closest('a[href*="#"]');
-      if (a && a.pathname === location.pathname && a.hash) jumpUntil = performance.now() + 2500;
-    });
-    window.addEventListener('hashchange', function () { jumpUntil = performance.now() + 2500; });
-    document.addEventListener('visibilitychange', function () { if (document.hidden) release(); });
-    /* the first scene's video only starts actually fetching once play() is
-       first called on it (preload="none" otherwise) — reported: a beat of
-       "having trouble loading" on arrival, on a slower connection. Giving
-       it a head start: once the track is within 1.5 screens of view, ask
-       it to preload — same margin telaventis-fx.js's loadGpu() uses for
-       the same reason (its own physics bake) — well before `go()` would
-       otherwise be the first thing to ask for it. One-shot, and it costs
-       nothing extra: normal browsing was always going to fetch this video
-       moments later regardless, just not until the section arrived. */
-    var primed0 = false;
-    var follow = function () {
-      scTick = 0;
-      if (!primed0 && track.getBoundingClientRect().top < (window.innerHeight || 800) * 1.5) {
-        primed0 = true;
-        warmPosters(1);
-        if (!lite) vidsOf(scenes[0]).forEach(function (v) { if (v.preload === 'none') v.preload = 'auto'; });
-      }
-      if (heldY !== null) {
-        if (Math.abs(window.scrollY - heldY) > 1) window.scrollTo({ top: heldY, behavior: 'instant' });
-        return;
-      }
-      var r = track.getBoundingClientRect();
-      var seg = Math.max(1, track.offsetHeight - (window.innerHeight || 800)) / N;
-      var t = -r.top, top = window.scrollY + r.top;
-      var rest = function (k) { return top + (k + 0.5) * seg; };
-      /* outside the pinned stretch: the scene seen on the way in is the
-         first one from above, the last one from below */
-      if (t < 0 || t > seg * N) {
-        inside = false;
-        var edge = t < 0 ? 0 : N - 1;
-        if (cur !== edge) go(edge, 1, true);
-        return;
-      }
-      var want = Math.min(N - 1, Math.floor(t / seg));
-      if (cur < 0 || performance.now() < jumpUntil) { inside = true; if (want !== cur) go(want, 1, true); return; }
-      if (!inside) { inside = true; hold(rest(cur), HOLD_ARRIVE); return; }
-      if (want === cur) return;
-      var d = want > cur ? 1 : -1;
-      go(cur + d, d, false);
-      hold(rest(cur), WIPE);
-    };
-    /* ---- the project bar -------------------------------------------------
-       Five links at the top of the pinned screen (telaventis.css: .showcase__rail,
-       generated by _outils/projets.py), and the current one is a timer: while
-       the section is really being looked at, its bar fills over --dwell (7 s,
-       a CSS animation: the stylesheet is the clock) and when it is full the
-       showcase moves on to the next project, the way a click on that project
-       would. Clicking a name goes straight to that project.
-       The timer runs only while the section is pinned on screen, the tab is
-       visible, no hand-over is in progress and the visitor has been still for
-       a moment (.is-timing); it waits while the pointer rests on the copy or
-       keyboard focus is in it (.is-reading: someone is reading). The moment
-       the visitor scrolls (wheel, touch, a scrolling key, the scrollbar) or
-       presses Escape it is over for this visit - the bars just show where you
-       are - exactly as for the jellyfish section's autoplay: whoever scrolls
-       knows how. Arriving by scrolling does not count (the stillness it waits
-       for), and clicking the bar does not stop it. It does not loop: on the
-       last project the bar fills and stays full. Reduced motion never gets
-       here (this whole block is skipped under it). */
-    var timerOn = true, timedY = 0, quietT = 0, hoverCopy = false, focusCopy = false;
-    show.setAttribute('data-timer', '');
-    var syncTimer = function () {
-      var on = timerOn && inside && heldY === null && !document.hidden && showOn && performance.now() - lastInput >= 700;
-      if (on !== show.classList.contains('is-timing')) { show.classList.toggle('is-timing', on); if (on) timedY = window.scrollY; }
-    };
-    var stopTimer = function () {
-      timerOn = false; clearTimeout(quietT);
-      show.removeAttribute('data-timer'); show.classList.remove('is-timing', 'is-reading');
-    };
-    var userMoved = function () {
-      if (!timerOn) return;
-      if (show.classList.contains('is-timing')) stopTimer();
-      else { clearTimeout(quietT); quietT = setTimeout(syncTimer, 760); }
-    };
-    var restOf = function (k) {
-      var seg = Math.max(1, track.offsetHeight - (window.innerHeight || 800)) / N;
-      return window.scrollY + track.getBoundingClientRect().top + (k + 0.5) * seg;
-    };
-    /* to any project, not only the next: the hand-over plays once, the scroll
-       is brought to that project's resting point and held until it is over */
-    var goTo = function (j) {
-      if (j === cur || j < 0 || j >= N || heldY !== null) return;
-      go(j, j > cur ? 1 : -1, false);
-      hold(restOf(j), WIPE);
-    };
-    /* the bar is the minimum time, not the whole of it: the recording on screen
-       is allowed to finish the loop it is in before the next project takes over
-       (the posters of the lite tier have no loop to wait for) */
-    var advanceAfterLoop = function (from) {
-      var v = !lite && scenes[from] && scenes[from].querySelector('.scene__desk video');
-      var left = (v && !v.paused && isFinite(v.duration) && v.duration > 0) ? (v.duration - v.currentTime) * 1000 : 0;
-      setTimeout(function () {
-        if (cur !== from || !timerOn) return;
-        if (!show.classList.contains('is-timing') || show.classList.contains('is-reading')) { advanceAfterLoop(from); return; }
-        goTo(from + 1);
-      }, Math.min(Math.max(left, 0) + 80, 30000));
-    };
-    if (rail) {
-      rail.addEventListener('animationend', function (e) {
-        if (e.animationName === 'rail-fill' && timerOn && show.classList.contains('is-timing') && cur < N - 1) advanceAfterLoop(cur);
-      });
-      rail.addEventListener('click', function (e) {
-        var a = e.target.closest && e.target.closest('a');
-        if (!a) return;
-        e.preventDefault(); e.stopPropagation();   /* not an in-page jump (the document-level handler would call it one) */
-        lastInput = performance.now();
-        goTo(railLinks.indexOf(a));
-      });
-    }
-    var setReading = function () { show.classList.toggle('is-reading', hoverCopy || focusCopy); };
-    sticky.addEventListener('pointerover', function (e) { hoverCopy = !!(e.target.closest && e.target.closest('.scene__copy')); setReading(); });
-    sticky.addEventListener('pointerleave', function () { hoverCopy = false; setReading(); });
-    sticky.addEventListener('focusin', function (e) { focusCopy = !!(e.target.closest && e.target.closest('.scene__copy')); setReading(); });
-    sticky.addEventListener('focusout', function () { focusCopy = false; setReading(); });
-    var followCore = follow;
-    follow = function () {
-      /* while the timer runs the page is still: a scroll that is not ours (the scrollbar, anything) is the visitor's */
-      if (show.classList.contains('is-timing') && heldY === null && Math.abs(window.scrollY - timedY) > 2) stopTimer();
-      followCore();
-      syncTimer();
-    };
-    window.addEventListener('scroll', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
-    window.addEventListener('resize', function () { if (!scTick) scTick = requestAnimationFrame(follow); }, { passive: true });
-    follow();
-
-    /* the pointer tilts the current scene's screens a few degrees toward
-       it — the same object seen from where you stand */
-    if (pointerFine) {
-      var tilt = { x: 0, y: 0, tx: 0, ty: 0 }, tiltRaf = 0;
-      var stepTilt = function () {
-        tilt.x += (tilt.tx - tilt.x) * 0.08; tilt.y += (tilt.ty - tilt.y) * 0.08;
-        var shots = scenes[cur] && scenes[cur].querySelector('.scene__shots');
-        if (shots) { shots.style.setProperty('--ry', tilt.x.toFixed(2) + 'deg'); shots.style.setProperty('--rx', tilt.y.toFixed(2) + 'deg'); }
-        tiltRaf = (Math.abs(tilt.tx - tilt.x) + Math.abs(tilt.ty - tilt.y) > 0.02) ? requestAnimationFrame(stepTilt) : 0;
-      };
-      sticky.addEventListener('pointermove', function (e) {
-        tilt.tx = ((e.clientX / window.innerWidth) - 0.5) * -9;
-        tilt.ty = ((e.clientY / window.innerHeight) - 0.5) * 6;
-        if (!tiltRaf) tiltRaf = requestAnimationFrame(stepTilt);
-      }, { passive: true });
-      sticky.addEventListener('pointerleave', function () { tilt.tx = 0; tilt.ty = 0; if (!tiltRaf) tiltRaf = requestAnimationFrame(stepTilt); });
-    }
-  }
-
   /* --- 7. work page: constellations ------------------------------------------
    * The big screen of each project is a recording of its live home page; it
    * plays while at least a third of it is on screen and rests otherwise (never
@@ -990,6 +611,68 @@
       }, { rootMargin: '-45% 0px -50% 0px' });
       Array.prototype.forEach.call(work.querySelectorAll('.cst'), function (s) { spy.observe(s); });
     }
+  }
+
+  /* --- 8. QR menu demo ---------------------------------------------------------------------
+   * The menu page's working example: the sheet on the left is what the owner edits, the phone on the
+   * right is what the customer sees. Typing a price updates that dish (and flashes it); un-ticking
+   * "available" strikes it through with a "sold out" note; the phone's FR / EN / IT buttons switch the
+   * dish names, the categories and the way prices are written; its two tabs switch category. No script:
+   * the page shows both categories, in the page's language, and the inputs just do nothing. */
+  var qd = document.querySelector('[data-qr-demo]');
+  if (qd) {
+    var qLang = qd.getAttribute('data-lang') || 'fr';
+    var qPhone = qd.querySelector('.qr-phone');
+    var qLists = [].slice.call(qd.querySelectorAll('.qr-phone__list'));
+    var qTabs = [].slice.call(qd.querySelectorAll('.qr-phone__tab'));
+    var qMoney = function (v) {
+      var n = parseFloat(String(v).replace(',', '.'));
+      if (isNaN(n) || n < 0) return '—';
+      var s = n.toFixed(2);
+      return qLang === 'en' ? '€' + s : s.replace('.', ',') + '\u00a0€';
+    };
+    var qPrices = {};
+    [].forEach.call(qd.querySelectorAll('tbody tr'), function (tr) { qPrices[tr.getAttribute('data-id')] = tr.querySelector('.qr-sheet__p').value; });
+    var qPaint = function () {
+      [].forEach.call(qd.querySelectorAll('[data-fr]'), function (el) { var t = el.getAttribute('data-' + qLang); if (t) el.textContent = t; });
+      [].forEach.call(qd.querySelectorAll('.qr-dish'), function (li) { li.querySelector('.qr-dish__p').textContent = qMoney(qPrices[li.getAttribute('data-id')]); });
+      [].forEach.call(qd.querySelectorAll('.qr-phone__langs button'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === qLang ? 'true' : 'false'); });
+    };
+    var qCat = function (i) {
+      qLists.forEach(function (ul, k) { ul.hidden = k !== i; });
+      qTabs.forEach(function (b, k) { b.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+    };
+    qCat(0);
+    var qTouched = function () { qd.classList.add('is-touched'); };
+    qd.addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.classList.contains('qr-sheet__p')) return;
+      qTouched();
+      var id = el.closest('tr').getAttribute('data-id');
+      qPrices[id] = el.value;
+      var li = qd.querySelector('.qr-dish[data-id="' + id + '"]');
+      if (!li) return;
+      li.querySelector('.qr-dish__p').textContent = qMoney(el.value);
+      var catIndex = qLists.indexOf(li.parentNode);
+      if (catIndex >= 0) qCat(catIndex);                       /* show the category the change is in */
+      li.classList.remove('is-flash'); void li.offsetWidth; li.classList.add('is-flash');
+    });
+    qd.addEventListener('change', function (e) {
+      var el = e.target;
+      if (!el.classList.contains('qr-sheet__ok')) return;
+      qTouched();
+      var li = qd.querySelector('.qr-dish[data-id="' + el.closest('tr').getAttribute('data-id') + '"]');
+      if (!li) return;
+      li.classList.toggle('is-out', !el.checked);
+      var catIndex = qLists.indexOf(li.parentNode);
+      if (catIndex >= 0) qCat(catIndex);
+    });
+    qd.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('button');
+      if (!b || !qPhone.contains(b)) return;
+      if (b.hasAttribute('data-lang')) { qLang = b.getAttribute('data-lang'); qPaint(); qTouched(); }
+      else if (b.hasAttribute('data-cat')) { qCat(+b.getAttribute('data-cat')); qTouched(); }
+    });
   }
 
   /* --- 4. contact form ----------------------------------------------------- */

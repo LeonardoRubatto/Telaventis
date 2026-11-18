@@ -11,7 +11,8 @@ trois langues :
 
   index.html, en/index.html, it/index.html
       <!-- projets:vitrine --> … <!-- /projets:vitrine -->
-      une scène plein écran par projet + la barre de progression (catégories)
+      la barre des catégories (liens #scene-<cle>) + un bloc par projet, même
+      mise en page que la page Travaux, défilement naturel
   work.html, en/work.html, it/work.html
       <!-- projets:barre -->   … <!-- /projets:barre -->     index des projets
       <!-- projets:travaux --> … <!-- /projets:travaux -->   un bloc par projet
@@ -86,51 +87,6 @@ def video(pre, k, kind, cls, vt=False):
             f'<noscript><img class="{cls}" src="{poster}" width="{w}" height="{h}" alt=""></noscript>')
 
 
-# ---------------------------------------------------------------- accueil --
-def scene(p, lg, pre):
-    k, t, l = p['cle'], p['textes'][lg], L[lg]
-    sw = ''.join(f'<i style="--c:{c}" title="{c}"></i>' for c in p['nuancier'])
-    return f'''
-          <article class="scene scene--{k}" data-scene style="{style(p)}" aria-labelledby="scene-{k}">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">{name_html(p)}</span>
-                <a class="scene__shots" href="project-{k}.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    {video(pre, k, 'desk', 'scene__video', vt=True)}
-                  </div>
-                  <div class="scene__phone">
-                    {video(pre, k, 'phone', 'scene__video')}
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-{k}" data-fx-split data-fx-manual>{name_html(p)}</h3>
-                <p class="scene__text"><b>{l['pb']}</b> {esc(t['probleme'])}</p>
-                <p class="scene__text"><b>{l['rp']}</b> {esc(t['reponse'])}</p>
-                <dl class="scene__spec">
-                  <div><dt>{l['coul']}</dt><dd><span class="scene__swatches" aria-hidden="true">{sw}</span><span class="scene__hex">{' '.join(p['nuancier'])}</span></dd></div>
-                  <div><dt>{l['typo']}</dt><dd>{esc(p['typos'])}</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-{k}.html">{l['cas']}</a>
-                  <a class="link link--plain" href="{attr(p['site'])}" target="_blank" rel="noopener">{esc(p['site_libelle'])}</a>
-                </div>
-              </div>
-            </div></div>
-          </article>'''
-
-
-def vitrine(P, lg, pre):
-    # the bar at the top of the pinned screen: one link per project, in the
-    # project's own accent. Clickable (telaventis.js §6 goes to the scene), and
-    # the current one fills like a timer, then hands over to the next.
-    # Hidden until the script has pinned the section (no JS: the scenes are
-    # simply stacked and the links would only point down the same page).
-    rail = ''.join(f'<li style="--ac:{p["couleurs"]["accent"]}"><a href="#scene-{p["cle"]}">{esc(p["textes"][lg]["categorie"])}</a></li>' for p in P)
-    return ''.join(scene(p, lg, pre) for p in P) + f'\n        <ol class="showcase__rail" aria-label="{L[lg]["rail"]}">{rail}</ol>\n        '
-
-
 # ---------------------------------------------------------------- travaux --
 def shot(pre, k, kind, sizes):
     w1, w2 = (420, 780) if kind == 'm1' else (900, 1440)
@@ -149,18 +105,24 @@ def barre(P, lg, pre):
     return '\n' + '\n'.join(out) + '\n    '
 
 
-def travaux(P, lg, pre):
+def travaux(P, lg, pre, home=False):
+    # home=True : les mêmes blocs sur l'accueil, ancrés en #scene-<cle> (les liens
+    # publiés), titres en h3 (le h2 est celui de la section)
     l, out = L[lg], []
+    h = 'h3' if home else 'h2'
+    ident = 'scene' if home else 'projet'
     for i, p in enumerate(P):
         k, t = p['cle'], p['textes'][lg]
         logo = (f'\n        <img class="cst__logo" src="{pre}assets/logos/{p["logo_titre"]}" width="160" height="160" alt="">'
                 if p.get('logo_titre') else '')
         cap = t['legendes']
+        # the previous block's ground, for the liquid seam (telaventis.css: .cst::before/::after)
+        pv = f";--pv:{P[i - 1]['couleurs']['fond']}" if i else ''
         out.append(f'''
-  <article class="cst scene--{k}{' cst--flip' if i % 2 else ''}" id="projet-{k}" style="{style(p)}" aria-labelledby="cst-{k}">
+  <article class="cst scene--{k}{' cst--flip' if i % 2 else ''}" id="{ident}-{k}" style="{style(p)}{pv}" aria-labelledby="cst-{k}">
     <div class="cst__in wrap">
       <header class="cst__head">{logo}
-        <h2 class="cst__name" id="cst-{k}">{name_html(p)}</h2>
+        <{h} class="cst__name" id="cst-{k}">{name_html(p)}</{h}>
         <p class="cst__desc">{esc(t['resume'])}</p>
         <p class="cst__links"><a class="link" href="project-{k}.html">{l['cas']}</a><a class="link link--plain" href="{attr(p['site'])}" target="_blank" rel="noopener">{esc(p['site_libelle'])}</a></p>
       </header>
@@ -170,11 +132,24 @@ def travaux(P, lg, pre):
         </a>
         <figure class="cst__float cst__float--a">{shot(pre, k, 'd1', '(min-width:1000px) 28vw, 44vw')}<figcaption>{esc(cap[0])}</figcaption></figure>
         <figure class="cst__float cst__float--b">{shot(pre, k, 'd2', '(min-width:1000px) 26vw, 44vw')}<figcaption>{esc(cap[1])}</figcaption></figure>
-        <figure class="cst__float cst__float--phone">{shot(pre, k, 'm1', '(min-width:1000px) 12vw, 30vw')}<figcaption>{esc(cap[2])}</figcaption></figure>
+        <figure class="cst__float cst__float--phone">{video(pre, k, 'phone', 'cst__video cst__video--phone')}<figcaption>{esc(cap[2])}</figcaption></figure>
       </div>
     </div>
   </article>''')
     return ''.join(out) + '\n  '
+
+
+def vitrine(P, lg, pre):
+    # accueil : la même organisation que la page Travaux (un bloc par projet,
+    # défilement naturel), avec une barre qui suit le défilement mais qui porte
+    # les CATÉGORIES génériques, pas les noms des clients (telaventis.js §7 la
+    # suit : le projet en vue est souligné à la couleur de son client)
+    bar = ''.join(
+        f'\n      <a class="work-bar__item" href="#scene-{p["cle"]}" style="--ac:{p["couleurs"]["accent"]}">'
+        f'<span>{esc(p["textes"][lg]["categorie"])}</span></a>' for p in P)
+    return (f'\n    <nav class="work-bar work-bar--home" aria-label="{L[lg]["rail"]}" data-work-bar>\n'
+            f'      <div class="work-bar__in wrap">{bar}\n      </div>\n    </nav>\n'
+            '    <div class="constellations">' + travaux(P, lg, pre, home=True) + '</div>\n  ')
 
 
 def pied(P):

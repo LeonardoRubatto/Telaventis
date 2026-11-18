@@ -137,7 +137,7 @@
         "repli": "var(--sans)",
         "reglages": "--nw:900;--ntt:uppercase;--nls:-.01em;--nsize:clamp(32px,3.9vw,66px)"
       },
-      "css_en_plus": "@media (max-width:999px){.scene--bde .scene__name{font-size:clamp(30px,8.4vw,52px)}}\n.scene--bde .scene__name .name-outline,.scene--bde .scene__ghost .name-outline{-webkit-text-stroke-color:var(--fg)}\n.scene--bde .scene__name .fx-char{color:inherit}\n.work-bar__item.scene--bde > span{font-size:15px}\n.cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}\n.cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}",
+      "css_en_plus": ".work-bar__item.scene--bde > span{font-size:15px}\n.cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}\n.cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}",
       "captures": {
         "ordinateur": [
           "https://bdedauphine.fr/evenements.html",

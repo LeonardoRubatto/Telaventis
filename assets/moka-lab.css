@@ -25,7 +25,7 @@
 .moka-story__scrollcue i:after{content:"";position:absolute;inset:0;background:var(--coral);transform:translateX(-100%);animation:mokaCue 1.8s cubic-bezier(.22,.9,.24,1) infinite}
 @keyframes mokaCue{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}
 
-.moka-story__track{height:520svh;position:relative}
+.moka-story__track{height:746svh;position:relative}   /* 520 + 226: the extra screens is the opening act's (moka-lab.js, ACT_EXTRA) */
 /* same 100dvh follow-up as .era__sticky in telaventis-fx.css: svh alone
    can fall short of the real viewport once iOS Safari's toolbar auto-hides
    mid-scroll, leaving an uncovered sliver below the pinned box. */
@@ -127,7 +127,7 @@ html.moka-held .moka-story__sticky{position:fixed;top:0;left:0;width:100%}
 #selected-work .proj--wide{display:block;padding:clamp(66px,8vw,118px) 0}.proj--wide>div:first-child{max-width:680px}.proj--wide .proj__shot-wrap{margin-top:clamp(34px,5vw,64px);padding:0}.proj--wide .proj__shot{width:100%;max-height:none}
 
 @media (max-width:900px){
-  .moka-story__intro{min-height:62svh}.moka-story__track{height:480svh}.moka-story__canvas{inset:122px 12px 28px 42px}
+  .moka-story__intro{min-height:62svh}.moka-story__track{height:706svh}.moka-story__canvas{inset:122px 12px 28px 42px}
   /* centred instead of pinned to the top-left corner, and sized up further
      still — on a phone this is the one piece of overlay copy with room to
      actually be the focal point while the demo assembles behind it. */
@@ -144,7 +144,7 @@ html.moka-held .moka-story__sticky{position:fixed;top:0;left:0;width:100%}
    story race ahead disproportionately to the gesture. More scroll runway
    here means the same flick now advances it noticeably less. */
 @media (max-width:580px){
-  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:640svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh;height:72dvh}.moka-page__hero{height:calc(72svh - 44px);height:calc(72dvh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
+  .moka-story__title{font-size:clamp(42px,14vw,70px)}.moka-story__intro{padding-top:80px;padding-bottom:72px}.moka-story__track{height:866svh}.moka-source{min-width:154px;max-width:210px;padding:11px 13px}.moka-source--instagram,.moka-source--address{min-width:180px;padding:13px 14px}.moka-source b{font-size:13px}.moka-source--instagram b,.moka-source--address b{font-size:15px}.moka-source span{font-size:8px}.moka-browser{height:72svh;height:72dvh}.moka-page__hero{height:calc(72svh - 44px);height:calc(72dvh - 44px)}.moka-browser__mark{font-size:8.5px}.moka-browser__url{font-size:8px}.moka-page__hero-copy h3{font-size:clamp(35px,11vw,54px)}.moka-page__statement,.moka-page__useful-copy,.moka-page__owned{padding:42px 24px}.moka-page__gallery-copy{padding:32px 24px}.moka-page__facts{margin-top:44px}.moka-page__facts span{display:block}.moka-page__facts strong{display:block;margin-top:7px}.moka-story__endcard{display:block}.moka-story__endcard p{text-align:left;margin-top:6px;font-size:15.5px}.moka-page__owned h3{font-size:clamp(44px,13vw,68px)}
 }
 @media (prefers-reduced-motion:reduce){.moka-story__scrollcue i:after{animation:none}.moka-source,.moka-browser,.moka-story__endcard{will-change:auto}}
 

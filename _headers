@@ -98,3 +98,8 @@
 # only indexing changes.
 /assets/art/*
   X-Robots-Tag: noindex
+
+# Leonardo's portrait (Studio page): shown to visitors, kept out of search results.
+# Same rule as assets/art/ above: noindex needs the file crawlable, so robots.txt does not block it.
+/assets/team/*
+  X-Robots-Tag: noindex

@@ -4,7 +4,7 @@ Site vitrine de [telaventis.fr](https://telaventis.fr) — studio web indépenda
 
 ## Le principe
 
-Un site statique, écrit à la main : HTML, CSS et JavaScript, sans framework, sans étape de build, sans CMS. Pas de dépendance runtime — les effets visuels (titre « météo » de l'accueil, bandeau TELAVENTIS coupé en diagonale, bulles qui se transforment d'une phrase à l'autre, fente qui ouvre sur l'exemple Moka, vitrine des projets en plein écran, etc.) sont ré-implémentés à la main plutôt qu'importés d'une librairie, et documentés en commentaire à côté du code qu'ils touchent. Le détail de ce qui est adapté de quoi, et sous quelle licence, est dans [`mentions-legales.html`](mentions-legales.html).
+Un site statique, écrit à la main : HTML, CSS et JavaScript, sans framework, sans étape de build, sans CMS. Pas de dépendance runtime — les effets visuels (titre « météo » de l'accueil, bandeau TELAVENTIS coupé en diagonale, bulles qui se transforment d'une phrase à l'autre, fente qui ouvre sur l'exemple Moka, vitrine des projets, etc.) sont ré-implémentés à la main plutôt qu'importés d'une librairie, et documentés en commentaire à côté du code qu'ils touchent. Le détail de ce qui est adapté de quoi, et sous quelle licence, est dans [`mentions-legales.html`](mentions-legales.html).
 
 **Pour faire évoluer le site — ajouter un projet client, changer le logo, retrouver un effet : [`_outils/MODE-EMPLOI.md`](_outils/MODE-EMPLOI.md).**
 
@@ -25,6 +25,7 @@ assets/
   share/, favicon*, icons/               logo, icônes, images de partage                   ← générés
   logos/                                 logos clients montrés (sur accord seulement)
   art/, moka/, menu-qr/                  images éditoriales
+  team/                                  portrait de Leonardo (noindex, voir _headers)
 _outils/                                 outils de préparation, jamais servis (voir MODE-EMPLOI)
   projets.json                           LA source des projets clients
   projets.py                             generer · nouveau <cle> · verifier

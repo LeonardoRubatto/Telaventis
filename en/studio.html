@@ -40,8 +40,8 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="../assets/telaventis.css?v=50">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=49">
+<link rel="stylesheet" href="../assets/telaventis.css?v=83">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=82">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -100,9 +100,13 @@
     </div>
     <div class="wrap split split--wide-left" style="--split-left:1.15fr;">
       <div>
+        <figure class="portrait" data-reveal>
+          <picture><source type="image/avif" srcset="../assets/team/portrait-lr-480.avif 480w, ../assets/team/portrait-lr-800.avif 800w" sizes="(min-width:900px) 300px, 60vw"><source type="image/webp" srcset="../assets/team/portrait-lr-480.webp 480w, ../assets/team/portrait-lr-800.webp 800w" sizes="(min-width:900px) 300px, 60vw"><img src="../assets/team/portrait-lr-800.jpg" width="800" height="800" alt="Leonardo Rubatto" loading="lazy" decoding="async"></picture>
+        </figure>
         <p class="small" style="font-family:var(--mono);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--coral-2);margin:0 0 10px;">Profile</p>
         <h3 class="h3" style="color:var(--cream);margin:0 0 4px;">Leonardo Rubatto</h3>
         <p class="small" style="color:rgba(237,233,226,.6);margin:0 0 20px;">Founder — design &amp; development</p>
+        <p class="small" style="margin:-8px 0 20px;"><a class="link" href="https://www.linkedin.com/in/leonardo-rubatto-737767383/" target="_blank" rel="noopener me" style="color:var(--cream);border-color:rgba(237,233,226,.3);">LinkedIn profile</a></p>
         <p class="body-serif" style="font-size:clamp(16.5px,1.3vw,19.5px);color:rgba(237,233,226,.9);">You work directly with the person who defines, designs and builds your website: <strong style="color:var(--cream);font-weight:600;">Leonardo Rubatto</strong>, based in France.</p>
         <p class="body-serif" style="margin-top:18px;font-size:clamp(16.5px,1.3vw,19.5px);">A student in a Licence in Organisation Sciences at Université Paris-Dauphine (PSL), I picked up AI as one tool among others — and in an economy that gets more digital every year, knowing how to use it well felt like the obvious thing to do. Telaventis grew out of that interest: a student's time and availability, put to work on real projects, from the first message to launch.</p>
         <p class="body-serif" style="margin-top:18px;font-size:clamp(16.5px,1.3vw,19.5px);">Sites are written by hand, then deployed and archived with every change. That's a choice — speed, robustness, independence from a vendor — not a limitation to hide. The technical detail sits right alongside, for anyone who wants to read it.</p>
@@ -182,6 +186,7 @@
     <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
+      <a class="foot__mono" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">LinkedIn</a>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Legal notice &amp; credits</a>
     </div>
   </div>
@@ -191,7 +196,7 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=38" defer fetchpriority="high"></script>
-<script src="../assets/telaventis-fx.js?v=64" defer fetchpriority="high"></script>
+<script src="../assets/telaventis.js?v=71" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
 </body>
 </html>

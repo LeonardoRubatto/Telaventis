@@ -1254,7 +1254,21 @@
          full at rest and faded in along a flight, so a landing is exactly
          the resting position at that instant (no step, ever) */
       var breathX = function (q, t) { return Math.sin(t * 0.55 + q.ph) * q.s * 0.12; };
-      var breathY = function (q, t) { return Math.sin(t * 0.42 + q.ph * 1.7) * q.s * 0.10; };
+      /* the lift (the visitor's idea: the words themselves drift upward like bubbles, each on its own
+         clock, a second or two after the phrase arrives — the page is saying "go up/on"). The plain
+         words do it in CSS (telaventis-fx.css, era-lift); the bubbles that draw the key words do it
+         here with the same shape: up by a quarter of the word's size, back, slowly, a different
+         period and delay per word so nothing moves in step. */
+      var lastStepAt = 0;
+      var liftY = function (q, t) {
+        if (q.w == null || !q.lf) return 0;
+        var per = 4.6 + (q.w % 5) * 0.4, dl = 1.4 + (q.w % 4) * 0.35;
+        var u = (t - lastStepAt / 1000 - dl) / per;
+        if (u < 0) return 0;
+        u -= Math.floor(u);
+        return -q.lf * 0.5 * (1 - Math.cos(u * 6.2832)) * 0.78;
+      };
+      var breathY = function (q, t) { return Math.sin(t * 0.42 + q.ph * 1.7) * q.s * 0.10 + liftY(q, t); };
       var breathS = function (q, t) { return 1 + 0.03 * Math.sin(t * 1.9 + q.ph); };
 
       var sampleHeading = function (el, box) {
@@ -1295,11 +1309,11 @@
         var out = [];
         if (i < 0) return out;
         if (kinds[i] && words[i].length) {
-          words[i].forEach(function (w) {
+          words[i].forEach(function (w, wi) {
             if (!w.key || !w.glyph.ensure()) return;
             var r = w.el.getBoundingClientRect();
             w.glyph.particles.forEach(function (pt) {
-              out.push({ x: r.left - box.left + pt.x, y: r.top - box.top + pt.y, s: pt.s, sp: pt.sp });
+              out.push({ x: r.left - box.left + pt.x, y: r.top - box.top + pt.y, s: pt.s, sp: pt.sp, w: wi, lf: (r.height || 60) * 0.28 });
             });
           });
           return out;
@@ -1320,7 +1334,7 @@
       };
       var restAt = function (cloud, i) {
         var old = live;
-        live = cloud.map(function (c, k) { return { x: c.x, y: c.y, s: c.s, sp: c.sp, ph: c.ph != null ? c.ph : (old.length === cloud.length && liveOf === i && old[k] ? old[k].ph : Math.random() * 6.283) }; });
+        live = cloud.map(function (c, k) { return { x: c.x, y: c.y, s: c.s, sp: c.sp, w: c.w, lf: c.lf, ph: c.ph != null ? c.ph : (old.length === cloud.length && liveOf === i && old[k] ? old[k].ph : Math.random() * 6.283) }; });
         liveOf = i;
         restSig = sigOf(i);
       };
@@ -1362,7 +1376,8 @@
             cy: (a.y + b.y) / 2 + dx / len * bend - Math.min(160, len * 0.18),
             sp: Math.random() < 0.5 ? a.sp : b.sp,
             delay: (a.x / W) * 0.24 + Math.random() * 0.14,
-            ph: a.ph != null ? a.ph : Math.random() * 6.283
+            ph: a.ph != null ? a.ph : Math.random() * 6.283,
+            w: b.w, lf: b.lf
           };
         }
         live = []; liveOf = -1;
@@ -1841,7 +1856,6 @@
          At 1300 a hard flick went 1 -> 2 -> 3 so fast that the second phrase had
          barely landed when it was already leaving: it looked skipped. */
       var STEP_COOLDOWN_MS = 2000;
-      var lastStepAt = 0;
 
       /* ---- 3e. the section moves on by itself, for whoever does not know it scrolls
          "They often don't know you have to scroll": a visitor can sit on the
@@ -1872,7 +1886,7 @@
       var AUTO_DWELL = [3000, 4000, 4000];   /* ms a phrase stays whole, for phrases 1, 2, 3 */
       var QUIET_GAP = 250;                    /* ms without any input once the section is whole: the gesture that brought the visitor is over (a trackpad's inertia can run for more than a second — a fixed grace period cancelled autoplay for people who did nothing) */
       var ASSIST_TOP = 0.08;                  /* within this fraction of the screen of being whole, ease it the rest of the way */
-      var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false, quietSeen = false;
+      var autoOff = false, autoSince = 0, autoMove = null, assistMove = null, clickMove = null, userAt = 0, autoState = '', pinnedAt = 0, wasPinned = false, quietSeen = false;
       /* data-auto on the section says where autoplay is: idle (waiting for the
          section to be pinned), count, move, off — for debugging and the test
          harness */
@@ -1884,7 +1898,7 @@
       var userMoved = function () {
         var now = performance.now();
         userAt = now;
-        assistMove = null;                      /* a visitor who takes over an ease to 100% simply gets the page back */
+        assistMove = null; clickMove = null;    /* a visitor who takes over an ease to 100% (or a click's glide) simply gets the page back */
         if (autoOff) return;
         if (autoMove || (autoSince && quietSeen)) autoStop();
       };
@@ -1910,7 +1924,64 @@
         window.scrollTo({ top: Math.round(m.from + (m.to - m.from) * easeInOutCubic(u)), behavior: 'instant' });
         return u >= 1;
       };
+      /* ---- 3f. the section answers to a click or a tap, not only to a scroll
+         The visitor asked for it to be really interactive, and not so hard to understand
+         that you have to scroll. (The three small markers and their caption were taken out: only the wide triangle stays.) Three small markers at the foot of the pinned screen
+         (01 02 03) are the phrases themselves: the current one fills like a timer over the
+         time autoplay gives it, and each is a button that goes to its phrase. A click or a
+         tap on the phrase goes to the next one, and after the last it opens the door. All of
+         it is the same real scroll as the autoplay's (a glide of the real scroll position),
+         so the trigger, its cooldown, the bubbles and the door run through their one code
+         path; none of the visitor's own scroll rules changes. A click restarts the phrase's
+         time (userAt) and does not end autoplay: the section still carries on by itself if
+         it is left alone. */
+      var goPhrase = function (k) {
+        if (lockY !== null || doc.hidden || autoMove || clickMove || target < 0) return;
+        var rect = track.getBoundingClientRect(), vh = window.innerHeight || 800;
+        var scrollable = Math.max(1, track.offsetHeight - vh), tailPx = cut ? vh * TAIL_VH : 0, run = scrollable - tailPx;
+        var trackTop = window.scrollY + rect.top, to;
+        if (k < n) to = trackTop + run * (segBounds[k] + segBounds[k + 1]) / 2;
+        else to = trackTop + run + tailPx * (CUT_AT + 0.05);
+        var now = performance.now();
+        userAt = now;
+        clickMove = { t0: now, from: window.scrollY, to: to, dur: clamp(900 + Math.abs(to - window.scrollY) / vh * 260, 1100, 2000) };
+        kick();
+      };
+      var stepEls = [];
+      (function () {
+        var lang = (doc.documentElement.lang || 'fr').slice(0, 2);
+        /* the cue: one wide open triangle (two fine strokes, no arrow), breathing at the foot of the screen (CSS: it shows
+           a second after the phrase's time starts, pulses, dissolves, and comes back); a click is "next" too */
+        var arrow = doc.createElement('button');
+        arrow.type = 'button';
+        arrow.className = 'era__arrow';
+        arrow.setAttribute('aria-label', lang === 'en' ? 'Next' : lang === 'it' ? 'Avanti' : 'Suivant');
+        arrow.innerHTML = '<svg viewBox="0 0 64 20" width="64" height="20" aria-hidden="true" focusable="false"><path d="M2 3 32 17 62 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        arrow.addEventListener('click', function (e) { e.stopPropagation(); goPhrase(target < n - 1 ? target + 1 : n); });
+        sticky.appendChild(arrow);
+        var stage = era.querySelector('.era__stage');
+        if (stage) stage.addEventListener('click', function (e) {
+          if (e.target.closest && e.target.closest('a,button')) return;
+          if (window.getSelection && String(window.getSelection())) return;          /* someone selecting text */
+          var r = track.getBoundingClientRect(), vh = window.innerHeight || 800;
+          if (!(r.top <= 2 && r.bottom >= vh - 2) || target < 0) return;
+          goPhrase(target < n - 1 ? target + 1 : n);
+        });
+      }());
+      var paintSteps = function () {
+        for (var i = 0; i < stepEls.length; i++) {
+          stepEls[i].classList.toggle('is-on', i === target);
+          stepEls[i].classList.toggle('is-past', i < target);
+          if (i === target) stepEls[i].setAttribute('aria-current', 'step'); else stepEls[i].removeAttribute('aria-current');
+        }
+      };
+
       var autoTick = function (now, rect, vh, scrollable, tailPx) {
+        if (clickMove) {
+          if (lockY !== null || doc.hidden) clickMove = null;
+          else if (glide(clickMove, now)) clickMove = null;
+          return;
+        }
         if (autoOff) return;
         if (cutGoal) { autoStop(); return; }     /* the door has opened (by us or not): its own one-shot takes over, and autoplay is done */
         var pinned = rect.top <= 2 && rect.bottom >= vh - 2;
@@ -2004,6 +2075,7 @@
           var dir = target < 0 ? 1 : (next > target ? 1 : -1);
           endMorph(); startMorph(target, next, now);
           target = next;
+          paintSteps();
           lastStepAt = now;
           for (var i = 0; i < n; i++) {
             applyState(i, i < target ? 'after' : (i > target ? 'before' : 'active'), now, dir);
@@ -2153,6 +2225,114 @@
       addJob(render);
       onResize(function () { measure(); lastQ = -1; });
     });
+  }());
+
+  /* ======================================================================
+     5. fx-melt — the hero's cream runs down into the night
+
+     The hero ends on a flat horizontal line under the wordmark and the dark
+     section starts there: a razor edge. Here the cream does not stop, it pours
+     over the top of the dark section as a liquid — a few tongues of different
+     lengths, a thin pale highlight along the edge, then two translucent
+     fringes (the sky of the letters, then the section's own teal) so the
+     boundary is a gradient rather than a line. It lives on a 2D canvas laid
+     over the first ~28 % of the screen of #digital-era (so it scrolls away
+     with it, and nothing below the fold of the first screen is touched), and:
+       · drifts slowly by itself, and is pushed along by the scroll (the
+         scroll's own speed moves the phase: a liquid, not a clip-path)
+       · pours deeper as the section rises into view
+       · only draws while it is on screen, then lets the frame loop sleep
+       · reduced motion: drawn once, at rest. No JS / no canvas: the CSS
+         fallback (.era__melt) is a plain soft fade of the same colours.
+     Written from scratch (a sum of sines under a moving window); no source.
+     ====================================================================== */
+  (function () {
+    var era = doc.getElementById('digital-era');
+    if (!era || !doc.createElement('canvas').getContext) return;
+    var box = doc.createElement('div');
+    box.className = 'era__melt';
+    box.setAttribute('aria-hidden', 'true');
+    var cv = doc.createElement('canvas');
+    box.appendChild(cv);
+    box.className += ' is-live';
+    era.insertBefore(box, era.firstChild);
+    var cx = cv.getContext('2d');
+    if (!cx) { box.parentNode.removeChild(box); return; }
+
+    var W = 0, H = 0, dpr = 1, ready = false;
+    var phase = 0, lastY = window.scrollY, depth = 0, last = 0;
+    var CREAM = '237,233,226', SKY = '124,150,174', TEAL = '27,68,88';
+
+    var size = function () {
+      var r = box.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ready = true;
+    };
+
+    /* the lower edge of one layer: how far down (px) at column x */
+    var edge = function (x, ph, d, lag) {
+      /* calm: two slow, wide swells and a faint third, all smooth (no power curve, so no
+         cusps in the valleys); the depth varies only gently along the width */
+      var cyc = W < 700 ? 420 : 760;                          /* one swell, in px */
+      var u = x / cyc + lag;
+      var a = Math.sin(u * 6.2832 + ph) * 0.5 + 0.5;
+      var b = Math.sin(u * 2.7 - ph * 0.6 + 2.1) * 0.5 + 0.5;
+      var c = Math.sin(u * 11 + ph * 1.3 + 0.8) * 0.5 + 0.5;
+      return H * d * (0.5 + 0.17 * a + 0.1 * b + 0.02 * c);
+    };
+
+    var path = function (ph, d, lag, extra) {
+      cx.beginPath();
+      cx.moveTo(0, 0);
+      var step = 6;
+      for (var x = 0; x <= W + step; x += step) cx.lineTo(x, edge(x, ph, d, lag) + extra);
+      cx.lineTo(W + step, 0);
+      cx.closePath();
+    };
+
+    var draw = function () {
+      cx.clearRect(0, 0, W, H);
+      /* the fringes, widest first */
+      path(phase * 0.9, depth, 0.17, H * 0.20 * depth);
+      cx.fillStyle = 'rgba(' + TEAL + ',.30)'; cx.fill();
+      path(phase * 0.95, depth, 0.09, H * 0.11 * depth);
+      cx.fillStyle = 'rgba(' + SKY + ',.42)'; cx.fill();
+      path(phase, depth, 0, 0);
+      cx.fillStyle = 'rgb(' + CREAM + ')'; cx.fill();
+      /* a pale thread along the edge: where the light catches the liquid */
+      cx.lineWidth = 1.4; cx.strokeStyle = 'rgba(255,255,255,.45)';
+      cx.beginPath();
+      for (var x = 0; x <= W + 6; x += 6) { var y = edge(x, phase, depth, 0) - 1; if (x) cx.lineTo(x, y); else cx.moveTo(x, y); }
+      cx.stroke();
+    };
+
+    var job = function (t, dt) {
+      var r = box.getBoundingClientRect(), vh = window.innerHeight || 800;
+      if (r.bottom < -20 || r.top > vh + 20) { lastY = window.scrollY; return false; }
+      if (!ready || Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) size();
+      var y = window.scrollY, dy = y - lastY; lastY = y;
+      /* by itself, slowly; pushed by the scroll, a lot */
+      phase += dt * 0.00028 + clamp(dy, -90, 90) * 0.0024;
+      /* how far the section has risen: 0 as its top meets the fold of the
+         screen, 1 when its top is a tenth of the way up: a long, gentle rise */
+      var p = clamp((vh - r.top) / (vh * 0.9), 0, 1);
+      depth = 0.14 + 0.86 * easeInOutQuad(p);
+      draw();
+      return true;                                           /* on screen: keep drawing */
+    };
+
+    if (reduce) {
+      var once = function () { size(); phase = 1.7; depth = 0.62; draw(); };
+      once(); onResize(once);
+      return;
+    }
+    /* wait for the page to be at rest: the first screen never pays for this */
+    var start = function () { addJob(job); onResize(function () { ready = false; }); };
+    var go = function () { if (window.requestIdleCallback) window.requestIdleCallback(start, { timeout: 2500 }); else setTimeout(start, 600); };
+    if (doc.readyState === 'complete') go(); else window.addEventListener('load', go);
   }());
 
 }());

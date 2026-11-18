@@ -40,8 +40,8 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="../assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="../assets/telaventis.css?v=50">
-<link rel="stylesheet" href="../assets/telaventis-fx.css?v=49">
+<link rel="stylesheet" href="../assets/telaventis.css?v=83">
+<link rel="stylesheet" href="../assets/telaventis-fx.css?v=82">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -81,70 +81,60 @@
 </header>
 
 <main id="main">
-  <section class="wrap" style="padding-top:clamp(48px,6.5vw,92px);padding-bottom:clamp(74px,9vw,124px);">
-    <div class="split split--wide-right" style="--split-right:1.1fr;">
-      <div style="min-width:0;" data-reveal>
-        <p class="eyebrow">Contatti</p>
-        <h1 class="h-page" style="margin-top:18px;font-size:clamp(34px,5.4vw,68px);">Parliamo del tuo progetto</h1>
-        <p class="lede" style="margin-top:22px;max-width:440px;">Descrivi la tua attività in poche righe e cosa deve fare il sito. La risposta dirà cosa è fattibile, a quale prezzo, e in quale ordine.</p>
-        <dl class="facts" style="margin-top:32px;">
-          <div class="fact"><dt class="fact__k">Email</dt><dd class="fact__v" style="margin:0;"><a class="link" href="mailto:hello@telaventis.fr">hello@telaventis.fr</a></dd></div>
-          <div class="fact"><dt class="fact__k">Basato a</dt><dd class="fact__v" style="margin:0;">Francia — lavoro a distanza, in francese, inglese o italiano</dd></div>
-          <div class="fact"><dt class="fact__k">Tempo di risposta</dt><dd class="fact__v" style="margin:0;">Un giorno lavorativo, per iscritto</dd></div>
-        </dl>
-      </div>
+  <!-- Contact on the site's own materials (cream, ink, one coral action): a title band like the other inner pages,
+       then the form with all four fields visible at once (it is short; nothing to discover), and the direct ways to
+       reach Telaventis beside it. The form element, its hidden fields, its data-msg-* texts and the field names are
+       the originals (telaventis.js, "4. contact form"). -->
+  <section class="page-head page-head--compact">
+    <div class="page-head__wedge" aria-hidden="true"></div>
+    <div class="wrap page-head__in">
+      <h1 class="h-page" data-reveal style="font-size:clamp(38px,6.4vw,90px);max-width:12ch;">Parliamo del tuo progetto</h1>
+      <p class="lede" >Descrivi la tua attività in poche righe e cosa deve fare il sito. La risposta dirà cosa è fattibile, a quale prezzo, e in quale ordine.</p>
+    </div>
+  </section>
 
-      <div data-reveal>
-        <!-- Invio reale via Web3Forms (api.web3forms.com): nessun backend da
-             mantenere, la chiave d'accesso qui sotto è pubblica per design
-             (identifica dove inviare il messaggio, non autorizza altro) —
-             vedi assets/telaventis.js. Fallback senza JavaScript: il form
-             invia nativamente ad action="…" e Web3Forms reindirizza a
+  <section class="wrap ct3">
+    <div class="ct3__grid">
+      <div class="ct3__form" data-reveal>
+        <!-- Invio reale via Web3Forms (api.web3forms.com): nessun backend da
+             mantenere, la chiave d'accesso qui sotto è pubblica per design
+             (identifica dove inviare il messaggio, non autorizza altro) —
+             vedi assets/telaventis.js. Fallback senza JavaScript: il form
+             invia nativamente ad action="…" e Web3Forms reindirizza a
              "redirect" qui sotto. -->
-        <form class="form-card" data-contact action="https://api.web3forms.com/submit" method="POST"
-              data-msg-sending="Invio in corso…"
-              data-msg-success="Messaggio inviato — riceverai una risposta scritta entro un giorno lavorativo."
-              data-msg-error="L'invio non è riuscito. Riprova, oppure scrivi direttamente a hello@telaventis.fr."
-              data-msg-submit-idle="Invia"
-              data-msg-submit-sending="Invio in corso…"
+        <form class="form-card" data-contact action="https://api.web3forms.com/submit" method="POST"
+              data-msg-sending="Invio in corso…"
+              data-msg-success="Messaggio inviato — riceverai una risposta scritta entro un giorno lavorativo."
+              data-msg-error="L'invio non è riuscito. Riprova, oppure scrivi direttamente a hello@telaventis.fr."
+              data-msg-submit-idle="Invia"
+              data-msg-submit-sending="Invio in corso…"
               data-msg-submit-done="Inviato ✓">
           <input type="hidden" name="access_key" value="8d741363-f38e-438c-b97e-a59230c22b87">
           <input type="hidden" name="subject" value="Nuova richiesta — telaventis.fr">
           <input type="hidden" name="from_name" value="Modulo Telaventis">
           <input type="hidden" name="redirect" value="https://telaventis.fr/it/contact.html?sent=1">
           <input type="checkbox" name="botcheck" class="field__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-
           <div class="form-grid">
-            <label class="field">
-              <span>Nome<span aria-hidden="true"> *</span></span>
-              <input type="text" name="name" autocomplete="name" required placeholder="Il tuo nome">
-            </label>
-            <label class="field">
-              <span>Email<span aria-hidden="true"> *</span></span>
-              <input type="email" name="email" autocomplete="email" required placeholder="tu@azienda.com">
-            </label>
+            <label class="field"><span>Nome<span aria-hidden="true"> *</span></span><input type="text" name="name" autocomplete="name" required placeholder="Il tuo nome"></label>
+            <label class="field"><span>Email<span aria-hidden="true"> *</span></span><input type="email" name="email" autocomplete="email" required placeholder="tu@azienda.com"></label>
           </div>
-
-          <label class="field">
-            <span>Attività</span>
-            <input type="text" name="activite" placeholder="Ristorante, studio, associazione…">
-          </label>
-
-          <label class="field">
-            <span>Cosa deve fare il sito<span aria-hidden="true"> *</span></span>
-            <textarea name="message" rows="6" required placeholder="Cos'è, per chi, e quando vorresti vederlo online."></textarea>
-          </label>
+          <label class="field"><span>Attività</span><input type="text" name="activite" placeholder="Ristorante, studio, associazione…"></label>
+          <label class="field"><span>Cosa deve fare il sito<span aria-hidden="true"> *</span></span><textarea name="message" rows="6" required placeholder="Cos'è, per chi, e quando vorresti vederlo online."></textarea></label>
           <p class="small" style="margin:0;">* campo obbligatorio</p>
-
-          <div class="btn-row" style="margin-top:4px;">
-            <button class="btn" type="submit" data-contact-submit style="background-color:var(--ink);background-image:linear-gradient(rgba(22,32,43,.88),rgba(22,32,43,.88)),url('../assets/art/susan-j-harris.jpg');background-size:cover;background-position:50% 50%;">Invia</button>
-          </div>
-
+          <div class="btn-row"><button class="btn" type="submit" data-contact-submit>Invia</button></div>
           <p class="small" style="margin:0;">Inviato direttamente da questa pagina. Riceverai una risposta scritta all'indirizzo indicato entro un giorno lavorativo.</p>
           <p class="small" data-formnote role="status" aria-live="polite" style="margin:0;min-height:1.4em;"></p>
           <p class="small" style="margin:0;">Le tue informazioni servono solo a risponderti e non sono condivise con nessuno, a eccezione di Web3Forms, il servizio che instrada questo messaggio verso la mia casella di posta. Vedi le <a class="link" href="mentions-legales.html">note legali</a>.</p>
         </form>
       </div>
+      <aside class="ct3__aside" data-reveal>
+        <dl class="facts">
+          <div class="fact"><dt class="fact__k">Email</dt><dd class="fact__v" style="margin:0;"><a class="link" href="mailto:hello@telaventis.fr">hello@telaventis.fr</a></dd></div>
+          <div class="fact"><dt class="fact__k">LinkedIn</dt><dd class="fact__v" style="margin:0;"><a class="link" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">Telaventis</a> · <a class="link" href="https://www.linkedin.com/in/leonardo-rubatto-737767383/" target="_blank" rel="noopener me">Leonardo Rubatto</a></dd></div>
+          <div class="fact"><dt class="fact__k">Basato a</dt><dd class="fact__v" style="margin:0;">Francia — lavoro a distanza, in francese, inglese o italiano</dd></div>
+          <div class="fact"><dt class="fact__k">Tempo di risposta</dt><dd class="fact__v" style="margin:0;">Un giorno lavorativo, per iscritto</dd></div>
+        </dl>
+      </aside>
     </div>
   </section>
 </main>
@@ -171,6 +161,7 @@
     <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
+      <a class="foot__mono" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">LinkedIn</a>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Note legali &amp; crediti</a>
     </div>
   </div>
@@ -180,7 +171,7 @@
   </div>
 </footer>
 
-<script src="../assets/telaventis.js?v=38" defer fetchpriority="high"></script>
-<script src="../assets/telaventis-fx.js?v=64" defer fetchpriority="high"></script>
+<script src="../assets/telaventis.js?v=71" defer fetchpriority="high"></script>
+<script src="../assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
 </body>
 </html>

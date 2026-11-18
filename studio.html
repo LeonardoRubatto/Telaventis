@@ -40,8 +40,8 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="assets/telaventis.css?v=50">
-<link rel="stylesheet" href="assets/telaventis-fx.css?v=49">
+<link rel="stylesheet" href="assets/telaventis.css?v=83">
+<link rel="stylesheet" href="assets/telaventis-fx.css?v=82">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -90,20 +90,19 @@
     </div>
   </section>
 
-  <!-- Portrait éditorial réel de Leonardo à intégrer ici dès qu'il est
-       disponible — pour l'instant, choix assumé de rester en typographie
-       plutôt que d'utiliser une photo de stock ou générée. (Un fragment
-       photo était testé ici — retiré : il faisait doublon avec le triangle
-       du bandeau d'en-tête juste au-dessus.) -->
   <section class="section--dark" style="padding-top:clamp(48px,6vw,88px);padding-bottom:clamp(74px,9vw,124px);">
     <div class="wrap">
       <p class="small" style="font-family:var(--mono);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--coral-2);margin:0 0 28px;">L'équipe</p>
     </div>
     <div class="wrap split split--wide-left" style="--split-left:1.15fr;">
       <div>
+        <figure class="portrait" data-reveal>
+          <picture><source type="image/avif" srcset="assets/team/portrait-lr-480.avif 480w, assets/team/portrait-lr-800.avif 800w" sizes="(min-width:900px) 300px, 60vw"><source type="image/webp" srcset="assets/team/portrait-lr-480.webp 480w, assets/team/portrait-lr-800.webp 800w" sizes="(min-width:900px) 300px, 60vw"><img src="assets/team/portrait-lr-800.jpg" width="800" height="800" alt="Leonardo Rubatto" loading="lazy" decoding="async"></picture>
+        </figure>
         <p class="small" style="font-family:var(--mono);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--coral-2);margin:0 0 10px;">Profil</p>
         <h3 class="h3" style="color:var(--cream);margin:0 0 4px;">Leonardo Rubatto</h3>
         <p class="small" style="color:rgba(237,233,226,.6);margin:0 0 20px;">Fondateur — design &amp; développement</p>
+        <p class="small" style="margin:-8px 0 20px;"><a class="link" href="https://www.linkedin.com/in/leonardo-rubatto-737767383/" target="_blank" rel="noopener me" style="color:var(--cream);border-color:rgba(237,233,226,.3);">Profil LinkedIn</a></p>
         <p class="body-serif" style="font-size:clamp(16.5px,1.3vw,19.5px);color:rgba(237,233,226,.9);">Vous travaillez directement avec la personne qui définit, conçoit et construit votre site : <strong style="color:var(--cream);font-weight:600;">Leonardo Rubatto</strong>, en France.</p>
         <p class="body-serif" style="margin-top:18px;font-size:clamp(16.5px,1.3vw,19.5px);">Étudiant en Licence Sciences des Organisations à l'Université Paris-Dauphine (PSL), j'ai appris à me servir de l'intelligence artificielle comme d'un outil parmi d'autres — et dans une économie qui devient chaque jour plus numérique, il m'a semblé normal de savoir bien m'en servir. Telaventis est né de cet intérêt : le temps et la disponibilité d'un étudiant, mis au service de projets réels, du premier message à la mise en ligne.</p>
         <p class="body-serif" style="margin-top:18px;font-size:clamp(16.5px,1.3vw,19.5px);">Les sites sont écrits à la main, puis mis en ligne et archivés à chaque modification. C'est un choix — rapidité, robustesse, indépendance vis-à-vis d'un fournisseur — pas une limite à cacher. Le détail technique est juste à côté, pour qui veut le lire.</p>
@@ -183,6 +182,7 @@
     <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
+      <a class="foot__mono" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">LinkedIn</a>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Mentions légales &amp; crédits</a>
     </div>
   </div>
@@ -192,7 +192,7 @@
   </div>
 </footer>
 
-<script src="assets/telaventis.js?v=38" defer fetchpriority="high"></script>
-<script src="assets/telaventis-fx.js?v=64" defer fetchpriority="high"></script>
+<script src="assets/telaventis.js?v=71" defer fetchpriority="high"></script>
+<script src="assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
 </body>
 </html>

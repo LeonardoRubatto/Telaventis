@@ -43,13 +43,13 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="assets/telaventis.css?v=50">
+<link rel="stylesheet" href="assets/telaventis.css?v=83">
 <!-- MOKA experiment (scroll-driven Atelier Moka case study) — delete this
      <link>, the <section id="direction-lab">…</section> below, and the
      matching <script> near </body> to remove it with zero effect on the
      rest of the site. -->
-<link rel="stylesheet" href="assets/moka-lab.css?v=15">
-<link rel="stylesheet" href="assets/telaventis-fx.css?v=49">
+<link rel="stylesheet" href="assets/moka-lab.css?v=48">
+<link rel="stylesheet" href="assets/telaventis-fx.css?v=82">
 
 <!-- TODO Leonardo: ajouter SIRET / adresse / téléphone dès que ces informations
      sont arrêtées — volontairement omis plutôt qu'inventé (voir mentions-legales.html). -->
@@ -66,7 +66,8 @@
   "areaServed": "FR",
   "availableLanguage": ["fr", "en", "it"],
   "priceRange": "€€",
-  "founder": { "@type": "Person", "name": "Leonardo Rubatto" },
+  "founder": { "@type": "Person", "name": "Leonardo Rubatto", "sameAs": ["https://www.linkedin.com/in/leonardo-rubatto-737767383/"] },
+  "sameAs": ["https://www.linkedin.com/company/telaventis/"],
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
     "name": "Services Telaventis",
@@ -129,6 +130,14 @@
         <h1 class="h-hero" data-ink>Un site qui rend votre activité évidente&nbsp;?<br class="wt-br"> On vous le crée.</h1>
         <div class="hero__foot">
           <p class="hero__lead">Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.</p>
+          <a class="hero__cue" href="#digital-era" aria-label="Faire défiler la page">
+            <svg class="hero__cue-svg" viewBox="0 0 44 132" width="44" height="132" aria-hidden="true" focusable="false">
+              <defs><filter id="cue-goo" x="-60%" y="-10%" width="220%" height="125%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter></defs>
+              <g filter="url(#cue-goo)"><circle class="cue-src" cx="22" cy="10" r="5.5"/><circle class="cue-drop" cx="22" cy="10" r="4.6"/></g>
+              <ellipse class="cue-ring" cx="22" cy="122" rx="5" ry="1.6"/>
+            </svg>
+            <span class="hero__cue-t" aria-hidden="true">Défiler</span>
+          </a>
         </div>
       </div>
     </div>
@@ -297,163 +306,113 @@
   <section class="section" id="selected-work">
     <div class="wrap">
       <div class="proj-head" data-reveal>
-        <h2 class="h2" id="showcase-title" data-fx-split>Quelques projets, expliqués clairement.</h2>
         <p class="proj-head__note"><span>Exemple fictif</span> Atelier Moka montre une transformation de bout en bout, mais Telaventis ne travaille pas exclusivement avec des bars, cafés ou commerces : la même méthode s'applique aussi bien à une entreprise qu'à un outil en ligne simplifié — comme les projets ci-dessous.</p>
+        <h2 class="h2" id="showcase-title" data-fx-split>Quelques projets, expliqués clairement.</h2>
       </div>
     </div>
   </section>
 
-  <!-- Showcase: one full screen per project, each in its client's own
-       colours and type; scenes hand over with the "continuous sections"
-       wipe (telaventis.js §6). Without JS or with reduced motion the
-       scenes are simply stacked, one after the other. -->
-  <section class="showcase" data-showcase aria-labelledby="showcase-title">
-    <div class="showcase__track">
-      <div class="showcase__sticky"><!-- projets:vitrine -->
-          <article class="scene scene--qualamantis" data-scene style="--bg:#FAF6EF;--fg:#221E18;--ac:#BC4827;--mu:#564F44" aria-labelledby="scene-qualamantis">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">Qualamantis</span>
-                <a class="scene__shots" href="project-qualamantis.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/qualamantis-desk-poster.webp" width="1280" height="800" alt=""></noscript>
-                  </div>
-                  <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/qualamantis-phone-poster.webp"><source src="assets/video/qualamantis-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/qualamantis-phone-poster.webp" width="360" height="780" alt=""></noscript>
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-qualamantis" data-fx-split data-fx-manual>Qualamantis</h3>
-                <p class="scene__text"><b>Le problème&nbsp;:</b> une expertise technique difficile à comprendre pour un public non spécialiste, à décliner en trois langues.</p>
-                <p class="scene__text"><b>La réponse&nbsp;:</b> une hiérarchie éditoriale qui pose l'enjeu avant le jargon, sans dupliquer la mise en page par langue.</p>
-                <dl class="scene__spec">
-                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#FAF6EF" title="#FAF6EF"></i><i style="--c:#221E18" title="#221E18"></i><i style="--c:#BC4827" title="#BC4827"></i><i style="--c:#4E6B3C" title="#4E6B3C"></i></span><span class="scene__hex">#FAF6EF #221E18 #BC4827 #4E6B3C</span></dd></div>
-                  <div><dt>Typographies</dt><dd>Newsreader · Hanken Grotesk</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-qualamantis.html">Voir l’étude de cas</a>
-                  <a class="link link--plain" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com</a>
-                </div>
-              </div>
-            </div></div>
-          </article>
-          <article class="scene scene--bde" data-scene style="--bg:#080808;--fg:#F4F2EE;--ac:#C8102E;--mu:#A8A6A2" aria-labelledby="scene-bde">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">BDE <span class="name-outline">Dauphine</span></span>
-                <a class="scene__shots" href="project-bde.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/bde-desk-poster.webp" width="1280" height="800" alt=""></noscript>
-                  </div>
-                  <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/bde-phone-poster.webp"><source src="assets/video/bde-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/bde-phone-poster.webp" width="360" height="780" alt=""></noscript>
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-bde" data-fx-split data-fx-manual>BDE <span class="name-outline">Dauphine</span></h3>
-                <p class="scene__text"><b>Le problème&nbsp;:</b> une billetterie et un programme d'événements que personne ne retrouvait sur l'ancien site.</p>
-                <p class="scene__text"><b>La réponse&nbsp;:</b> un accès direct à la billetterie dès l'écran d'accueil, pensé d'abord pour le téléphone.</p>
-                <dl class="scene__spec">
-                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#080808" title="#080808"></i><i style="--c:#F4F2EE" title="#F4F2EE"></i><i style="--c:#C8102E" title="#C8102E"></i></span><span class="scene__hex">#080808 #F4F2EE #C8102E</span></dd></div>
-                  <div><dt>Typographies</dt><dd>Unbounded · DM Sans</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-bde.html">Voir l’étude de cas</a>
-                  <a class="link link--plain" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr</a>
-                </div>
-              </div>
-            </div></div>
-          </article>
-          <article class="scene scene--wecalc" data-scene style="--bg:#1E3A5F;--fg:#F5F5F2;--ac:#C8B27D;--mu:#B9C3D0" aria-labelledby="scene-wecalc">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">wecalc.fr</span>
-                <a class="scene__shots" href="project-wecalc.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/wecalc-desk-poster.webp" width="1280" height="800" alt=""></noscript>
-                  </div>
-                  <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/wecalc-phone-poster.webp"><source src="assets/video/wecalc-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/wecalc-phone-poster.webp" width="360" height="780" alt=""></noscript>
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-wecalc" data-fx-split data-fx-manual>wecalc.fr</h3>
-                <p class="scene__text"><b>Le problème&nbsp;:</b> des calculateurs disponibles en ligne, mais saturés de publicité et de traceurs.</p>
-                <p class="scene__text"><b>La réponse&nbsp;:</b> un résultat qui apparaît au fil de la frappe, sans compte à créer et sans script tiers.</p>
-                <dl class="scene__spec">
-                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#1E3A5F" title="#1E3A5F"></i><i style="--c:#C8B27D" title="#C8B27D"></i><i style="--c:#F5F5F2" title="#F5F5F2"></i><i style="--c:#111827" title="#111827"></i></span><span class="scene__hex">#1E3A5F #C8B27D #F5F5F2 #111827</span></dd></div>
-                  <div><dt>Typographies</dt><dd>Plus Jakarta Sans</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-wecalc.html">Voir l’étude de cas</a>
-                  <a class="link link--plain" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr</a>
-                </div>
-              </div>
-            </div></div>
-          </article>
-          <article class="scene scene--jeanne-randu" data-scene style="--bg:#3E493B;--fg:#F5F1E9;--ac:#C9BDA9;--mu:#C7C9BC" aria-labelledby="scene-jeanne-randu">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">Jeanne Randu</span>
-                <a class="scene__shots" href="project-jeanne-randu.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/jeanne-randu-desk-poster.webp" width="1280" height="800" alt=""></noscript>
-                  </div>
-                  <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/jeanne-randu-phone-poster.webp"><source src="assets/video/jeanne-randu-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/jeanne-randu-phone-poster.webp" width="360" height="780" alt=""></noscript>
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-jeanne-randu" data-fx-split data-fx-manual>Jeanne Randu</h3>
-                <p class="scene__text"><b>Le problème&nbsp;:</b> un travail visuel qu'une grille de vignettes toutes identiques aurait aplati.</p>
-                <p class="scene__text"><b>La réponse&nbsp;:</b> chaque projet a sa propre composition dessinée à la main, et Jeanne change ses textes et ses photos elle-même, sans ouvrir le HTML.</p>
-                <dl class="scene__spec">
-                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#ECE7DD" title="#ECE7DD"></i><i style="--c:#171813" title="#171813"></i><i style="--c:#3E493B" title="#3E493B"></i><i style="--c:#4B2925" title="#4B2925"></i><i style="--c:#C9BDA9" title="#C9BDA9"></i></span><span class="scene__hex">#ECE7DD #171813 #3E493B #4B2925 #C9BDA9</span></dd></div>
-                  <div><dt>Typographies</dt><dd>Instrument Serif · Instrument Sans</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-jeanne-randu.html">Voir l’étude de cas</a>
-                  <a class="link link--plain" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr</a>
-                </div>
-              </div>
-            </div></div>
-          </article>
-          <article class="scene scene--cave-antoine" data-scene style="--bg:#6F272F;--fg:#FFFAF0;--ac:#E4C780;--mu:#E3CFC6" aria-labelledby="scene-cave-antoine">
-            <div class="scene__outer"><div class="scene__inner">
-              <div class="scene__bg">
-                <span class="scene__ghost" aria-hidden="true">La Cave d’Antoine</span>
-                <a class="scene__shots" href="project-cave-antoine.html" tabindex="-1" aria-hidden="true">
-                  <div class="scene__desk">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-desk.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/cave-antoine-desk-poster.webp" width="1280" height="800" alt=""></noscript>
-                  </div>
-                  <div class="scene__phone">
-                    <video class="scene__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/cave-antoine-phone-poster.webp"><source src="assets/video/cave-antoine-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-phone.mp4" type="video/mp4"></video><noscript><img class="scene__video" src="assets/video/cave-antoine-phone-poster.webp" width="360" height="780" alt=""></noscript>
-                  </div>
-                </a>
-              </div>
-              <div class="scene__copy">
-                <h3 class="scene__name" id="scene-cave-antoine" data-fx-split data-fx-manual>La Cave d’Antoine</h3>
-                <p class="scene__text"><b>Le problème&nbsp;:</b> un établissement visible seulement via Google et Instagram, sans adresse à lui.</p>
-                <p class="scene__text"><b>La réponse&nbsp;:</b> quatre pages en italien, écrites dans le registre du lieu, et une carte Google qui ne se charge qu'au clic.</p>
-                <dl class="scene__spec">
-                  <div><dt>Couleurs</dt><dd><span class="scene__swatches" aria-hidden="true"><i style="--c:#F6F3EA" title="#F6F3EA"></i><i style="--c:#302A25" title="#302A25"></i><i style="--c:#6F272F" title="#6F272F"></i><i style="--c:#E4C780" title="#E4C780"></i><i style="--c:#515B46" title="#515B46"></i></span><span class="scene__hex">#F6F3EA #302A25 #6F272F #E4C780 #515B46</span></dd></div>
-                  <div><dt>Typographies</dt><dd>Cormorant Garamond · DM Sans</dd></div>
-                </dl>
-                <div class="scene__links">
-                  <a class="link" href="project-cave-antoine.html">Voir l’étude de cas</a>
-                  <a class="link link--plain" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev</a>
-                </div>
-              </div>
-            </div></div>
-          </article>
-        <ol class="showcase__rail" aria-label="Projets"><li style="--ac:#BC4827"><a href="#scene-qualamantis">Entreprise de conseil</a></li><li style="--ac:#C8102E"><a href="#scene-bde">Plateforme événementielle</a></li><li style="--ac:#C8B27D"><a href="#scene-wecalc">Outil en ligne</a></li><li style="--ac:#C9BDA9"><a href="#scene-jeanne-randu">Portfolio</a></li><li style="--ac:#E4C780"><a href="#scene-cave-antoine">Restaurant &amp; bar</a></li></ol>
-        <!-- /projets:vitrine --></div>
+  <!-- Showcase: the same blocks as the Work page (generated, see _outils/MODE-EMPLOI.md),
+       scrolled naturally; the sticky bar carries the generic categories. -->
+  <section class="showcase" data-work aria-labelledby="showcase-title"><!-- projets:vitrine -->
+    <nav class="work-bar work-bar--home" aria-label="Projets" data-work-bar>
+      <div class="work-bar__in wrap">
+      <a class="work-bar__item" href="#scene-qualamantis" style="--ac:#BC4827"><span>Entreprise de conseil</span></a>
+      <a class="work-bar__item" href="#scene-bde" style="--ac:#C8102E"><span>Plateforme événementielle</span></a>
+      <a class="work-bar__item" href="#scene-wecalc" style="--ac:#C8B27D"><span>Outil en ligne</span></a>
+      <a class="work-bar__item" href="#scene-jeanne-randu" style="--ac:#C9BDA9"><span>Portfolio</span></a>
+      <a class="work-bar__item" href="#scene-cave-antoine" style="--ac:#E4C780"><span>Restaurant &amp; bar</span></a>
+      </div>
+    </nav>
+    <div class="constellations">
+  <article class="cst scene--qualamantis" id="scene-qualamantis" style="--bg:#FAF6EF;--fg:#221E18;--ac:#BC4827;--mu:#564F44" aria-labelledby="cst-qualamantis">
+    <div class="cst__in wrap">
+      <header class="cst__head">
+        <h3 class="cst__name" id="cst-qualamantis">Qualamantis</h3>
+        <p class="cst__desc">Conseil, expertise, trois langues.</p>
+        <p class="cst__links"><a class="link" href="project-qualamantis.html">Voir l’étude de cas</a><a class="link link--plain" href="https://qualamantis.com" target="_blank" rel="noopener">qualamantis.com</a></p>
+      </header>
+      <div class="cst__stage">
+        <a class="cst__main" href="project-qualamantis.html" aria-label="La page d’accueil de Qualamantis, en ligne — ouvrir l’étude de cas">
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/qualamantis-desk-poster.webp" style="view-transition-name:shot-qualamantis"><source src="assets/video/qualamantis-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="assets/video/qualamantis-desk-poster.webp" width="1280" height="800" alt=""></noscript>
+        </a>
+        <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="assets/work/qualamantis-d1-900.avif 900w, assets/work/qualamantis-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="assets/work/qualamantis-d1-900.webp 900w, assets/work/qualamantis-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="assets/work/qualamantis-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Le programme</figcaption></figure>
+        <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="assets/work/qualamantis-d2-900.avif 900w, assets/work/qualamantis-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="assets/work/qualamantis-d2-900.webp 900w, assets/work/qualamantis-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="assets/work/qualamantis-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Les services</figcaption></figure>
+        <figure class="cst__float cst__float--phone"><video class="cst__video cst__video--phone" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/qualamantis-phone-poster.webp"><source src="assets/video/qualamantis-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/qualamantis-phone.mp4" type="video/mp4"></video><noscript><img class="cst__video cst__video--phone" src="assets/video/qualamantis-phone-poster.webp" width="360" height="780" alt=""></noscript><figcaption>À propos, sur téléphone</figcaption></figure>
+      </div>
     </div>
-  </section>
+  </article>
+  <article class="cst scene--bde cst--flip" id="scene-bde" style="--bg:#080808;--fg:#F4F2EE;--ac:#C8102E;--mu:#A8A6A2;--pv:#FAF6EF" aria-labelledby="cst-bde">
+    <div class="cst__in wrap">
+      <header class="cst__head">
+        <img class="cst__logo" src="assets/logos/bde.webp" width="160" height="160" alt="">
+        <h3 class="cst__name" id="cst-bde">BDE <span class="name-outline">Dauphine</span></h3>
+        <p class="cst__desc">Vie associative, événements, billetterie.</p>
+        <p class="cst__links"><a class="link" href="project-bde.html">Voir l’étude de cas</a><a class="link link--plain" href="https://bdedauphine.fr" target="_blank" rel="noopener">bdedauphine.fr</a></p>
+      </header>
+      <div class="cst__stage">
+        <a class="cst__main" href="project-bde.html" aria-label="La page d’accueil de BDE Dauphine, en ligne — ouvrir l’étude de cas">
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/bde-desk-poster.webp" style="view-transition-name:shot-bde"><source src="assets/video/bde-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="assets/video/bde-desk-poster.webp" width="1280" height="800" alt=""></noscript>
+        </a>
+        <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="assets/work/bde-d1-900.avif 900w, assets/work/bde-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="assets/work/bde-d1-900.webp 900w, assets/work/bde-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="assets/work/bde-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Les événements</figcaption></figure>
+        <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="assets/work/bde-d2-900.avif 900w, assets/work/bde-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="assets/work/bde-d2-900.webp 900w, assets/work/bde-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="assets/work/bde-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Le label Les Nuits Dauphine</figcaption></figure>
+        <figure class="cst__float cst__float--phone"><video class="cst__video cst__video--phone" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/bde-phone-poster.webp"><source src="assets/video/bde-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/bde-phone.mp4" type="video/mp4"></video><noscript><img class="cst__video cst__video--phone" src="assets/video/bde-phone-poster.webp" width="360" height="780" alt=""></noscript><figcaption>How We Dau, sur téléphone</figcaption></figure>
+      </div>
+    </div>
+  </article>
+  <article class="cst scene--wecalc" id="scene-wecalc" style="--bg:#1E3A5F;--fg:#F5F5F2;--ac:#C8B27D;--mu:#B9C3D0;--pv:#080808" aria-labelledby="cst-wecalc">
+    <div class="cst__in wrap">
+      <header class="cst__head">
+        <h3 class="cst__name" id="cst-wecalc">wecalc.fr</h3>
+        <p class="cst__desc">Calculateurs, simulateurs, outils métier.</p>
+        <p class="cst__links"><a class="link" href="project-wecalc.html">Voir l’étude de cas</a><a class="link link--plain" href="https://www.wecalc.fr" target="_blank" rel="noopener">wecalc.fr</a></p>
+      </header>
+      <div class="cst__stage">
+        <a class="cst__main" href="project-wecalc.html" aria-label="La page d’accueil de wecalc.fr, en ligne — ouvrir l’étude de cas">
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/wecalc-desk-poster.webp" style="view-transition-name:shot-wecalc"><source src="assets/video/wecalc-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="assets/video/wecalc-desk-poster.webp" width="1280" height="800" alt=""></noscript>
+        </a>
+        <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="assets/work/wecalc-d1-900.avif 900w, assets/work/wecalc-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="assets/work/wecalc-d1-900.webp 900w, assets/work/wecalc-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="assets/work/wecalc-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Calculateur de TVA</figcaption></figure>
+        <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="assets/work/wecalc-d2-900.avif 900w, assets/work/wecalc-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="assets/work/wecalc-d2-900.webp 900w, assets/work/wecalc-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="assets/work/wecalc-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Coût salarié</figcaption></figure>
+        <figure class="cst__float cst__float--phone"><video class="cst__video cst__video--phone" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/wecalc-phone-poster.webp"><source src="assets/video/wecalc-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/wecalc-phone.mp4" type="video/mp4"></video><noscript><img class="cst__video cst__video--phone" src="assets/video/wecalc-phone-poster.webp" width="360" height="780" alt=""></noscript><figcaption>Calculateur d’IMC, sur téléphone</figcaption></figure>
+      </div>
+    </div>
+  </article>
+  <article class="cst scene--jeanne-randu cst--flip" id="scene-jeanne-randu" style="--bg:#3E493B;--fg:#F5F1E9;--ac:#C9BDA9;--mu:#C7C9BC;--pv:#1E3A5F" aria-labelledby="cst-jeanne-randu">
+    <div class="cst__in wrap">
+      <header class="cst__head">
+        <h3 class="cst__name" id="cst-jeanne-randu">Jeanne Randu</h3>
+        <p class="cst__desc">Portfolio, galerie, mise à jour autonome.</p>
+        <p class="cst__links"><a class="link" href="project-jeanne-randu.html">Voir l’étude de cas</a><a class="link link--plain" href="https://jeanne-randu.fr" target="_blank" rel="noopener">jeanne-randu.fr</a></p>
+      </header>
+      <div class="cst__stage">
+        <a class="cst__main" href="project-jeanne-randu.html" aria-label="La page d’accueil de Jeanne Randu, en ligne — ouvrir l’étude de cas">
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/jeanne-randu-desk-poster.webp" style="view-transition-name:shot-jeanne-randu"><source src="assets/video/jeanne-randu-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="assets/video/jeanne-randu-desk-poster.webp" width="1280" height="800" alt=""></noscript>
+        </a>
+        <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="assets/work/jeanne-randu-d1-900.avif 900w, assets/work/jeanne-randu-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="assets/work/jeanne-randu-d1-900.webp 900w, assets/work/jeanne-randu-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="assets/work/jeanne-randu-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Projet — La Cave</figcaption></figure>
+        <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="assets/work/jeanne-randu-d2-900.avif 900w, assets/work/jeanne-randu-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="assets/work/jeanne-randu-d2-900.webp 900w, assets/work/jeanne-randu-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="assets/work/jeanne-randu-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>À propos</figcaption></figure>
+        <figure class="cst__float cst__float--phone"><video class="cst__video cst__video--phone" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/jeanne-randu-phone-poster.webp"><source src="assets/video/jeanne-randu-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/jeanne-randu-phone.mp4" type="video/mp4"></video><noscript><img class="cst__video cst__video--phone" src="assets/video/jeanne-randu-phone-poster.webp" width="360" height="780" alt=""></noscript><figcaption>Projet — La Véranda, sur téléphone</figcaption></figure>
+      </div>
+    </div>
+  </article>
+  <article class="cst scene--cave-antoine" id="scene-cave-antoine" style="--bg:#6F272F;--fg:#FFFAF0;--ac:#E4C780;--mu:#E3CFC6;--pv:#3E493B" aria-labelledby="cst-cave-antoine">
+    <div class="cst__in wrap">
+      <header class="cst__head">
+        <h3 class="cst__name" id="cst-cave-antoine">La Cave d’Antoine</h3>
+        <p class="cst__desc">Restaurant, bar, café. Projet de démonstration.</p>
+        <p class="cst__links"><a class="link" href="project-cave-antoine.html">Voir l’étude de cas</a><a class="link link--plain" href="https://caveantoine.pages.dev" target="_blank" rel="noopener">caveantoine.pages.dev</a></p>
+      </header>
+      <div class="cst__stage">
+        <a class="cst__main" href="project-cave-antoine.html" aria-label="La page d’accueil de La Cave d’Antoine, en ligne — ouvrir l’étude de cas">
+          <video class="cst__video" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="1280" height="800" data-poster="assets/video/cave-antoine-desk-poster.webp" style="view-transition-name:shot-cave-antoine"><source src="assets/video/cave-antoine-desk.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-desk.mp4" type="video/mp4"></video><noscript><img class="cst__video" src="assets/video/cave-antoine-desk-poster.webp" width="1280" height="800" alt=""></noscript>
+        </a>
+        <figure class="cst__float cst__float--a"><picture><source type="image/avif" srcset="assets/work/cave-antoine-d1-900.avif 900w, assets/work/cave-antoine-d1-1440.avif 1440w" sizes="(min-width:1000px) 28vw, 44vw"><source type="image/webp" srcset="assets/work/cave-antoine-d1-900.webp 900w, assets/work/cave-antoine-d1-1440.webp 1440w" sizes="(min-width:1000px) 28vw, 44vw"><img src="assets/work/cave-antoine-d1-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>La Cave</figcaption></figure>
+        <figure class="cst__float cst__float--b"><picture><source type="image/avif" srcset="assets/work/cave-antoine-d2-900.avif 900w, assets/work/cave-antoine-d2-1440.avif 1440w" sizes="(min-width:1000px) 26vw, 44vw"><source type="image/webp" srcset="assets/work/cave-antoine-d2-900.webp 900w, assets/work/cave-antoine-d2-1440.webp 1440w" sizes="(min-width:1000px) 26vw, 44vw"><img src="assets/work/cave-antoine-d2-900.webp" width="900" height="562" alt="" loading="lazy" decoding="async"></picture><figcaption>Passa a trovarci — le contact</figcaption></figure>
+        <figure class="cst__float cst__float--phone"><video class="cst__video cst__video--phone" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" width="360" height="780" data-poster="assets/video/cave-antoine-phone-poster.webp"><source src="assets/video/cave-antoine-phone.webm" type="video/webm; codecs=&quot;av01.0.05M.08&quot;"><source src="assets/video/cave-antoine-phone.mp4" type="video/mp4"></video><noscript><img class="cst__video cst__video--phone" src="assets/video/cave-antoine-phone-poster.webp" width="360" height="780" alt=""></noscript><figcaption>La Cave, sur téléphone</figcaption></figure>
+      </div>
+    </div>
+  </article>
+  </div>
+  <!-- /projets:vitrine --></section>
 
   <section class="section section--tight showcase-after">
     <div class="wrap">
@@ -656,6 +615,7 @@
     <!-- /projets:pied --></div>
     <div>
       <p class="foot__langs">FR · EN · IT</p>
+      <a class="foot__mono" href="https://www.linkedin.com/company/telaventis/" target="_blank" rel="noopener me">LinkedIn</a>
       <a class="link" style="color:rgba(237,233,226,.7);border-color:rgba(237,233,226,.2);" href="mentions-legales.html">Mentions légales &amp; crédits</a>
     </div>
   </div>
@@ -665,10 +625,10 @@
   </div>
 </footer>
 
-<script src="assets/telaventis.js?v=38" defer fetchpriority="high"></script>
-<script src="assets/telaventis-fx.js?v=64" defer fetchpriority="high"></script>
+<script src="assets/telaventis.js?v=71" defer fetchpriority="high"></script>
+<script src="assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
 <!-- MOKA experiment — remove this line together with the CSS <link> and
      the #direction-lab section to deactivate it. -->
-<script src="assets/moka-lab.js?v=20" defer fetchpriority="low"></script>
+<script src="assets/moka-lab.js?v=53" defer fetchpriority="low"></script>
 </body>
 </html>

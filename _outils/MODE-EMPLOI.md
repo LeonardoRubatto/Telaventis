@@ -12,7 +12,7 @@ servi par le site (`_redirects` le renvoie en 404).
 | Quoi | Où | Comment ça change |
 |---|---|---|
 | Textes, mises en page, études de cas | les pages `.html` (FR à la racine, `en/`, `it/`) | à la main, **dans les trois langues** |
-| Les projets clients sur l'accueil (vitrine), la page Travaux, les liens du pied de page, la police du nom de chaque client | entre des marqueurs `<!-- projets:… -->` et `/* projets:debut */ … /* projets:fin */` | **générés** depuis `_outils/projets.json` par `python _outils/projets.py generer` — ne jamais les éditer à la main |
+| Les projets clients sur l'accueil (mêmes blocs que la page Travaux), la page Travaux, les liens du pied de page, la police du nom de chaque client | entre des marqueurs `<!-- projets:… -->` et `/* projets:debut */ … /* projets:fin */` | **générés** depuis `_outils/projets.json` par `python _outils/projets.py generer` — ne jamais les éditer à la main |
 | Logo, favicons, icônes d'application, images de partage (Google, réseaux) | `assets/share/`, `assets/favicon*`, `assets/icons/`, `assets/apple-touch-icon.png`, `assets/mask-icon.svg` | **générés** depuis une image source par `python _outils/identite.py <image>` |
 | Vidéos et captures des sites clients | `assets/video/`, `assets/work/`, `assets/shots/` | **générées** par `node _outils/capturer.js <cle>` |
 
@@ -82,7 +82,7 @@ Règle simple : si un fichier est listé comme généré, on change la **source*
    python _outils/projets.py verifier     # refuse s'il manque un média ou un texte
    ```
    puis ouvrir le site en local (`python -m http.server`) : la vitrine de
-   l'accueil (une scène par projet), la page Travaux, l'étude de cas, à
+   l'accueil (un bloc par projet), la page Travaux, l'étude de cas, à
    1440 px et 390 px. **Relire les textes d'introduction qui citent un nombre
    de projets** (« cinq projets… » sur la page Travaux, dans les trois langues).
 
@@ -134,23 +134,21 @@ la Search Console permet de demander une nouvelle exploration.
 0 menu mobile & barre qui se cache · 1 apparition des blocs · 2 encre au
 survol · 2c titre de l'accueil « météo » (graisse/largeur lettre par lettre) ·
 3 bandeau TELAVENTIS coupé en diagonale · 5 chiffres mesurés en direct ·
-6 vitrine des projets (une scène plein écran par client, passage
-« Continuous Sections » ; un geste — molette, pavé tactile, swipe, touche —
-= une scène : l'élan est retenu pendant le passage ; la première touche/clic
-n'importe où sur la page essaie de lire puis met en pause la vidéo de la
-première scène, pour que Safari iOS autorise ensuite les lectures
-automatiques qu'un geste ne déclenche pas directement — Mode Faible
-consommation ou réglage Auto-Play strict, sinon la vidéo reste bloquée sur
-sa première image sans que rien ne le dise ; la retenue elle-même — le
-passage de `.showcase__sticky` en `position:fixed` le temps du geste,
-nécessaire pour que la scène reste à l'écran pendant que `overflow:hidden`
-casse son `position:sticky` — a déjà coupé une vidéo en cours sur Safari
-iOS (repéré : la vidéo jouait au premier passage, plus après être
-remontée puis redescendue sur la même scène, exactement le chemin qui
-redéclenche une retenue) ; `release()` relance donc `syncVideos()` à
-chaque fin de retenue, que celle-ci ait coupé quelque chose ou non) ·
-7 page Travaux (vidéos en vue, index qui suit) ·
+0c le repère de défilement du hero s'efface au premier défilement (`html.is-scrolled`) ·
+7 page Travaux **et vitrine de l'accueil** (vidéos en vue, barre qui suit ; sur
+l'accueil la barre porte les catégories génériques et pointe `#scene-<cle>`) ·
 4 formulaire de contact.
+
+**La vitrine de l'accueil (17 novembre)** n'est plus une scène épinglée : ce sont
+les mêmes blocs que la page Travaux (`.cst`, générés par `projets.py` entre
+`<!-- projets:vitrine -->`), défilement naturel, aucune retenue du geste, aucune
+minuterie. Avant, une scène plein écran par client, passage « Continuous Sections »,
+un geste = une scène : trop de coups de molette. Récupérable dans l'historique du
+dépôt (commit d'avant le 17 novembre). La barre (`.work-bar--home`, sticky) donne
+« Entreprise de conseil · Plateforme événementielle · Outil en ligne · Portfolio ·
+Restaurant & bar » ; les liens publiés `https://telaventis.fr/#scene-qualamantis`,
+`#scene-bde`, `#scene-wecalc`, `#scene-jeanne-randu`, `#scene-cave-antoine` sont les
+`id` des blocs.
 
 `assets/telaventis-fx.js` — 1 titres révélés lettre par lettre · 2 vagues des
 tarifs · 3 bulles/fleurs · 3b chorégraphie de la section méduses · 3c champ de
@@ -158,7 +156,12 @@ bulles unique (les mots se transforment d'une phrase à l'autre) · 3d la fente
 qui ouvre sur l'exemple Moka (déclenchée, jamais tirée par le scroll), puis
 l'arrivée du titre Moka ; **pendant ces ~2,5 s le défilement est retenu**
 (« pas de speedrun », demandé par Leonardo) — sauf lors d'un saut par lien
-interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio.
+interne ; un filet de sécurité libère tout après 4 s · 4 courbe du Studio ·
+5 **la crème du hero qui coule sur la section sombre** (`fx-melt` : canvas 2D posé sur le
+haut de `#digital-era`, langues de longueurs différentes + filet de lumière + deux franges
+ciel/bleu-vert ; dérive seule, poussée par la vitesse du défilement, plus profonde à mesure
+que la section monte, puis effacée quand la section est épinglée ; ne dessine que s'il est à l'écran ; mouvement réduit : dessiné une
+fois).
 
 **3e — la section avance toute seule** (défilement automatique, pour qui ne sait
 pas qu'il faut défiler) : dès que la section est à 100 % de l'écran (épinglée),
@@ -183,33 +186,9 @@ douceur à 100 % (`ASSIST_TOP`). État lisible dans `data-auto` sur la section
 (idle / count / move / off). Mouvement réduit : rien, la section n'est même pas
 épinglée. Le « Faites défiler » reste masqué (`display:none`), comme avant.
 Les écouteurs molette/toucher qui peuvent annuler un défilement (non passifs) ne
-sont posés que **pendant une retenue** (porte, vitrine, ouverture Moka) : posés
+sont posés que **pendant une retenue** (porte, ouverture Moka) : posés
 en permanence, ils obligent le navigateur à attendre le script avant chaque
 cran de défilement, n'importe où sur la page.
-
-**La barre des projets (vitrine de l'accueil)** : en haut de l'écran épinglé, un
-lien par projet (`.showcase__rail`, générée par `projets.py` depuis les
-catégories de `projets.json`, libellé de la barre dans le dictionnaire `L`). Elle
-flotte au-dessus des scènes sans jamais entrer dans leur mise en page : leur
-taille ne change pas. Un clic va droit au projet (une seule transition jouée,
-le défilement amené au point de repos de ce projet, `goTo()`). La barre du projet
-courant est un minuteur : elle se remplit en 7 s (`--dwell`, une animation CSS
-`rail-fill` : la feuille de style est l'horloge), puis la vitrine passe au
-projet suivant (événement `animationend`). Le minuteur ne tourne que lorsque la
-vitrine est vraiment regardée (épinglée à l'écran, onglet visible, aucune
-transition en cours, visiteur immobile : `.is-timing`) et attend tant que le
-pointeur est sur le texte ou que le clavier y est (`.is-reading`). Dès que le
-visiteur défile (molette, doigt, touche, barre de défilement) ou presse Échap, il
-s'arrête pour la visite (`data-timer` disparaît, les barres indiquent seulement
-où l'on est) ; cliquer sur la barre ne l'arrête pas. Pas de boucle : sur le
-dernier projet la barre se remplit et reste pleine. L'en-tête du site ne redescend jamais de lui-même tant qu'on est dans la
-vitrine (`inShowcase()` dans le §0b de `telaventis.js`) : il revient quand le
-visiteur remonte au-dessus du début de la vitrine, et seulement alors. Le
-contenu des scènes est descendu d'une bande (`padding-top` du `.scene__inner`,
-puis de `.scene__copy` sur téléphone) pour laisser sa place à la barre sans
-changer la taille des scènes. Sans JavaScript la barre
-n'existe pas (scènes empilées). Rejouable avec `node _outils/vitrine.js <url>
---scenario=timer|click|user|shots`.
 
 Point de vigilance sur la section 3b : la **lisibilité des mots en bulles**. Un mot en
 bulles est une texture éparse, pas un aplat : il perd contre un fond qui fait le même genre
@@ -226,8 +205,7 @@ rythme (~2,6 s)** dès qu'on commence à défiler, défilement retenu, puis
 rendu une fois le geste arrêté ; à l'envers de même en remontant.
 
 Les hauteurs de défilement des sections épinglées sont en CSS
-(`.era__track`, `.moka-story__track`, `.showcase__track` — 110svh par scène,
-140svh sur téléphone) et doivent rester
+(`.era__track`, `.moka-story__track` : 740svh et 628svh sur téléphone pour l'ère) et doivent rester
 cohérentes avec les constantes du JS qui les commentent (ex. `TAIL_VH`).
 
 Chaque effet respecte la même règle : sans JavaScript, avec « réduire les
@@ -260,7 +238,8 @@ python _outils/projets.py verifier
 
 Après une modification de `assets/*.css` ou `assets/*.js`, monter leur
 numéro `?v=` dans **toutes** les pages (même numéro partout), sinon les
-visiteurs gardent l'ancienne version en cache.
+visiteurs gardent l'ancienne version en cache : `python _outils/monter-v.py`
+(monte d'un cran les six fichiers, refuse si les pages ne sont pas d'accord).
 
 Publication : ce dossier est une copie de travail ; la production est le dépôt
 GitHub relié à Cloudflare Pages (un push sur `main` publie). La
@@ -326,7 +305,6 @@ python _outils/lent.py 3g            # serveur lent : 700 kbit/s, 400 ms (ou « 
 cd _outils && npm install            # une fois
 node mesurer.js http://127.0.0.1:8762/index.html            # premier affichage à froid ; --mobile pour un téléphone
 node parcours.js http://127.0.0.1:8742/index.html --scenario=auto   # joue la section : auto | user | user-late | assist | inertia | fling
-node vitrine.js http://127.0.0.1:8742/index.html --scenario=timer   # joue la vitrine : timer | click | user | shots
 HEADED=1 node fluidite.js http://127.0.0.1:8742/index.html          # images perdues, avec le script responsable
 ```
 
@@ -355,7 +333,7 @@ le mesurer ainsi.
   sous les mots en bulles.
 - **Phrases** : Source Serif 4 en graisse 330 (350 pour la grande), plus grand ; 400/450 sur
   téléphone ; pas de point final ; plus de texte sous la dernière.
-- **Barre des projets (vitrine)** : en haut de l'écran épinglé, un lien par projet
+- **(remplacé le 17 novembre, voir §9) Barre des projets (vitrine)** : en haut de l'écran épinglé, un lien par projet
   (`projets.py` la génère) ; le projet courant est un minuteur de 7 s (animation CSS
   `rail-fill`, `animationend`), qui laisse finir la boucle de la vidéo ; en pause
   pendant la lecture (pointeur sur le texte), arrêté pour la visite au premier défilement
@@ -381,3 +359,45 @@ haut, le dégradé et les canvas (`era__aurora`, `era__ripple`, `era__morph`) fo
 réalloués), et un vol de bulles en cours suit les mots s'ils bougent (`retarget` dans
 `telaventis-fx.js`). Test : `node _outils/bulles-barre.js <url> --barre --rest` (part des bulles
 hors des mots, image par image) ; l'ancienne version donne ~60 % pendant ~170 ms, la nouvelle 0 %.
+
+---
+
+## 9. Réglages du 17 novembre (Leonardo)
+
+- **Vitrine de l'accueil = les blocs de la page Travaux**, défilement naturel (voir §4). Plus de
+  scène épinglée, plus de retenue, plus de minuterie. La barre qui suit le défilement porte les
+  catégories génériques (pas les noms des clients).
+- **Transition hero → section sombre liquide** (§4, fx-melt) : plus de ligne droite sous le mot
+  TELAVENTIS. Rien n'est ajouté au premier écran (mesuré : premier affichage identique, +4 Ko).
+- **Repère de défilement du hero** : une goutte d'encre qui se détache de son fil, s'étire en
+  tombant et ouvre un anneau (SVG + filtre « goo », opacité/transformation seulement). Elle part
+  2,2 s après le chargement, disparaît au premier défilement, ne bouge pas en mouvement réduit.
+  Un clic mène à `#digital-era`.
+- **Accroc après l'ouverture de l'histoire Moka** : l'arrivée du titre (« Même activité. Autre
+  perception. ») interpolait les axes de la police lettre par lettre (le défaut déjà corrigé pour
+  le titre de l'accueil) ; elle n'anime plus que l'opacité et la transformation. Les images du champ
+  « du bruit au signal » sont décodées d'avance (`createImageBitmap`) au lieu de l'être à leur
+  première image. Mesure : `node _outils/moka-saccade.js <url> --cpu=4` (images perdues, rappels rAF
+  lents, LoAF, instant par instant).
+- **Portrait de Leonardo** : page Studio (trois langues), `assets/team/portrait-lr-*`, découpé selon
+  la diagonale de la marque. Gardé hors des moteurs de recherche : `X-Robots-Tag: noindex` sur
+  `/assets/team/*` (`_headers`) — **robots.txt ne doit pas le bloquer** (noindex exige que le fichier
+  reste lisible, même règle que `assets/art/`), pas de balise `og:image`/`image` structurée, nom de
+  fichier neutre, absent du sitemap.
+- **LinkedIn** : page entreprise dans le pied de page de toutes les pages et sur Contact ; profil de
+  Leonardo sur Studio et Contact ; `sameAs` dans le balisage de l'accueil.
+
+- **Bulles qui montent dans la section des phrases** (`fx-rise`, §6 de `telaventis-fx.js`, CSS `.era__rise`) : 9 bulles sur téléphone, 16 ailleurs, qui quittent le bas de l'écran, ondulent et se dissolvent au-dessus du milieu, derrière les mots. Le mouvement vers le haut dit « la page descend » sans flèche ni étiquette. Transformation et opacité seulement ; coupées quand le visiteur a repris la main (`data-auto="off"`), absentes en mouvement réduit.
+- **La section des phrases répond au clic** (§3f de `telaventis-fx.js`) : un clic ou un toucher sur la phrase passe à la suivante, et après la dernière ouvre la porte ; c'est le même vrai défilement que l'autoplay (`goPhrase` → `clickMove` → `glide`) : seuils, retenue et porte inchangés ; un clic relance le temps de la phrase mais n'arrête pas l'autoplay. Seul élément visible : un grand triangle ouvert (deux traits fins ; Leonardo a refusé les flèches, les marqueurs 01 02 03 et le texte « Cliquez, ou laissez faire »), qui apparaît 1 s après le début du temps de la phrase, respire deux fois, se dissout et revient (`.era__arrow`, `data-auto="count"`) ; cliquable aussi.
+- **Jointure liquide entre les blocs de projets** (accueil et Travaux) : deux bandes masquées par une vague, qui glissent lentement en sens contraires, dans la couleur du bloc précédent (`--pv`, écrite par `projets.py`) ; CSS seul, transformation seulement.
+- **Plus de retenue à l'entrée de l'histoire Moka** : l'ouverture (images qui traversent l'écran, fragments, navigateur) suit maintenant le défilement du visiteur (`ACT_HOLD=false` dans `moka-lab.js`). La porte vers Moka (titre « Même activité. Autre perception. ») garde sa retenue d'environ 2,5 s.
+- **Titre de la vitrine** : « Quelques projets, expliqués clairement. » en grand titre de section, précédé de la note « Exemple fictif » qui conclut l'exemple Moka.
+- **Entrée de Moka plus longue** : l'ouverture dispose de `ACT_EXTRA` = 1 écran de défilement de plus (pistes CSS +100svh : 620 / 580 / 740) ; le reste de l'histoire garde sa longueur (remappage de `p` dans `moka-lab.js`). Un grand coup de molette (1500 px) n'en traverse plus que 3/4.
+- **La transition liquide ne se fond plus** (une couche crème semi-transparente remplissait l'écran de gris) : elle reste pleine et ne remonte qu'à la toute fin (12 % d'écran). Le triangle pulse en continu tant que la section est à l'écran (visible dès qu'elle est épinglée, y compris pendant les déplacements automatiques).
+- **La phrase monte comme des bulles** (remplace les ronds qui montaient) : les mots simples se soulèvent d'un tiers d'em et retombent, chacun avec sa période et son retard (CSS `era-lift`, après 1,4 à 2,6 s) ; les mots-clés, dessinés par le champ de bulles, font pareil (`liftY` dans `telaventis-fx.js`, même forme). Rien n'est synchronisé.
+- **Transition liquide** : revenue à la version qui monte progressivement (pas de retrait, pas de fondu) ; la montée s'étale sur 90 % d'écran. **Triangle** : toujours actif tant que la section est à l'écran, taille et position fluides (`clamp`), jamais masqué par une fenêtre basse. **Moka** : l'ouverture dispose de 1,56 écran de plus (+25 % sur l'ouverture ; pistes 676 / 636 / 796 svh).
+- **Page menu numérique** (trois langues, écrite à la main) : refaite dans l'ordre des questions d'un restaurateur : l'image du QR à côté du titre, ce qu'on obtient (4 cases), comment ça se met en place (4 étapes numérotées sur fond encre, joint diagonal), le prix (rangée « tier » comme la page Tarifs). Classes `qr-*` dans `telaventis.css`.
+- **Page menu numérique, deuxième version** (17-18 novembre) : l'image à côté du titre ; une **démo qui marche** (`[data-qr-demo]`, §8 de `telaventis.js`) : à gauche le tableau que le restaurateur modifierait, à droite le téléphone du client ; changer un prix, décocher un plat (« épuisé »), basculer FR/EN/IT ou de catégorie met le téléphone à jour (sans JS : les deux catégories, en statique) ; « ce que vous obtenez » en grands titres serif entre filets ; « comment ça se met en place » avec le titre qui reste en vue à côté de quatre grandes étapes, sans points ni ornement (marge haute corrigée : `.qr-how.seam`) ; prix en rangée « tier ». Les noms de plats sont dans les trois langues dans le HTML (`data-fr/en/it`).
+- **Entrée de Moka encore +25 %** : `ACT_EXTRA = 2,26` écrans (l'ouverture passe de 2,82 à 3,52 écrans de défilement ; pistes 746 / 706 / 866 svh).
+- **Menu numérique : pas de page d'administration ni de serveur** (décision de Leonardo, 18 novembre). C'est lui qui change la carte (version optionnelle du site ou version chargée par les QR codes) d'après ce que lui disent les restaurateurs. La démo de la page est une illustration, rien n'y est enregistré ; les textes disent « vous nous dites ce qui change, Telaventis met la carte à jour », jamais que le client édite lui-même.
+- **Page contact** (trois langues) : sur les matières du site (crème, encre, une action corail), pas de version sombre ni « une question à la fois » (refusées par Leonardo : « ça doit être intuitif et naturel »). Bandeau de titre compact comme les autres pages intérieures, puis le formulaire avec ses quatre champs visibles (les styles `.form-card` / `.field` d'origine) et, à côté, les coordonnées. Le formulaire (`data-contact`, champs, clés Web3Forms, textes `data-msg-*`) est celui d'origine ; testé avec Web3Forms intercepté, rien n'est envoyé en test.

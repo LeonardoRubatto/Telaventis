@@ -21,7 +21,7 @@ généré, ce qui est écrit à la main, et la méthode pas à pas.
 7. Aucune dépendance chargée depuis un CDN (la CSP de `_headers` l'interdit) ;
    tout effet vit dans `assets/`, avec un état au repos lisible sans JS et avec
    « réduire les animations ».
-8. Après une modification de `assets/*.css|js` : monter leur `?v=` dans toutes
+8. Après une modification de `assets/*.css|js` : monter leur `?v=` (`python _outils/monter-v.py`) dans toutes
    les pages. Vérifier à 1440 px et à 390 px avant de dire que c'est fini.
 9. **Le premier écran se mesure** : toute modification du `<head>`, du titre, du
    mot TELAVENTIS ou de ce qui se charge avant eux se vérifie avec

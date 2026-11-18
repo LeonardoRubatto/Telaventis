@@ -365,6 +365,49 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .hero__lead{animation:hero-up .9s var(--ease) .18s both}
 .hero__aside{animation:hero-up .9s var(--ease) .3s both}
 
+/* ---- the scroll cue ------------------------------------------------------
+   Not an arrow, not a mouse: a drop of ink swells at the end of a thread,
+   lets go, stretches as it falls (the blur-and-threshold filter makes the neck
+   between the two blobs pull like a liquid) and opens a ring where it lands:
+   the same liquid that pours under the wordmark further down. Opacity and
+   transform only, on a 44 x 132 box; it starts once the headline has arrived
+   (2.4 s), leaves when the visitor scrolls, and with "reduce motion" it is a
+   still drop. Clicking it goes to the next section like any anchor. */
+.hero__foot{position:relative}
+.hero__cue{position:absolute;right:0;bottom:calc(-1 * clamp(10px,2svh,22px));display:flex;align-items:flex-end;gap:10px;
+  color:var(--ink-soft);text-decoration:none;opacity:0;animation:cue-in 1s var(--ease) 2.2s forwards;transition:opacity .5s ease}
+.hero__cue-t{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;padding-bottom:6px}
+.hero__cue-svg{display:block;width:44px;height:132px;overflow:visible}
+.cue-src,.cue-drop{fill:var(--ink)}
+.cue-ring{fill:none;stroke:var(--coral);stroke-width:1.2;opacity:0;transform-box:fill-box;transform-origin:center}
+.cue-src,.cue-drop{transform-box:fill-box;transform-origin:center}
+.cue-src{animation:cue-src 4.4s linear 2.2s infinite}
+.cue-drop{animation:cue-drop 4.4s linear 2.2s infinite}
+.cue-ring{animation:cue-ring 4.4s cubic-bezier(.2,.6,.3,1) 2.2s infinite}
+@keyframes cue-in{to{opacity:1}}
+/* 0-14 % the drop swells, 14-60 % it falls (ease-in: gravity), 60 % it lands */
+@keyframes cue-src{0%{transform:scale(1)}14%{transform:scale(1.28)}30%{transform:scale(.82)}46%,100%{transform:scale(1)}}
+@keyframes cue-drop{
+  0%{transform:translateY(0) scale(1);animation-timing-function:ease-in-out}
+  14%{transform:translateY(1px) scale(1.12);animation-timing-function:cubic-bezier(.55,0,.95,.55)}
+  58%{transform:translateY(106px) scale(.78,1.45);opacity:1}
+  60%{transform:translateY(110px) scale(1.5,.4);opacity:0}
+  61%,100%{transform:translateY(0) scale(1);opacity:0}
+}
+@keyframes cue-ring{0%,58%{transform:scale(.3,.3);opacity:0}60%{transform:scale(.5,.5);opacity:.85}92%,100%{transform:scale(3.4,2.4);opacity:0}}
+html.is-scrolled .hero__cue{opacity:0 !important;pointer-events:none}
+@media (max-width:900px){
+  .hero__cue{bottom:calc(-1 * clamp(4px,1svh,12px))}
+  .hero__cue-svg{width:34px;height:102px}
+  .hero__lead{padding-right:56px}
+}
+@media (max-height:640px){.hero__cue{display:none}}
+@media (prefers-reduced-motion: reduce){
+  .hero__cue{animation:none;opacity:1}
+  .cue-src,.cue-drop,.cue-ring{animation:none}
+  .cue-drop{display:none}
+}
+
 /* ---- the headline's weather (telaventis.js §2c) ---------------------------
    Two registered properties holding the font's own axes, per letter; the
    script drives them (gust, pointer) once the arrival is done. */
@@ -683,10 +726,11 @@ br.wt-br{display:none}   /* hard break in the hero title: phones only */
    of its own between the Moka story and this list, centred mono text on a
    panel; it IS the introduction to these projects ("comme les projets
    ci-dessous"), so it now sits here, under the title. */
-.proj-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px clamp(28px,5vw,80px);align-items:end;margin-bottom:clamp(30px,4vw,52px)}
-.proj-head__note{margin:0;font-family:var(--serif);font-size:16px;line-height:1.65;color:var(--ink-soft);max-width:52ch}
+.proj-head{margin-bottom:clamp(30px,4vw,52px)}
+/* the note closes the Moka example (it comes first), then the section's title, big */
+.proj-head__note{margin:0 0 clamp(26px,3.4vw,46px);font-family:var(--serif);font-size:16px;line-height:1.65;color:var(--ink-soft);max-width:60ch}
 .proj-head__note span{font-family:var(--sans);font-weight:700;color:var(--coral-ink)}
-@media (max-width:900px){.proj-head{grid-template-columns:1fr}}
+.proj-head .h2{font-size:clamp(36px,6vw,92px);line-height:.98;letter-spacing:-.045em;max-width:12em}
 .proj__body{min-width:0}
 .proj__meta{display:flex;align-items:center;gap:16px;margin-bottom:16px}
 .proj__title{margin:0;font-size:clamp(24px,2.5vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
@@ -850,6 +894,9 @@ a.proj__shot-wrap{display:block;cursor:pointer}
 .foot__col a:hover{color:var(--cream)}
 .foot__mono{font-family:var(--mono);font-size:13px}
 .foot__langs{margin:0 0 12px;font-family:var(--mono);font-size:11.5px;line-height:1.9;letter-spacing:.06em;color:rgba(237,233,226,.5)}
+/* the LinkedIn link sits in the same column as the langs / legal notice: its own line, not run into them */
+.foot__langs ~ .foot__mono{display:block;margin:0 0 12px;color:rgba(237,233,226,.7);text-decoration:none;border:0}
+.foot__langs ~ .foot__mono:hover{color:var(--cream)}
 
 /* ---- utility -----------------------------------------------------------------*/
 .mt-0{margin-top:0}
@@ -947,203 +994,147 @@ a.proj__shot-wrap{display:block;cursor:pointer}
 }
 
 /* ==========================================================================
-   Showcase — the selected work, one full screen per project
-   Five scenes, each dressed in its client's own identity: that site's real
-   palette (read off the live site's CSS custom properties), its name set in
-   that site's own typeface — Newsreader, Unbounded, Plus Jakarta Sans,
-   Instrument Serif, Cormorant Garamond, all OFL, each subset to the letters
-   of its one name (1.5–14 KB; see fonts/clients/OFL-clients.txt) — plus a
-   specimen line with the swatches and the typefaces.
-   Five scenes that share nothing but their layout: the argument against
-   templates, made by the section's own structure.
-   Motion (telaventis.js §6): the section pins; scroll picks the scene, and
-   each hand-over is the "Animated Continuous Sections" wipe (GreenSock
-   codepen XWzRraJ, after BrianCross PoWapLP) re-derived without GSAP or
-   Observer — the incoming scene's outer mask travels in while its inner
-   layer travels the opposite way, so the scene is uncovered in place
-   rather than pushed; the backdrops drift 15% against the motion; the
-   name's letters rise out of their masks in random order. One gesture
-   (wheel, trackpad, swipe, key) plays one scene: the scroll is held while
-   it hands over (see §6). No JS / reduced motion: the scenes simply stack.
+   Showcase — the selected work, on the home page
+   The same blocks as the Work page (".cst", styled in "Work page —
+   constellations" below, one per project, in that client's colours and name
+   typeface), scrolled naturally: no pinning, no held gesture. A bar follows the
+   scroll and carries the generic CATEGORIES (not the client names, which stay
+   in the blocks): telaventis.js §7 marks the project in view. Generated by
+   _outils/projets.py between <!-- projets:vitrine --> markers.
    ========================================================================== */
-
 .showcase{position:relative;background:var(--ink)}
-.showcase__track,.showcase__sticky{position:relative}
-.scene{
-  --gut:clamp(16px,5vw,80px);
-  /* the wrap's content width; the two columns are fractions of it, so
-     copy and screens can never meet whatever the window */
-  --cw:calc(min(100vw,1320px) - 2 * var(--gut));
-  --nf:var(--sans);--nw:800;--nst:normal;--nstretch:100%;--nls:-.045em;--ntt:none;--nsize:clamp(44px,5.4vw,92px);
-  position:relative;color:var(--fg);overflow:hidden;isolation:isolate;
-}
-/* the colour lives on the INNER layer, not on the scene: that is what makes
-   the hand-over a wipe — the outer mask's edge travels across the screen
-   while everything inside it (ground, screens, copy) holds still */
-.scene__outer,.scene__inner{position:relative;height:100%;overflow:hidden}
-.scene__inner{min-height:100svh;display:flex;align-items:center;background:var(--bg)}
-.scene__bg{position:absolute;inset:0;z-index:0}
-.scene__ghost{position:absolute;left:-.03em;bottom:-.19em;white-space:nowrap;pointer-events:none;
-  font-family:var(--nf);font-weight:var(--nw);font-style:var(--nst);font-stretch:var(--nstretch);text-transform:var(--ntt);
-  font-size:clamp(120px,21vw,380px);line-height:.8;letter-spacing:var(--nls);color:var(--fg);opacity:.055}
-.scene__shots{--rx:0deg;--ry:0deg;position:absolute;z-index:1;right:max(var(--gut),calc((100% - 1320px)/2 + var(--gut)));top:50%;width:calc(var(--cw) * .56);
-  transform:translateY(-50%) perspective(1600px) rotateX(var(--rx)) rotateY(var(--ry));transform-style:preserve-3d;display:block}
-/* posters are applied by script as the showcase nears (data-poster); without it the
+/* posters are applied by script as each block nears (data-poster); without it the
    <noscript> still of the same file takes the video's place */
 html:not(.js) video[data-poster]{display:none}
-.scene__desk img,.scene__desk video{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 50px 90px -40px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.85)}
-.scene__phone{position:absolute;right:-5%;bottom:-13%;width:21%;transform:translateZ(60px) rotate(5deg)}
-.scene__phone img,.scene__phone video{display:block;width:100%;height:auto;border-radius:14px;border:3px solid #fff;box-shadow:0 26px 50px -18px rgba(0,0,0,.6)}
-.scene__copy{position:relative;z-index:2;width:calc(var(--cw) * .38);margin-left:max(var(--gut),calc((100% - 1320px)/2 + var(--gut)))}
-.scene__count{margin:0 0 18px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--mu)}
-.scene__count span{color:var(--ac);font-weight:700}
-.scene__name{margin:0;font-family:var(--nf);font-weight:var(--nw);font-style:var(--nst);font-stretch:var(--nstretch);text-transform:var(--ntt);
-  font-size:var(--nsize);line-height:.95;letter-spacing:var(--nls);color:var(--fg);text-wrap:balance}
-/* italic and wide names overhang their box: give the per-line masks room */
-.scene__name .fx-line{padding-inline:.12em;margin-inline:-.12em}
-.scene__text{margin:18px 0 0;font-family:var(--serif);font-size:16px;line-height:1.6;color:var(--mu);max-width:36em}
-.scene__text + .scene__text{margin-top:8px}
-.scene__text b{font-family:var(--sans);font-size:14.5px;font-weight:650;color:var(--fg)}
-.scene__spec{margin:24px 0 0;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--fg) 16%,transparent);display:grid;gap:10px}
-.scene__spec div{display:grid;grid-template-columns:7.5em 1fr;align-items:center;gap:12px}
-.scene__spec dt{font-size:12.5px;color:var(--mu)}
-.scene__spec dd{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14px;font-weight:600;color:var(--fg)}
-.scene__swatches{display:flex}
-.scene__swatches i{width:20px;height:20px;border-radius:50%;background:var(--c);box-shadow:0 0 0 1.5px var(--bg),0 0 0 2.5px color-mix(in srgb,var(--fg) 22%,transparent);margin-right:-5px}
-.scene__hex{font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:.02em;color:var(--mu)}
-.scene__links{margin-top:24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 24px}
-.scene .link{color:var(--fg);--link-rule:color-mix(in srgb,var(--ac) 70%,transparent)}
-.scene .link:hover{color:var(--ac)}
-.scene .link--plain{color:var(--mu)}
-
-/* each client's name in its own typeface: the rules are generated from
-   _outils/projets.json into the projets:debut … projets:fin block at the end */
-
-/* the project bar: five names at the top of the pinned screen, each a link to
-   its scene; the current one fills in its own accent like a timer and, when it
-   is full, the showcase moves on to the next (telaventis.js §6) */
-.showcase__rail{display:none}
-
-/* ---- live (pinned) ---- */
-/* SEG = 110svh of scroll per scene; each scene rests in the middle of its
-   stretch, so the next one is 55svh away either way (telaventis.js §6: one
-   gesture, one scene). The extra 100svh is the pinned screen itself:
-   pinned stretch = scenes × SEG. */
-.showcase[data-showcase-live] .showcase__track{height:calc(var(--scenes,5) * 110svh + 100svh)}
-.showcase[data-showcase-live] .showcase__sticky{position:sticky;top:0;height:100svh;height:100dvh;overflow:hidden}
-.showcase[data-showcase-live] .scene{position:absolute;inset:0;visibility:hidden}
-.showcase[data-showcase-live] .scene.is-current,.showcase[data-showcase-live] .scene.is-leaving{visibility:visible}
-.showcase[data-showcase-live] .scene.is-current{z-index:2}
-.showcase[data-showcase-live] .scene.is-leaving{z-index:1}
-.showcase[data-showcase-live] .scene__inner{min-height:0}
-/* phones (phone layout + touch screen): SEG = 140svh, so the next scene is
-   70svh away — a finger's swipe travels further than a wheel's notch, and
-   it must take a real swipe, not a light touch */
-@media (max-width:999px) and (hover:none) and (pointer:coarse){
-  .showcase[data-showcase-live] .showcase__track{height:calc(var(--scenes,5) * 140svh + 100svh)}
-}
-/* the hold while a scene hands over: overflow:hidden is what drops an iOS
-   fling or a wheel gesture already under way (Chrome only lets a page
-   cancel the first wheel event of a gesture). A root with overflow:hidden no
-   longer honours sticky, so the pinned screen is fixed in the very place it
-   was stuck (the scroll does not move during the hold) — no visible change */
-html.sc-held{overflow:hidden;overscroll-behavior:none}
-html.sc-held body{touch-action:none}
-html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:0;left:0;width:100%}
-.showcase[data-showcase-live] .showcase__rail{
-  display:grid;grid-template-columns:repeat(var(--scenes,5),minmax(0,1fr));gap:12px;
-  position:absolute;z-index:5;left:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));right:max(clamp(16px,5vw,80px),calc((100% - 1320px)/2 + clamp(16px,5vw,80px)));
-  /* off the edge, and clear of the copy under it: the scenes keep their
-     size, the bar floats over the empty top of each (it is never part of
-     their layout) */
-  top:clamp(20px,3.8vh,36px);
-  --dwell:7s;
-  margin:0;padding:0;list-style:none;font-size:12px;color:var(--rail-fg,var(--cream));transition:color .6s ease}
-.showcase__rail li{position:relative;opacity:.55;transition:opacity .5s ease}
-.showcase__rail li:hover{opacity:.85}
-.showcase__rail li.is-on{opacity:1}
-/* the link is the whole cell, bar included (the bar's own pixels are not what
-   you aim at) */
-.showcase__rail a{display:block;padding:14px 0 6px;margin-top:-4px;color:inherit;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent}
-.showcase__rail a:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:2px}
-.showcase__rail li::before,.showcase__rail li::after{content:"";position:absolute;left:0;top:0;height:2px;pointer-events:none}
-.showcase__rail li::before{right:0;background:currentColor;opacity:.25}
-.showcase__rail li::after{width:100%;background:var(--ac);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--ease)}
-.showcase__rail li.is-past::after{transform:scaleX(1);opacity:.5}
-/* the current one is simply full (the bar's resting state — what a visitor
-   who scrolls for themselves sees, and what is left when the timer is over)… */
-.showcase__rail li.is-on::after{transform:scaleX(1)}
-/* …and while the timer runs it fills over --dwell instead: it starts empty
-   when the scene arrives, the animation is paused unless the section is
-   really being looked at (.is-timing: pinned on screen, tab visible, no hand-
-   over in progress, visitor still) and while the pointer rests on the copy
-   (.is-reading: someone is reading it), and when it ends the script moves on
-   (animationend). It is the clock: nothing else counts the seconds. */
-@keyframes rail-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.showcase[data-timer] .showcase__rail li.is-on::after{transform:scaleX(0);transition:none;animation:rail-fill var(--dwell,7s) linear forwards;animation-play-state:paused}
-.showcase[data-timer].is-timing:not(.is-reading) .showcase__rail li.is-on::after{animation-play-state:running}
-
 .showcase-after{padding-top:clamp(28px,4vw,48px)}
 .showcase-after .proj-more{margin-top:0}
 
-@media (max-width:999px){
-  .scene__inner{align-items:flex-start}
-  .scene__copy{width:auto;margin:0;padding:clamp(76px,11svh,110px) var(--gut) 0}
-  .scene__name{--nsize:clamp(40px,11vw,64px)}
-  .scene__text{font-size:15px;margin-top:12px}
-  .scene__spec{margin-top:16px;padding-top:12px}
-  .scene__spec div{grid-template-columns:6.5em 1fr}
-  .scene__hex{display:none}
-  .scene__links{margin-top:16px}
-  /* the screens follow the copy instead of sinking to the bottom edge: the
-     desktop underneath, the phone standing above it and over its top
-     corner. Sizes come from both the width and the height of the screen
-     (--pw), so the pair always fits the space left under the copy. */
-  .scene__inner{flex-direction:column;justify-content:flex-start}
-  /* the screens live in .scene__bg (absolute, for the desktop parallax);
-     here that wrapper steps out of the way so they can follow the copy */
-  .scene__bg{display:contents}
-  .scene__copy{order:1}
-  .scene__shots{order:2}
-  .scene__shots{--pw:min(31vw,14.5svh,200px);position:relative;top:auto;bottom:auto;left:auto;right:auto;
-    align-self:stretch;width:auto;margin:clamp(14px,2.6svh,30px) var(--gut) 0;padding-top:calc(var(--pw) * 1.08);
-    transform:perspective(1600px) rotateX(var(--rx)) rotateY(var(--ry))}
-  .scene__desk{display:block;width:min(100%,calc(var(--pw) * 3.6))}
-  .scene__phone{z-index:2;left:auto;right:2%;top:0;bottom:auto;width:var(--pw);transform:rotate(4deg)}
-  .scene__ghost{bottom:auto;top:clamp(56px,8svh,80px);opacity:.045}
-  /* phones: bars only (no room for names), but a finger-sized target: the link
-     reaches 14px above and below its 2px bar */
-  .showcase[data-showcase-live] .showcase__rail{gap:6px;font-size:0}
-  .showcase__rail li{height:2px}
-  .showcase__rail a{position:absolute;inset:-14px 0;padding:0;margin:0}
-  .showcase:not([data-showcase-live]) .scene__inner{padding-bottom:48px}
+/* the home bar's marker: the client accents are too pale on cream (the sand and gold of
+   wecalc, Jeanne Randu, La Cave), so the project in view is marked in the site's own coral */
+.work-bar--home .work-bar__item > span::before{background:var(--coral-2);opacity:.62}
+.work-bar--home .work-bar__item:hover > span::before,.work-bar--home .work-bar__item.is-on > span::before{opacity:.8}
+
+/* ---- the liquid seam between two blocks (home showcase and Work page) --------------------
+   The same gesture as the cream that pours under the wordmark (telaventis-fx.js, "melt"), small
+   and calm: the previous block's ground (--pv, written by projets.py) runs a few pixels down into
+   this one along a rippling edge that drifts slowly sideways, with a fainter second layer drifting
+   the other way. Pure CSS: two masked bands moved by transform (compositor), no script. The
+   first block has no seam (the bar sits above it); reduced motion keeps the shape, still. */
+.cst > .cst__in{position:relative}
+.cst:not(:first-child)::before,.cst:not(:first-child)::after{content:"";position:absolute;top:0;left:0;width:calc(100% + 600px);height:clamp(26px,3.4vw,46px);
+  background:var(--pv,transparent);pointer-events:none;will-change:transform;
+  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;-webkit-mask-size:600px 100%;mask-size:600px 100%}
+.cst:not(:first-child)::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H600V26.3L590 25.7L580 24.9L570 23.7L560 22.3L550 20.8L540 19.1L530 17.4L520 15.7L510 14.3L500 13.1L490 12.2L480 11.6L470 11.5L460 11.7L450 12.3L440 13.2L430 14.4L420 15.7L410 17.2L400 18.6L390 19.9L380 21.0L370 22.0L360 22.8L350 23.3L340 23.6L330 23.7L320 23.6L310 23.5L300 23.4L290 23.2L280 23.2L270 23.2L260 23.3L250 23.6L240 23.9L230 24.3L220 24.8L210 25.2L200 25.6L190 25.9L180 26.1L170 26.1L160 26.1L150 26.0L140 25.8L130 25.6L120 25.4L110 25.2L100 25.1L90 25.1L80 25.2L70 25.5L60 25.8L50 26.1L40 26.4L30 26.7L20 26.8L10 26.7L0 26.3Z' fill='%23000'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H600V26.3L590 25.7L580 24.9L570 23.7L560 22.3L550 20.8L540 19.1L530 17.4L520 15.7L510 14.3L500 13.1L490 12.2L480 11.6L470 11.5L460 11.7L450 12.3L440 13.2L430 14.4L420 15.7L410 17.2L400 18.6L390 19.9L380 21.0L370 22.0L360 22.8L350 23.3L340 23.6L330 23.7L320 23.6L310 23.5L300 23.4L290 23.2L280 23.2L270 23.2L260 23.3L250 23.6L240 23.9L230 24.3L220 24.8L210 25.2L200 25.6L190 25.9L180 26.1L170 26.1L160 26.1L150 26.0L140 25.8L130 25.6L120 25.4L110 25.2L100 25.1L90 25.1L80 25.2L70 25.5L60 25.8L50 26.1L40 26.4L30 26.7L20 26.8L10 26.7L0 26.3Z' fill='%23000'/%3E%3C/svg%3E");animation:seam-a 70s linear infinite}
+.cst:not(:first-child)::after{height:clamp(32px,4.2vw,58px);opacity:.42;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H600V29.9L590 30.8L580 31.8L570 32.8L560 34.0L550 35.0L540 35.9L530 36.7L520 37.3L510 37.6L500 37.8L490 37.7L480 37.5L470 37.1L460 36.7L450 36.2L440 35.7L430 35.2L420 34.7L410 34.2L400 33.7L390 33.2L380 32.6L370 32.0L360 31.2L350 30.2L340 29.1L330 27.9L320 26.5L310 25.1L300 23.6L290 22.3L280 21.0L270 20.0L260 19.3L250 19.0L240 19.0L230 19.4L220 20.2L210 21.3L200 22.6L190 24.2L180 25.8L170 27.4L160 28.9L150 30.2L140 31.3L130 32.0L120 32.4L110 32.5L100 32.3L90 31.9L80 31.3L70 30.6L60 29.9L50 29.4L40 29.0L30 28.8L20 29.0L10 29.3L0 29.9Z' fill='%23000'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H600V29.9L590 30.8L580 31.8L570 32.8L560 34.0L550 35.0L540 35.9L530 36.7L520 37.3L510 37.6L500 37.8L490 37.7L480 37.5L470 37.1L460 36.7L450 36.2L440 35.7L430 35.2L420 34.7L410 34.2L400 33.7L390 33.2L380 32.6L370 32.0L360 31.2L350 30.2L340 29.1L330 27.9L320 26.5L310 25.1L300 23.6L290 22.3L280 21.0L270 20.0L260 19.3L250 19.0L240 19.0L230 19.4L220 20.2L210 21.3L200 22.6L190 24.2L180 25.8L170 27.4L160 28.9L150 30.2L140 31.3L130 32.0L120 32.4L110 32.5L100 32.3L90 31.9L80 31.3L70 30.6L60 29.9L50 29.4L40 29.0L30 28.8L20 29.0L10 29.3L0 29.9Z' fill='%23000'/%3E%3C/svg%3E");animation:seam-b 105s linear infinite}
+@keyframes seam-a{to{transform:translateX(-600px)}}
+@keyframes seam-b{from{transform:translateX(-600px)}to{transform:translateX(0)}}
+@media (prefers-reduced-motion: reduce){.cst::before,.cst::after{animation:none}}
+@media print{.cst::before,.cst::after{display:none}}
+
+/* ---- QR menu page ---------------------------------------------------------------------------
+   Order of a restaurateur's questions: what is it (the picture), what does it look like and how do I run it
+   (a working demo: change a price in the sheet, the phone follows; telaventis.js, "8. QR menu demo"), what do
+   I get (set as large type, not as boxes), how does it happen (title kept in view beside four large steps,
+   no ornament), what does it cost (a tier row, like the Pricing page). */
+.qr-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(20px,4vw,72px);align-items:center;padding-top:clamp(40px,5.5vw,84px);padding-bottom:clamp(36px,5vw,72px)}
+.qr-hero__media{display:block;min-width:0}
+.qr-hero__media img{display:block;width:calc(100% + clamp(0px,4vw,60px));max-width:none;height:auto;margin-right:calc(-1 * clamp(0px,4vw,60px))}
+
+/* the demo */
+.qr-demo-band{padding:clamp(54px,7vw,104px) 0;border-top:1px solid var(--line-soft)}
+.qr-demo-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px clamp(28px,5vw,80px);align-items:end;margin-bottom:clamp(30px,4vw,52px)}
+.qr-demo-head .body-serif{margin:0;max-width:46ch}
+.qr-demo{display:grid;grid-template-columns:minmax(0,1.15fr) auto;gap:clamp(28px,6vw,110px);align-items:center;justify-content:space-between}
+.qr-sheet{width:100%;max-width:560px;border-collapse:collapse;background:var(--cream);border:1px solid var(--line);box-shadow:0 30px 60px -44px rgba(22,32,43,.5)}
+.qr-sheet th,.qr-sheet td{padding:12px clamp(12px,1.6vw,20px);text-align:left;border-bottom:1px solid var(--line-soft)}
+.qr-sheet thead th{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);background:var(--cream-3)}
+.qr-sheet tbody th{font-weight:600;font-size:15.5px}
+.qr-sheet td:nth-child(2){width:34%}.qr-sheet td:last-child{width:18%}
+.qr-sheet__p{width:100%;max-width:9em;font:inherit;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink);background:transparent;border:0;border-bottom:1.5px solid var(--ink);padding:4px 2px;border-radius:0}
+.qr-sheet__p:focus{outline:0;border-color:var(--coral);background:rgba(224,116,47,.1)}
+.qr-sheet__ok{width:20px;height:20px;accent-color:var(--coral);cursor:pointer}
+@keyframes qr-invite{0%,100%{box-shadow:0 0 0 0 rgba(180,68,28,0)}50%{box-shadow:0 0 0 6px rgba(180,68,28,.22)}}
+html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{animation:qr-invite 2.2s ease-in-out 1.4s 4}
+@media (prefers-reduced-motion: reduce){html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{animation:none}}
+
+/* the phone: the page a customer lands on after scanning */
+.qr-phone{width:clamp(250px,24vw,300px);background:var(--cream);border:9px solid var(--ink);border-radius:38px;box-shadow:0 50px 90px -44px rgba(22,32,43,.6);padding:26px 18px 22px;position:relative;overflow:hidden;min-height:clamp(430px,40vw,520px)}
+.qr-phone::before{content:"";position:absolute;top:9px;left:50%;width:62px;height:6px;margin-left:-31px;border-radius:6px;background:var(--ink);opacity:.9}
+.qr-phone__bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.qr-phone__brand{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:-.02em}
+.qr-phone__langs{display:flex;gap:2px}
+.qr-phone__langs button{appearance:none;background:none;border:0;padding:4px 5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-soft);cursor:pointer;border-radius:3px}
+.qr-phone__langs button[aria-pressed="true"]{color:var(--cream);background:var(--ink)}
+.qr-phone__tabs{display:flex;gap:18px;margin:18px 0 6px;border-bottom:1px solid var(--line-soft)}
+.qr-phone__tab{appearance:none;background:none;border:0;padding:8px 0;font-family:var(--sans);font-weight:650;font-size:13.5px;color:var(--ink-soft);cursor:pointer;position:relative}
+.qr-phone__tab[aria-selected="true"]{color:var(--ink)}
+.qr-phone__tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--coral)}
+.qr-phone__list{list-style:none;margin:6px 0 0;padding:0}
+.qr-phone__list[hidden]{display:none}
+.qr-dish{display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:baseline;padding:13px 0;border-bottom:1px dotted rgba(22,32,43,.25);transition:opacity .4s ease}
+.qr-dish__n{font-family:var(--serif);font-size:16.5px;line-height:1.25}
+.qr-dish__p{font-weight:750;font-variant-numeric:tabular-nums;font-size:15px;border-radius:3px;padding:1px 4px;margin-right:-4px}
+.qr-dish__o{display:none;grid-column:1 / -1;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--coral-ink);margin-top:3px}
+.qr-dish.is-out{opacity:.5}
+.qr-dish.is-out .qr-dish__n,.qr-dish.is-out .qr-dish__p{text-decoration:line-through;text-decoration-thickness:1px}
+.qr-dish.is-out .qr-dish__o{display:block}
+@keyframes qr-flash{from{background:rgba(224,116,47,.5)}to{background:rgba(224,116,47,0)}}
+.qr-dish.is-flash .qr-dish__p{animation:qr-flash 1.1s ease-out}
+
+/* what you get: large type, hairlines, no boxes */
+.qr-gets{padding-top:clamp(54px,7vw,104px)}
+.qr-bens{list-style:none;margin:clamp(20px,2.6vw,34px) 0 0;padding:0;border-top:1px solid var(--ink)}
+.qr-ben{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px clamp(24px,5vw,80px);align-items:baseline;padding:clamp(18px,2.4vw,30px) 0;border-bottom:1px solid var(--line-soft)}
+.qr-ben__t{margin:0;font-family:var(--serif);font-weight:350;font-size:clamp(26px,3.6vw,52px);line-height:1.05;letter-spacing:-.035em}
+.qr-ben__p{margin:0;font-family:var(--serif);font-size:16.5px;line-height:1.6;color:var(--ink-soft);max-width:38ch}
+
+/* how it comes together: the title stays in view while the four steps pass */
+.qr-how.seam{padding-top:calc(var(--seam) + clamp(64px,8vw,124px));padding-bottom:clamp(70px,9vw,128px)}
+.qr-how__in{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr);gap:clamp(30px,6vw,110px);align-items:start}
+.qr-how__head{position:sticky;top:clamp(88px,12vh,130px)}
+.qr-how__head .body-serif{margin:18px 0 0;max-width:30ch}
+.qr-steps{list-style:none;margin:0;padding:0}
+.qr-step{display:grid;grid-template-columns:clamp(54px,7vw,104px) minmax(0,1fr);gap:clamp(12px,2.4vw,34px);align-items:start;padding:clamp(26px,3.2vw,44px) 0;border-top:1px solid rgba(237,233,226,.24)}
+.qr-step:last-child{border-bottom:1px solid rgba(237,233,226,.24)}
+.qr-step__n{font-family:var(--serif);font-weight:300;font-size:clamp(54px,7vw,104px);line-height:.8;letter-spacing:-.05em;color:var(--coral-2)}
+.qr-step__t{margin:.25em 0 8px;font-size:clamp(20px,2vw,26px);font-weight:700;letter-spacing:-.02em;color:var(--cream)}
+.qr-step .body-serif{margin:0;max-width:44ch}
+
+@media (max-width:1000px){
+  .qr-demo-head,.qr-how__in{grid-template-columns:1fr}
+  .qr-how__head{position:static}
+  .qr-demo{grid-template-columns:1fr;justify-items:center;gap:36px}
+  .qr-sheet{max-width:none}
 }
-@media (max-width:999px) and (max-height:800px){.scene__name + .scene__text{display:none}}
-/* a phone held sideways: copy and screens side by side, copy trimmed to
-   the name and the links */
-@media (max-width:999px) and (max-height:560px) and (orientation:landscape){
-  .scene__inner{flex-direction:row;align-items:center}
-  .scene__copy{flex:0 0 42%;padding:48px 0 40px var(--gut)}
-  .scene__text,.scene__spec{display:none}
-  .scene__shots{flex:1;align-self:center;margin:0 var(--gut);--pw:min(13vw,24svh)}
+@media (max-width:759px){
+  .qr-hero{grid-template-columns:1fr}
+  .qr-hero__media{order:2}
+  .qr-hero__media img{width:100%;margin-right:0}
+  .qr-ben{grid-template-columns:1fr}
 }
-/* The project bar floats over the top of the pinned screen (above), so the
-   content is moved down to leave it room: the bar sits in its own band instead
-   of in the margin of the copy, and the scene keeps its size — only where its
-   content is centred changes. Desktop: the content box starts below the band;
-   phones: the copy starts lower. */
-.showcase[data-showcase-live] .scene__inner{padding-top:clamp(44px,8vh,84px)}
-@media (max-width:999px){
-  .showcase[data-showcase-live] .scene__inner{padding-top:0}
-  .showcase[data-showcase-live] .scene__copy{padding-top:clamp(96px,13svh,132px)}
-}
-@media (max-width:999px) and (max-height:560px) and (orientation:landscape){
-  .showcase[data-showcase-live] .scene__copy{padding-top:60px}
-}
-@media (max-width:999px) and (max-height:700px){.scene__spec{display:none}}
-@media (max-width:999px) and (max-height:640px){.scene__text{display:none}}
-@media (prefers-reduced-motion: reduce){.scene__shots{transform:translateY(-50%)}}
-@media (prefers-reduced-motion: reduce) and (max-width:999px){.scene__shots{transform:none}}
+@media print{.qr-phone{box-shadow:none}}
+
+/* ---- Contact page ---------------------------------------------------------------------------
+   The site's own materials: the title band of the inner pages, then the form (all fields visible, the
+   existing .form-card / .field styles) with the direct ways to reach Telaventis beside it. */
+.page-head .lede{margin:22px 0 0;max-width:520px}
+/* compact: no wedge, the form is on the first screen */
+.page-head--compact .page-head__wedge{display:none}
+.page-head--compact .page-head__in{padding-top:clamp(36px,5vw,72px);padding-bottom:clamp(8px,1.5vw,20px)}
+.ct3{padding-top:clamp(18px,2.6vw,36px);padding-bottom:clamp(70px,9vw,124px)}
+.ct3__grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(30px,5vw,92px);align-items:start}
+.ct3 .form-card{background:var(--cream);box-shadow:0 40px 80px -56px rgba(22,32,43,.55)}
+.ct3__aside{min-width:0;position:sticky;top:clamp(84px,11vh,120px)}
+@media (max-width:900px){.ct3__grid{grid-template-columns:1fr}.ct3__aside{position:static}}
+
+/* ---- portrait (Studio) ---------------------------------------------------
+   Square photograph cut along the brand's diagonal (low on the left, high on
+   the right: the wordmark's gesture), never wider than the text column. The
+   files live in assets/team/ and are kept out of search engines
+   (_headers: X-Robots-Tag noindex; robots.txt must not block them). */
+.portrait{margin:0 0 clamp(22px,2.6vw,34px);width:clamp(190px,24vw,300px)}
+.portrait img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;object-position:50% 22%;
+  clip-path:polygon(0 0,100% 0,100% 84%,0 100%);background:#2a3340}
 
 /* ==========================================================================
    Seams — how one section hands over to the next
@@ -1292,7 +1283,7 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
 .cst__float--a{z-index:1;top:0;right:0;width:36%;rotate:2.2deg}
 .cst__float--b{z-index:1;bottom:0;right:3%;width:38%;rotate:-1.6deg}
 .cst__float--phone{z-index:3;bottom:3%;left:-4%;width:15%;rotate:-4deg}
-.cst__float--phone img{border-radius:14px;border:3px solid #fff}
+.cst__float--phone img,.cst__float--phone video{border-radius:14px;border:3px solid #fff;box-shadow:0 34px 60px -30px rgba(0,0,0,.55)}
 .cst--flip .cst__float--a{right:auto;left:0;rotate:-2.2deg}
 .cst--flip .cst__float--b{right:auto;left:3%;rotate:1.6deg}
 .cst--flip .cst__float--phone{left:auto;right:-4%;rotate:4deg}
@@ -1327,9 +1318,6 @@ html.sc-held .showcase[data-showcase-live] .showcase__sticky{position:fixed;top:
 .scene--wecalc{--nf:'Jakarta TV',var(--sans);--nw:800;--nls:-.04em}
 .scene--jeanne-randu{--nf:'Instrument Serif TV',var(--serif);--nw:400;--nls:-.02em;--nsize:clamp(52px,6.6vw,112px)}
 .scene--cave-antoine{--nf:'Cormorant TV',var(--serif);--nw:500;--nst:italic;--nls:-.01em;--nsize:clamp(48px,6.2vw,104px)}
-@media (max-width:999px){.scene--bde .scene__name{font-size:clamp(30px,8.4vw,52px)}}
-.scene--bde .scene__name .name-outline,.scene--bde .scene__ghost .name-outline{-webkit-text-stroke-color:var(--fg)}
-.scene--bde .scene__name .fx-char{color:inherit}
 .work-bar__item.scene--bde > span{font-size:15px}
 .cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}
 .cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}

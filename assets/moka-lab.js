@@ -40,6 +40,10 @@
      a jump (an in-page link, Home/End); HOLD_MAX releases it whatever
      happens. The hold is html.moka-held (moka-lab.css). */
   var ACT_END=.30, ACT_MS=2600, QUIET=180, HOLD_MAX=ACT_MS+2000;
+  /* The opening act no longer holds the page (17 Nov): it is scrubbed by the scroll itself, at
+     the visitor's own pace, like the rest of the story — a held, timed animation made people
+     wait. Set ACT_HOLD to true to bring back the "plays whole on its own clock" version. */
+  var ACT_HOLD=false, ACT_EXTRA=2.26;   /* ACT_EXTRA: screens of scroll added to the opening act (the track is 100svh taller in moka-lab.css) */
   var root=document.documentElement;
   var heldY=null, heldSince=0, lastInput=0, jumpUntil=0;
   /* the scroll-cancelling wheel/touch listeners must be non-passive, and a
@@ -144,13 +148,20 @@
       var rect=track.getBoundingClientRect();
       var scrollable=Math.max(1,track.offsetHeight-window.innerHeight);
       var target=clamp(-rect.top/scrollable,0,1);
+      /* the opening act (pictures flying past the camera, fragments gathering, the browser opening: the first ACT_END of the story)
+         gets ACT_EXTRA more screens of scroll than the rest, which keeps exactly the length it had: a hard flick of the wheel
+         no longer crosses it in one go. Same story, same p, only the first stretch of scroll is mapped more slowly. */
+      if(!ACT_HOLD){
+        var S1=1-(1-ACT_END)*Math.max(0,scrollable-ACT_EXTRA*window.innerHeight)/scrollable;
+        target=target<S1?target/S1*ACT_END:ACT_END+(target-S1)/(1-S1)*(1-ACT_END);
+      }
       var now=performance.now();
       var posOf=function(pp){return window.scrollY+rect.top+pp*scrollable;};
       /* the opening act (see the hold above): past it or not is decided
          once from where the page opens, then only by the act itself */
       if(actPast===null)actPast=target>=ACT_END;
       var onScreen=rect.top<window.innerHeight&&rect.bottom>0;
-      if(!act&&heldY===null){
+      if(ACT_HOLD&&!act&&heldY===null){
         if(target<=0||!onScreen||jumping())actPast=target>=ACT_END;
         else if(!actPast&&target>.01){
           act={from:story._mokaP==null?0:story._mokaP,to:ACT_END,t0:now};
@@ -360,7 +371,15 @@
     var load=function(){
       var im=new Image();
       im.decoding='async';
-      im.onload=function(){f.img=im;f.res=0;kick();};
+      /* decoded NOW, off the critical moment: an <img> decoded lazily is decoded on its
+         first drawImage(), i.e. seven pictures at once in the first frame of the opening;
+         an ImageBitmap is already pixels, so drawing it costs only the draw */
+      im.onload=function(){
+        var ready=function(src){f.img=src;f.res=0;kick();};
+        if(window.createImageBitmap){window.createImageBitmap(im).then(ready,function(){ready(im);});}
+        else if(im.decode){im.decode().then(function(){ready(im);},function(){ready(im);});}
+        else ready(im);
+      };
       /* the mosaic never shows more than ~420 px of a picture: the 640 px file
          is plenty, whatever size the page's own copy of it chose */
       im.src=(src.getAttribute('src')||'').replace(/-(?:960|1536)\.webp/,'-640.webp');
@@ -386,7 +405,8 @@
   var STEPS=[12,24,48,96,192,420];
   var draw=function(f,res){
     if(!f.img||!f.ctx)return;
-    var w=res, h=Math.round(res*f.img.naturalHeight/f.img.naturalWidth)||res;
+    var iw=f.img.naturalWidth||f.img.width, ih=f.img.naturalHeight||f.img.height;
+    var w=res, h=Math.round(res*ih/iw)||res;
     f.cv.width=w; f.cv.height=h;
     f.ctx.imageSmoothingEnabled=true;
     f.ctx.drawImage(f.img,0,0,w,h);

@@ -182,6 +182,49 @@
   to{transform:translate3d(2%,1.5%,0) scale(1.06)}
 }
 
+/* ---- the melt (5 in telaventis-fx.js): the hero's cream pours over the top of
+   the dark section as a liquid, so the boundary is a gradient and not a line.
+   A canvas over the top ~28 % of a screen, above the pinned scene (which is a
+   stacking context of its own) and scrolling away with the section. Without the
+   script this is only the soft fade of the same colours. */
+.era__melt{position:absolute;top:0;left:0;right:0;z-index:6;height:clamp(180px,30svh,340px);pointer-events:none;
+  background:linear-gradient(rgba(237,233,226,.95),rgba(237,233,226,.55) 28%,rgba(124,150,174,.22) 55%,transparent)}
+.era__melt canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.era__melt.is-live{background:none}
+@media (prefers-reduced-motion: reduce){.era__melt{background:none}}
+@media print{.era__melt{display:none}}
+
+/* ---- the lift (the words drift upward like bubbles) ----------------------------------------
+   The visitor's idea: the phrase's own words rise a little and settle, each on its own period and
+   delay, starting a second or two after the phrase arrives — nobody tells you to scroll, the page just
+   moves the way it wants to be read. Plain words here (transform only); the key words are drawn by the
+   bubble field, which does the same in telaventis-fx.js (liftY). */
+.era[data-era-live] .era__panel.is-active .era__w:not(.era__w--key),
+.era[data-era-live] .era__panel.is-active .fx-word{animation:era-lift var(--lp,5.2s) ease-in-out var(--ld,1.5s) infinite}
+.era__w:nth-child(5n+1),.fx-word:nth-child(5n+1){--lp:4.6s;--ld:1.4s}
+.era__w:nth-child(5n+2),.fx-word:nth-child(5n+2){--lp:5.4s;--ld:2.1s}
+.era__w:nth-child(5n+3),.fx-word:nth-child(5n+3){--lp:6.2s;--ld:1.75s}
+.era__w:nth-child(5n+4),.fx-word:nth-child(5n+4){--lp:5s;--ld:2.6s}
+.era__w:nth-child(5n+5),.fx-word:nth-child(5n+5){--lp:5.8s;--ld:1.6s}
+@keyframes era-lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-.3em)}}
+@media print,(prefers-reduced-motion: reduce){.era__w,.fx-word{animation:none !important}}
+
+/* the cue: one wide open triangle, two fine strokes (no arrow, no thread), above the
+   steps. Invisible until the phrase's time has run for a second; then it comes in, breathes
+   slowly, fading in and out, for as long as the section is on screen. Gone
+   while the page moves and once the visitor has taken over. Opacity and transform only. */
+.era__arrow{position:absolute;left:50%;bottom:calc(clamp(10px,3.4svh,40px) + env(safe-area-inset-bottom));margin:0 0 0 calc(clamp(60px,6.4vw,100px) / -2);z-index:5;width:clamp(60px,6.4vw,100px);height:clamp(28px,3vw,44px);padding:0;
+  display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--cream);cursor:pointer;opacity:0;-webkit-tap-highlight-color:transparent}
+.era__arrow svg{display:block;width:100%;height:auto}
+.era[data-era-live] .era__arrow{animation:era-arrow 3.4s ease-in-out 1s infinite}
+.era__arrow:focus-visible{outline:2px solid var(--coral-2);outline-offset:2px;opacity:.9}
+@keyframes era-arrow{
+  0%,100%{opacity:.3;transform:translateY(0)}
+  50%{opacity:.92;transform:translateY(5px)}
+}
+
+@media print,(prefers-reduced-motion: reduce){.era__arrow{display:none}}
+
 /* ---- the aurora: the animated gradient behind the words (desktop) -----------
    A WebGL canvas (telaventis-fx.js, "the animated gradient": the design
    system's Animated Gradient, in the site's own ink, teal and coral). Above the
@@ -219,7 +262,13 @@
 .era__cut-in .moka-story__lede{opacity:0}
 .era__cut-in.is-arrived .wt-c{animation:cut-arrive 1s var(--ease) both;animation-delay:calc(var(--i) * 16ms)}
 .era__cut-in.is-arrived .moka-story__lede{animation:cut-lede .9s var(--ease) .45s both}
-@keyframes cut-arrive{from{opacity:0;--wg:340;--wd:125;transform:translateY(.16em)}60%{opacity:1}to{opacity:1;--wg:800;--wd:100;transform:none}}
+/* opacity and transform only, like the home headline's arrival (telaventis.css, wt-arrive):
+   this used to interpolate the font's own axes (--wg / --wd) on every letter of the
+   title, so every frame re-shaped and re-laid-out the whole line at a new weight and
+   width while the door's layer was the biggest thing on screen: the hitch right after
+   the door opened. The "thin and wide settling into heavy" feel is kept by a slight
+   scaleX that relaxes to 1. */
+@keyframes cut-arrive{from{opacity:0;transform:translateY(.16em) scaleX(1.16)}60%{opacity:1}to{opacity:1;transform:none}}
 /* the hold while the door opens and the title arrives (3d, "no speedrun") */
 /* overflow:hidden is what really stops a wheel gesture already under way
    (Chrome only lets a page cancel the FIRST wheel event of a gesture); the
