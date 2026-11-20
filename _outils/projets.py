@@ -124,10 +124,10 @@ def travaux(P, lg, pre, home=False):
       <header class="cst__head">{logo}
         <{h} class="cst__name" id="cst-{k}">{name_html(p)}</{h}>
         <p class="cst__desc">{esc(t['resume'])}</p>
-        <p class="cst__links"><a class="link" href="project-{k}.html">{l['cas']}</a><a class="link link--plain" href="{attr(p['site'])}" target="_blank" rel="noopener">{esc(p['site_libelle'])}</a></p>
+        <p class="cst__links"><a class="link" href="project-{k}">{l['cas']}</a><a class="link link--plain" href="{attr(p['site'])}" target="_blank" rel="noopener">{esc(p['site_libelle'])}</a></p>
       </header>
       <div class="cst__stage">
-        <a class="cst__main" href="project-{k}.html" aria-label="{attr(l['joue'].format(n=p['nom']))}">
+        <a class="cst__main" href="project-{k}" aria-label="{attr(l['joue'].format(n=p['nom']))}">
           {video(pre, k, 'desk', 'cst__video', vt=True)}
         </a>
         <figure class="cst__float cst__float--a">{shot(pre, k, 'd1', '(min-width:1000px) 28vw, 44vw')}<figcaption>{esc(cap[0])}</figcaption></figure>
@@ -232,7 +232,7 @@ def nouveau(cle, modele='wecalc'):
         if os.path.exists(dst):
             print('existe déjà, laissé tel quel :', pre + f'project-{cle}.html'); continue
         s = open(src, encoding='utf-8').read()
-        s = s.replace(f'project-{modele}.html', f'project-{cle}.html')
+        s = s.replace(f'project-{modele}"', f'project-{cle}"')  # URL propres : sans .html (voir MODE-EMPLOI §6)
         s = s.replace(f'assets/shots/{modele}', f'assets/shots/{cle}')
         s = s.replace(f'shot-{modele}', f'shot-{cle}')
         s = s.replace(m['site'], p['site']).replace(m['site_libelle'], p['site_libelle'])
@@ -249,11 +249,11 @@ def nouveau(cle, modele='wecalc'):
     # sitemap : les trois URL, avec leurs alternates
     sm = os.path.join(ROOT, 'sitemap.xml')
     s = open(sm, encoding='utf-8').read()
-    if f'project-{cle}.html' not in s:
-        alts = ''.join(f'\n    <xhtml:link rel="alternate" hreflang="{lg}" href="https://telaventis.fr/{pre}project-{cle}.html"/>' for lg, pre in LANGS.items())
-        alts += f'\n    <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/project-{cle}.html"/>'
+    if f'/project-{cle}<' not in s:
+        alts = ''.join(f'\n    <xhtml:link rel="alternate" hreflang="{lg}" href="https://telaventis.fr/{pre}project-{cle}"/>' for lg, pre in LANGS.items())
+        alts += f'\n    <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/project-{cle}"/>'
         entries = ''.join(f'''  <url>
-    <loc>https://telaventis.fr/{pre}project-{cle}.html</loc>
+    <loc>https://telaventis.fr/{pre}project-{cle}</loc>
     <lastmod>AAAA-MM-JJ</lastmod>
     <priority>0.7</priority>{alts}
   </url>

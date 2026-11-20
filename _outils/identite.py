@@ -253,7 +253,16 @@ def main(path):
                     P(sx0, ty1), P(sx0, bar_bottom), P(tx0, bar_bottom)])
     open(A('mask-icon.svg'), 'w', encoding='utf-8').write(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><polygon points="{pts}" fill="#000"/></svg>\n')
+    copier_racine()
     print('ok — partage, favicons, icônes et mask-icon régénérés')
+
+
+def copier_racine():
+    """/favicon.ico et /apple-touch-icon.png À LA RACINE : navigateurs, Bing, lecteurs RSS et
+    aperçus vont les chercher là sans lire le HTML (404 sinon)."""
+    import shutil
+    for n in ('favicon.ico', 'apple-touch-icon.png'):
+        shutil.copyfile(A(n), os.path.join(ROOT, n))
 
 
 ICONES = ['favicon.svg', 'favicon-16x16.png', 'favicon-32x32.png', 'favicon-48x48.png', 'favicon.ico',
@@ -269,6 +278,7 @@ def restaurer(dossier):
             shutil.copyfile(src, A(n)); print('  ✓', n)
         else:
             print("  – absent de l'archive :", n)
+    copier_racine()
     print('icônes restaurées — monter les ?v= des favicons dans les pages')
 
 

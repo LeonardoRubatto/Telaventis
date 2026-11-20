@@ -241,6 +241,20 @@ numéro `?v=` dans **toutes** les pages (même numéro partout), sinon les
 visiteurs gardent l'ancienne version en cache : `python _outils/monter-v.py`
 (monte d'un cran les six fichiers, refuse si les pages ne sont pas d'accord).
 
+**Adresses sans `.html` (20 novembre).** Cloudflare Pages renvoie `work.html` vers `/work`
+(308) : l'adresse officielle d'une page est donc **sans `.html`** (`/work`, `/en/work`,
+`/project-bde`, l'accueil `/`, `/en/`, `/it/`). Canonical, hreflang, `og:url`, JSON-LD,
+`sitemap.xml` et liens internes doivent tous dire la même chose ; le fichier garde son nom
+`.html`, seul ce qu'on **publie** change. Un canonical en `.html` annonce à Google une
+adresse qui redirige ailleurs : il hésite, indexe mal les pages internes, et les sous-liens
+(sitelinks) n'apparaissent pas. Un nouveau projet suit la règle tout seul (`projets.py nouveau`).
+Vérification rapide : `curl -sI https://telaventis.fr/<page>` doit répondre 200, jamais 308.
+`404.html` utilise des liens absolus (`/work`) car elle est servie à n'importe quelle adresse.
+
+**Icônes à la racine.** `identite.py` copie `favicon.ico` et `apple-touch-icon.png` à la racine
+du site (navigateurs, Bing et lecteurs RSS les demandent là sans lire le HTML), et les pages
+déclarent aussi le favicon 48 px (Google veut un multiple de 48).
+
 Publication : ce dossier est une copie de travail ; la production est le dépôt
 GitHub relié à Cloudflare Pages (un push sur `main` publie). La
 Content-Security-Policy (`_headers`) interdit tout script tiers : un nouvel
