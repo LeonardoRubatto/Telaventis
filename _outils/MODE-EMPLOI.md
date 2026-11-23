@@ -255,6 +255,22 @@ Vérification rapide : `curl -sI https://telaventis.fr/<page>` doit répondre 20
 du site (navigateurs, Bing et lecteurs RSS les demandent là sans lire le HTML), et les pages
 déclarent aussi le favicon 48 px (Google veut un multiple de 48).
 
+**Icônes : ne pas compter sur le SVG ni sur le PNG seuls (20 novembre).** Les icônes
+n'apparaissaient pas sur Internet Explorer (et les très vieux navigateurs, certains lecteurs
+RSS, Bing) : ils ne lisent ni le favicon SVG ni les PNG déclarés, seulement un vrai fichier
+`.ico`. Règles qui évitent que ça se reproduise :
+- `/favicon.ico` doit exister **à la racine** du site, être un vrai `.ico` multi-tailles
+  (16, 32 et 48 px dans le même fichier : `identite.py` le fait), jamais un PNG renommé ;
+- chaque page déclare aussi `<link rel="shortcut icon" href="/favicon.ico">` (chemin absolu
+  depuis la racine, sans `?v=`), en plus des liens SVG/PNG : IE le lit, les navigateurs
+  récents l'ignorent au profit du SVG ;
+- ne jamais retirer le `.ico` « parce que le SVG suffit » : le SVG est un confort pour les
+  navigateurs récents, pas un remplacement ;
+- vérifier après publication : `curl -sI https://telaventis.fr/favicon.ico` doit répondre 200
+  avec `content-type: image/x-icon` (ou `image/vnd.microsoft.icon`), jamais 404 ni 308 ; et
+  ouvrir le site dans un navigateur qui ne lit pas le SVG (ou tester le `.ico` seul) avant
+  de dire que les icônes sont réglées.
+
 Publication : ce dossier est une copie de travail ; la production est le dépôt
 GitHub relié à Cloudflare Pages (un push sur `main` publie). La
 Content-Security-Policy (`_headers`) interdit tout script tiers : un nouvel
@@ -415,3 +431,13 @@ hors des mots, image par image) ; l'ancienne version donne ~60 % pendant ~170 ms
 - **Entrée de Moka encore +25 %** : `ACT_EXTRA = 2,26` écrans (l'ouverture passe de 2,82 à 3,52 écrans de défilement ; pistes 746 / 706 / 866 svh).
 - **Menu numérique : pas de page d'administration ni de serveur** (décision de Leonardo, 18 novembre). C'est lui qui change la carte (version optionnelle du site ou version chargée par les QR codes) d'après ce que lui disent les restaurateurs. La démo de la page est une illustration, rien n'y est enregistré ; les textes disent « vous nous dites ce qui change, Telaventis met la carte à jour », jamais que le client édite lui-même.
 - **Page contact** (trois langues) : sur les matières du site (crème, encre, une action corail), pas de version sombre ni « une question à la fois » (refusées par Leonardo : « ça doit être intuitif et naturel »). Bandeau de titre compact comme les autres pages intérieures, puis le formulaire avec ses quatre champs visibles (les styles `.form-card` / `.field` d'origine) et, à côté, les coordonnées. Le formulaire (`data-contact`, champs, clés Web3Forms, textes `data-msg-*`) est celui d'origine ; testé avec Web3Forms intercepté, rien n'est envoyé en test.
+
+---
+
+## 10. Design Memory, 23 novembre (Leonardo)
+
+- **Titre du hero** : `telaventis.js` §9a (ombre douce d'après « Shadow Text », force 0,30 : moins noire, pas plus claire) et §9d : la partie qui change (« votre activité », « votre » compris) monte et laisse place à « votre entreprise / association / boutique / agence », 3 s après l'arrivée du titre ; à partir de la 2e valeur les lettres sont remplies par une œuvre de `assets/art/` (attributs `data-words` et `data-art` du `<h1>`). Les `<br class="br-always">` gardent les sauts de ligne à toutes les largeurs (§2c les comprend). Le flou/seuil de « Text Morph » a été essayé puis écarté (boueux sur un titre aussi gras).
+- **Section des phrases** (`telaventis-fx.js` §6 et §7) : mots-clés en encre (solveur de fluide WebGL2, d'après « Ink Background » ; police des mots-clés inchangée, les mots autour sont en Archivo léger), plus de bulles qui suivent le curseur, repère « goutte » dans la marge droite (fil sinueux, goutte à vitesse variable, pas de texte) à la place du repère du hero. Le flow field a été retiré (demande de Leonardo).
+- **Boutons** (`a.btn`) : texte qui roule (« Slide Text Button »). **Barre des projets** : trait qui s'ouvre autour du projet courant (« Morphic Navbar »). **Démo de la page menu** : pastille d'état, boutons − / + sur les prix, bulle dans le téléphone (§9e).
+- **Moka** : cadre du navigateur plus grand, plus de chiffres, trait de progression moderne avec une goutte en tête ; la retenue après le titre « Même activité. Autre perception. » est ~1,2 s plus courte.
+- Crédits (Kokonut UI, Componentry) dans les trois `mentions-legales.html`.

@@ -1692,7 +1692,7 @@
         /* release once the last letter has landed and the line has risen */
         var letters = cutIn.querySelectorAll('.wt-c').length;
         clearTimeout(lockTimer);
-        lockTimer = setTimeout(unlockScroll, Math.max(letters * 16 + 1000, 1350) + 150);
+        lockTimer = setTimeout(unlockScroll, Math.max(letters * 16 + 420, 760) + 80);   /* released as soon as the last letter is landing (was +1000 / 1350: the stop after the effect felt long) */
       };
       var tweenCut = function (goal, now, ms) {
         if (goal === 0) { cutArrived = false; cutIn.classList.remove('is-arrived'); }
@@ -2082,7 +2082,7 @@
           }
         }
         if (!(cut && cutGoal && cutOpen > 0.6)) {
-          drawGrad(now); renderRipple(now);
+          drawGrad(now);   /* the cursor-following bubbles (renderRipple) are gone, 23 Nov */
         }
         renderField(now);
 
@@ -2335,4 +2335,278 @@
     if (doc.readyState === 'complete') go(); else window.addEventListener('load', go);
   }());
 
+}());
+
+
+/* ==========================================================================
+   6. Design Memory layer on #digital-era (appended 23 November; the rest of this file is as it was)
+
+   6. backgrounds/ink-background — Kokonut UI "Ink Background" (MIT): a WebGL2 stable-fluids
+       solver that writes words as ink; stirring makes them bleed, then they gather back.
+       Here: the KEY words of the active phrase (the ones the bubble field used to draw) are the
+       mask; the output is transparent cream ink over the gradient. When the phrase changes the
+       mask changes: the old ink dissolves into the water and the new words bloom in. Where
+       WebGL2 / float render targets are missing the bubble field stays (class era--ink is only
+       added once the solver works).
+   Reduced motion: nothing here runs (the section is not even pinned).
+   ========================================================================== */
+(function () {
+  'use strict';
+  var doc = document;
+  if (!window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var era = doc.querySelector('[data-era]');
+  if (!era) return;
+  var sticky = era.querySelector('.era__sticky');
+  var stage = era.querySelector('.era__stage');
+  if (!sticky || !stage) return;
+  var panels = [].slice.call(era.querySelectorAll('[data-era-panel]'));
+  var phone = window.matchMedia('(max-width:759px)').matches;
+  var probe = doc.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  var toRgb = function (c) { probe.clearRect(0, 0, 1, 1); probe.fillStyle = c; probe.fillRect(0, 0, 1, 1); var d = probe.getImageData(0, 0, 1, 1).data; return [d[0] / 255, d[1] / 255, d[2] / 255]; };
+  var cream = function () { return (getComputedStyle(era).getPropertyValue('--cream') || '#EDE9E2').trim() || '#EDE9E2'; };
+
+  /* ---------------------------------------------------------------- 6b. ink */
+  var SHADERS = (function () {
+    var HEAD = '#version 300 es\nprecision highp float;\nprecision highp sampler2D;\nin vec2 vUv;\nin vec2 vL;\nin vec2 vR;\nin vec2 vT;\nin vec2 vB;\nout vec4 o;\n';
+    return {
+      vertex: '#version 300 es\nin vec2 aPos;\nout vec2 vUv;\nout vec2 vL;\nout vec2 vR;\nout vec2 vT;\nout vec2 vB;\nuniform vec2 texel;\nvoid main(){vUv=aPos*0.5+0.5;vL=vUv-vec2(texel.x,0.0);vR=vUv+vec2(texel.x,0.0);vT=vUv+vec2(0.0,texel.y);vB=vUv-vec2(0.0,texel.y);gl_Position=vec4(aPos,0.0,1.0);}',
+      splat: HEAD + 'uniform sampler2D uTarget;uniform float aspect;uniform vec3 color;uniform vec2 point;uniform float radius;void main(){vec2 p=vUv-point;p.x*=aspect;vec3 s=exp(-dot(p,p)/radius)*color;o=vec4(texture(uTarget,vUv).xyz+s,1.0);}',
+      advect: HEAD + 'uniform sampler2D uVelocity;uniform sampler2D uSource;uniform vec2 simTexel;uniform float dt;uniform float fade;void main(){vec2 coord=vUv-dt*texture(uVelocity,vUv).xy*simTexel;o=texture(uSource,coord)/(1.0+fade*dt);}',
+      divergence: HEAD + 'uniform sampler2D uVelocity;void main(){float l=texture(uVelocity,vL).x;float r=texture(uVelocity,vR).x;float t=texture(uVelocity,vT).y;float b=texture(uVelocity,vB).y;vec2 c=texture(uVelocity,vUv).xy;if(vL.x<0.0){l=-c.x;}if(vR.x>1.0){r=-c.x;}if(vT.y>1.0){t=-c.y;}if(vB.y<0.0){b=-c.y;}o=vec4(0.5*(r-l+t-b),0.0,0.0,1.0);}',
+      curl: HEAD + 'uniform sampler2D uVelocity;void main(){float l=texture(uVelocity,vL).y;float r=texture(uVelocity,vR).y;float t=texture(uVelocity,vT).x;float b=texture(uVelocity,vB).x;o=vec4(0.5*(r-l-t+b),0.0,0.0,1.0);}',
+      vorticity: HEAD + 'uniform sampler2D uVelocity;uniform sampler2D uCurl;uniform float curl;uniform float dt;void main(){float l=texture(uCurl,vL).x;float r=texture(uCurl,vR).x;float t=texture(uCurl,vT).x;float b=texture(uCurl,vB).x;float c=texture(uCurl,vUv).x;vec2 force=0.5*vec2(abs(t)-abs(b),abs(r)-abs(l));force/=length(force)+0.0001;force*=curl*c;force.y*=-1.0;vec2 v=texture(uVelocity,vUv).xy+force*dt;o=vec4(clamp(v,-1000.0,1000.0),0.0,1.0);}',
+      pressure: HEAD + 'uniform sampler2D uPressure;uniform sampler2D uDivergence;void main(){float l=texture(uPressure,vL).x;float r=texture(uPressure,vR).x;float t=texture(uPressure,vT).x;float b=texture(uPressure,vB).x;float d=texture(uDivergence,vUv).x;o=vec4((l+r+b+t-d)*0.25,0.0,0.0,1.0);}',
+      gradient: HEAD + 'uniform sampler2D uPressure;uniform sampler2D uVelocity;void main(){float l=texture(uPressure,vL).x;float r=texture(uPressure,vR).x;float t=texture(uPressure,vT).x;float b=texture(uPressure,vB).x;vec2 v=texture(uVelocity,vUv).xy-vec2(r-l,t-b);o=vec4(v,0.0,1.0);}',
+      scale: HEAD + 'uniform sampler2D uTarget;uniform float value;void main(){o=value*texture(uTarget,vUv);}',
+      gather: HEAD + 'uniform sampler2D uDye;uniform sampler2D uMask;uniform float rate;void main(){vec4 d=texture(uDye,vUv);float m=texture(uMask,vUv).r;o=vec4(mix(d.r,m,rate),d.g,0.0,1.0);}',
+      /* the component paints ink on an opaque paper; here the paper is the gradient behind, so the ink is
+         premultiplied cream with the dye as its alpha */
+      display: HEAD + 'uniform sampler2D uDye;uniform vec3 ink;void main(){vec4 d=texture(uDye,vUv);float a=smoothstep(0.02,0.85,d.r);o=vec4(ink*a,a);}'
+    };
+  }());
+
+  var createFluid = function (gl, SIM, DYE, ITER) {
+    if (!gl.getExtension('EXT_color_buffer_float')) return null;
+    gl.getExtension('OES_texture_float_linear');
+    var cs = function (type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+    var vertex = cs(gl.VERTEX_SHADER, SHADERS.vertex); if (!vertex) return null;
+    var programs = {}, names = ['splat', 'advect', 'divergence', 'curl', 'vorticity', 'pressure', 'gradient', 'scale', 'gather', 'display'], i;
+    for (i = 0; i < names.length; i++) {
+      var f = cs(gl.FRAGMENT_SHADER, SHADERS[names[i]]), pr = gl.createProgram();
+      if (!f || !pr) return null;
+      gl.attachShader(pr, vertex); gl.attachShader(pr, f); gl.bindAttribLocation(pr, 0, 'aPos'); gl.linkProgram(pr);
+      if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+      var u = {}, cnt = gl.getProgramParameter(pr, gl.ACTIVE_UNIFORMS);
+      for (var k = 0; k < cnt; k++) { var inf = gl.getActiveUniform(pr, k); if (inf) u[inf.name] = gl.getUniformLocation(pr, inf.name); }
+      programs[names[i]] = { program: pr, u: u };
+    }
+    var quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    var textures = [], fbos = [];
+    var target = function (w, h, internal, format) {
+      var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, gl.HALF_FLOAT, null);
+      var fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      gl.viewport(0, 0, w, h); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      textures.push(tex); fbos.push(fbo);
+      return { tex: tex, fbo: fbo, w: w, h: h };
+    };
+    var dbl = function (w, h, internal, format) {
+      var pair = { read: target(w, h, internal, format), write: target(w, h, internal, format), swap: function () { var t = pair.read; pair.read = pair.write; pair.write = t; } };
+      return pair;
+    };
+    var velocity, dye, pressure, divergence, curl, aspect = 1, cw = 1, ch = 1, inkRgb = [1, 1, 1];
+    var mask = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, mask);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 1, 1, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array([0]));
+    var free = function () { textures.forEach(function (t) { gl.deleteTexture(t); }); fbos.forEach(function (f) { gl.deleteFramebuffer(f); }); textures.length = 0; fbos.length = 0; };
+    var sizeFor = function (s) { return aspect >= 1 ? [Math.round(s * aspect), s] : [s, Math.round(s / aspect)]; };
+    var unit = 0;
+    var run = function (name, texel) { var p = programs[name]; gl.useProgram(p.program); gl.uniform2f(p.u.texel, texel[0], texel[1]); unit = 0; return p; };
+    var bind = function (p, uni, tex) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(p.u[uni], unit); unit++; };
+    var blit = function (o2, w, h) { gl.bindFramebuffer(gl.FRAMEBUFFER, o2 ? o2.fbo : null); gl.viewport(0, 0, o2 ? o2.w : (w || 1), o2 ? o2.h : (h || 1)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); };
+    var CURL = 22, DYE_FADE = 0.35, VELOCITY_FADE = 1.2;
+    return {
+      resize: function (w, h) {
+        cw = w; ch = h; aspect = w / h; free();
+        var s = sizeFor(SIM), d = sizeFor(DYE);
+        velocity = dbl(s[0], s[1], gl.RG16F, gl.RG); pressure = dbl(s[0], s[1], gl.R16F, gl.RED);
+        divergence = target(s[0], s[1], gl.R16F, gl.RED); curl = target(s[0], s[1], gl.R16F, gl.RED);
+        dye = dbl(d[0], d[1], gl.RGBA16F, gl.RGBA);
+      },
+      setMask: function (src) {
+        gl.bindTexture(gl.TEXTURE_2D, mask); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, gl.RED, gl.UNSIGNED_BYTE, src); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      },
+      setInk: function (c) { inkRgb = c; },
+      splat: function (x, y, vx, vy, ink, radius) {
+        var r = radius * (aspect > 1 ? aspect : 1);
+        var p = run('splat', [1 / velocity.read.w, 1 / velocity.read.h]);
+        bind(p, 'uTarget', velocity.read.tex); gl.uniform1f(p.u.aspect, aspect); gl.uniform2f(p.u.point, x, y); gl.uniform3f(p.u.color, vx, vy, 0); gl.uniform1f(p.u.radius, r);
+        blit(velocity.write); velocity.swap();
+        if (ink) {
+          p = run('splat', [1 / dye.read.w, 1 / dye.read.h]);
+          bind(p, 'uTarget', dye.read.tex); gl.uniform1f(p.u.aspect, aspect); gl.uniform2f(p.u.point, x, y); gl.uniform3f(p.u.color, ink, 0, 0); gl.uniform1f(p.u.radius, r);
+          blit(dye.write); dye.swap();
+        }
+      },
+      step: function (dt, gather) {
+        var sim = [1 / velocity.read.w, 1 / velocity.read.h], p, n;
+        p = run('curl', sim); bind(p, 'uVelocity', velocity.read.tex); blit(curl);
+        p = run('vorticity', sim); bind(p, 'uVelocity', velocity.read.tex); bind(p, 'uCurl', curl.tex); gl.uniform1f(p.u.curl, CURL); gl.uniform1f(p.u.dt, dt); blit(velocity.write); velocity.swap();
+        p = run('divergence', sim); bind(p, 'uVelocity', velocity.read.tex); blit(divergence);
+        p = run('scale', sim); bind(p, 'uTarget', pressure.read.tex); gl.uniform1f(p.u.value, 0.8); blit(pressure.write); pressure.swap();
+        for (n = 0; n < ITER; n++) { p = run('pressure', sim); bind(p, 'uPressure', pressure.read.tex); bind(p, 'uDivergence', divergence.tex); blit(pressure.write); pressure.swap(); }
+        p = run('gradient', sim); bind(p, 'uPressure', pressure.read.tex); bind(p, 'uVelocity', velocity.read.tex); blit(velocity.write); velocity.swap();
+        p = run('advect', sim); bind(p, 'uVelocity', velocity.read.tex); bind(p, 'uSource', velocity.read.tex); gl.uniform2f(p.u.simTexel, sim[0], sim[1]); gl.uniform1f(p.u.dt, dt); gl.uniform1f(p.u.fade, VELOCITY_FADE); blit(velocity.write); velocity.swap();
+        p = run('advect', [1 / dye.read.w, 1 / dye.read.h]); bind(p, 'uVelocity', velocity.read.tex); bind(p, 'uSource', dye.read.tex); gl.uniform2f(p.u.simTexel, sim[0], sim[1]); gl.uniform1f(p.u.dt, dt); gl.uniform1f(p.u.fade, DYE_FADE); blit(dye.write); dye.swap();
+        if (gather > 0) {
+          p = run('scale', sim); bind(p, 'uTarget', velocity.read.tex); gl.uniform1f(p.u.value, 1 - gather); blit(velocity.write); velocity.swap();
+          p = run('gather', [1 / dye.read.w, 1 / dye.read.h]); bind(p, 'uDye', dye.read.tex); bind(p, 'uMask', mask); gl.uniform1f(p.u.rate, gather); blit(dye.write); dye.swap();
+        }
+      },
+      draw: function () {
+        var p = run('display', [1 / dye.read.w, 1 / dye.read.h]); bind(p, 'uDye', dye.read.tex); gl.uniform3fv(p.u.ink, inkRgb);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, cw, ch); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      },
+      destroy: function () { free(); gl.deleteTexture(mask); gl.deleteBuffer(quad); }
+    };
+  };
+
+  var startInk = function () {
+    var cv = doc.createElement('canvas');
+    cv.className = 'era__ink';
+    cv.setAttribute('aria-hidden', 'true');
+    var gl = cv.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
+    if (!gl) return;
+    var DYE = phone ? 288 : 384;
+    var fluid = createFluid(gl, 112, DYE, phone ? 10 : 14);
+    if (!fluid) return;
+    sticky.insertBefore(cv, sticky.querySelector('.era__morph') || null);   /* the bubble field's own canvas is hidden by CSS once this exists */
+    var GATHER = 0.06, GATHER_AFTER = 1200, SLEEP_AFTER = 5000, STIR_FORCE = 5200, STIR_RADIUS = 0.0018, DROP_RADIUS = 0.0020;
+    var maskCv = doc.createElement('canvas');
+    var W = 0, H = 0, raf = 0, last = 0, visible = false, born = 0, touched = -1e9, active = 0, keys = [], panelNow = -2, lost = false, frames = 0;
+    var hand = { x: 0, y: 0, on: false, moved: 0 };
+
+    var wordsOf = function (i) { return (i < 0 || !panels[i]) ? [] : [].slice.call(panels[i].querySelectorAll('.era__w--key')); };
+    /* the key words, written white on black at the DOM's own positions and font: the mask the ink gathers to */
+    var build = function () {
+      var r = cv.getBoundingClientRect(); W = r.width; H = r.height;
+      if (W < 2 || H < 2) return false;
+      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      fluid.resize(cv.width, cv.height);
+      var sc = DYE / Math.min(W, H);
+      maskCv.width = Math.round(W * sc); maskCv.height = Math.round(H * sc);
+      var c = maskCv.getContext('2d');
+      c.setTransform(sc, 0, 0, sc, 0, 0);
+      c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
+      c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+      keys.forEach(function (el) {
+        var b = el.getBoundingClientRect(); if (b.width < 2) return;
+        var cs = getComputedStyle(el);
+        var pr = doc.createElement('span'); pr.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'; el.appendChild(pr);
+        var base = pr.getBoundingClientRect().bottom; el.removeChild(pr);
+        c.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+        if ('letterSpacing' in c) c.letterSpacing = cs.letterSpacing;
+        c.filter = 'blur(' + Math.max(0.4, parseFloat(cs.fontSize) * 0.006) + 'px)';
+        c.fillText(el.textContent, b.left - r.left + b.width / 2, base - r.top, b.width);
+      });
+      c.filter = 'none';
+      fluid.setMask(maskCv);
+      fluid.setInk(toRgb(cream()));
+      fluid.step(1 / 60, 0); fluid.draw();
+      return true;
+    };
+    var bloom = function () {
+      var r = cv.getBoundingClientRect();
+      keys.forEach(function (el) {
+        var b = el.getBoundingClientRect(); if (b.width < 2) return;
+        var n = Math.max(4, Math.round(b.width / 38));
+        for (var i = 0; i < n; i++) {
+          var x = (b.left - r.left + b.width * (i + Math.random() * 0.8) / n) / W;
+          var y = 1 - (b.top - r.top + b.height * (0.25 + Math.random() * 0.5)) / H;
+          fluid.splat(x, y, (Math.random() - 0.5) * 110, (Math.random() - 0.5) * 110, 0.32, DROP_RADIUS * (0.6 + Math.random()));
+        }
+      });
+    };
+    var frame = function (now) {
+      raf = 0;
+      if (!visible || doc.hidden || lost) return;
+      var dt = Math.min((now - (last || now - 16)) / 1000, 1 / 30); last = now;
+      if (hand.moved > now - 100) active = now;
+      var idle = now - touched, gather = 0;
+      if (idle > GATHER_AFTER) gather = GATHER * Math.min(1, (idle - GATHER_AFTER) / 1500);
+      var age = now - born;
+      if (age < 2000) gather = Math.max(gather, 0.012 + (age / 2000) * GATHER);
+      /* the gathering is per second, not per frame: a slow device (few frames) must still end with crisp words */
+      if (gather > 0) gather = 1 - Math.pow(1 - gather, Math.max(1, dt * 60));
+      frames++;
+      fluid.step(dt, gather); fluid.draw();
+      if (now - active < SLEEP_AFTER || age < 4000 || frames < 90) raf = requestAnimationFrame(frame);
+    };
+    var start = function () { if (!raf && visible && !doc.hidden && !lost) { last = 0; raf = requestAnimationFrame(frame); } };
+
+    /* a new phrase: the mask becomes its key words; the old ink dissolves, the new words bloom in */
+    var hadInk = false, swapT = 0;
+    var setPanel = function (i) {
+      if (i === panelNow) return;
+      panelNow = i; clearTimeout(swapT);
+      var next = wordsOf(i);
+      var apply = function () {
+        keys = next;
+        if (!build()) return;
+        born = performance.now(); active = born; touched = -1e9; frames = 0;
+        if (keys.length) bloom();
+        hadInk = keys.length > 0;
+        cv.style.opacity = '1';
+        start();
+      };
+      /* the old ink fades out in the water first (0.34 s), then the new words bloom in: no hard swap of the mask */
+      if (hadInk) { keys = []; cv.style.opacity = '0'; swapT = setTimeout(apply, 340); } else apply();
+    };
+    var activeIndex = function () { for (var k = 0; k < panels.length; k++) if (panels[k].classList.contains('is-active')) return k; return -1; };
+    var sync = function () { if (era.hasAttribute('data-era-live')) setPanel(activeIndex()); };
+    var mo = new MutationObserver(sync);
+    panels.forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['class'] }); });
+    mo.observe(era, { attributes: true, attributeFilter: ['data-era-live'] });
+
+    new ResizeObserver(function () {
+      var r = cv.getBoundingClientRect();
+      if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) { if (panelNow !== -2 && build()) { born = performance.now(); active = born; if (keys.length) bloom(); start(); } }
+    }).observe(cv);
+    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) start(); }).observe(cv);
+    doc.addEventListener('visibilitychange', start);
+    cv.addEventListener('webglcontextlost', function (e) { e.preventDefault(); lost = true; era.classList.remove('era--ink'); });
+
+    var local = function (e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: 1 - (e.clientY - r.top) / r.height }; };
+    era.addEventListener('pointermove', function (e) {
+      if (panelNow < 0 || !keys.length || (e.pointerType === 'touch' && e.buttons === 0)) return;
+      var p = local(e);
+      if (p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1) { hand.on = false; return; }
+      if (hand.on) {
+        var dx = p.x - hand.x, dy = p.y - hand.y;
+        if (dx || dy) { fluid.splat(p.x, p.y, dx * STIR_FORCE, dy * STIR_FORCE, 0, STIR_RADIUS); touched = performance.now(); hand.moved = touched; }
+      }
+      hand.x = p.x; hand.y = p.y; hand.on = true; start();
+    }, { passive: true });
+    era.addEventListener('pointerleave', function () { hand.on = false; });
+
+    era.classList.add('era--ink');
+    sync();
+    window.__eraInk = { setPanel: setPanel, state: function () { return { panel: panelNow, keys: keys.length, visible: visible, raf: !!raf, lost: lost }; } };
+  };
+
+  var later = function (fn) { if (window.requestIdleCallback) window.requestIdleCallback(fn, { timeout: 3000 }); else setTimeout(fn, 800); };
+  var go = function () {
+    later(function () {
+      try { var f = doc.fonts && doc.fonts.ready; if (f && f.then) f.then(function () { try { startInk(); } catch (e) {} }); else startInk(); } catch (e) {}
+    });
+  };
+  if (doc.readyState === 'complete') go(); else window.addEventListener('load', go);
 }());

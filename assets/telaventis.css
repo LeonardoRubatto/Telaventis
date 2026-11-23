@@ -342,7 +342,7 @@ html.js [data-reveal].in{opacity:1;transform:none}
 }
 .hero__in{position:relative;z-index:2;width:100%;padding-top:clamp(20px,min(5.4vw,6svh),80px);padding-bottom:clamp(18px,min(3.6vw,4svh),52px)}
 .hero__foot{display:grid;grid-template-columns:minmax(0,32em) auto;justify-content:space-between;align-items:end;gap:clamp(16px,2.6svh,28px) 48px;margin-top:clamp(16px,min(2.6vw,3.4svh),34px)}
-.hero__lead{margin:0;font-family:var(--serif);font-size:clamp(17.5px,1.3vw,20.5px);line-height:1.62;color:var(--ink-soft)}
+.hero__lead{margin:0;font-family:var(--sans);font-weight:360;letter-spacing:-.005em;font-size:clamp(17px,1.28vw,20px);line-height:1.58;color:var(--ink-soft)}
 .hero__aside{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
 .hero__status{margin:0;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink-soft)}
 /* a live dot, not a decoration: the studio really is taking projects
@@ -365,56 +365,14 @@ html.js [data-reveal].in{opacity:1;transform:none}
 .hero__lead{animation:hero-up .9s var(--ease) .18s both}
 .hero__aside{animation:hero-up .9s var(--ease) .3s both}
 
-/* ---- the scroll cue ------------------------------------------------------
-   Not an arrow, not a mouse: a drop of ink swells at the end of a thread,
-   lets go, stretches as it falls (the blur-and-threshold filter makes the neck
-   between the two blobs pull like a liquid) and opens a ring where it lands:
-   the same liquid that pours under the wordmark further down. Opacity and
-   transform only, on a 44 x 132 box; it starts once the headline has arrived
-   (2.4 s), leaves when the visitor scrolls, and with "reduce motion" it is a
-   still drop. Clicking it goes to the next section like any anchor. */
-.hero__foot{position:relative}
-.hero__cue{position:absolute;right:0;bottom:calc(-1 * clamp(10px,2svh,22px));display:flex;align-items:flex-end;gap:10px;
-  color:var(--ink-soft);text-decoration:none;opacity:0;animation:cue-in 1s var(--ease) 2.2s forwards;transition:opacity .5s ease}
-.hero__cue-t{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;padding-bottom:6px}
-.hero__cue-svg{display:block;width:44px;height:132px;overflow:visible}
-.cue-src,.cue-drop{fill:var(--ink)}
-.cue-ring{fill:none;stroke:var(--coral);stroke-width:1.2;opacity:0;transform-box:fill-box;transform-origin:center}
-.cue-src,.cue-drop{transform-box:fill-box;transform-origin:center}
-.cue-src{animation:cue-src 4.4s linear 2.2s infinite}
-.cue-drop{animation:cue-drop 4.4s linear 2.2s infinite}
-.cue-ring{animation:cue-ring 4.4s cubic-bezier(.2,.6,.3,1) 2.2s infinite}
-@keyframes cue-in{to{opacity:1}}
-/* 0-14 % the drop swells, 14-60 % it falls (ease-in: gravity), 60 % it lands */
-@keyframes cue-src{0%{transform:scale(1)}14%{transform:scale(1.28)}30%{transform:scale(.82)}46%,100%{transform:scale(1)}}
-@keyframes cue-drop{
-  0%{transform:translateY(0) scale(1);animation-timing-function:ease-in-out}
-  14%{transform:translateY(1px) scale(1.12);animation-timing-function:cubic-bezier(.55,0,.95,.55)}
-  58%{transform:translateY(106px) scale(.78,1.45);opacity:1}
-  60%{transform:translateY(110px) scale(1.5,.4);opacity:0}
-  61%,100%{transform:translateY(0) scale(1);opacity:0}
-}
-@keyframes cue-ring{0%,58%{transform:scale(.3,.3);opacity:0}60%{transform:scale(.5,.5);opacity:.85}92%,100%{transform:scale(3.4,2.4);opacity:0}}
-html.is-scrolled .hero__cue{opacity:0 !important;pointer-events:none}
-@media (max-width:900px){
-  .hero__cue{bottom:calc(-1 * clamp(4px,1svh,12px))}
-  .hero__cue-svg{width:34px;height:102px}
-  .hero__lead{padding-right:56px}
-}
-@media (max-height:640px){.hero__cue{display:none}}
-@media (prefers-reduced-motion: reduce){
-  .hero__cue{animation:none;opacity:1}
-  .cue-src,.cue-drop,.cue-ring{animation:none}
-  .cue-drop{display:none}
-}
-
 /* ---- the headline's weather (telaventis.js §2c) ---------------------------
    Two registered properties holding the font's own axes, per letter; the
    script drives them (gust, pointer) once the arrival is done. */
 @property --wg{syntax:'<number>';inherits:false;initial-value:750}
 @property --wd{syntax:'<number>';inherits:false;initial-value:100}
 .wt{display:block}
-br.wt-br{display:none}   /* hard break in the hero title: phones only */
+br.wt-br{display:none}
+br.wt-br.wt-br--always{display:inline}   /* hard break in the hero title: phones only */
 @media (max-width:700px){br.wt-br{display:inline}}
 .wt-line{display:block;white-space:nowrap}
 .wt-w{display:inline-block;white-space:nowrap}
@@ -825,13 +783,13 @@ a.proj__shot-wrap{display:block;cursor:pointer}
 .studio-lede{max-width:560px;padding-left:20px;border-left:2px solid var(--coral)}
 .stages{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink)}
 .stages__item{position:relative;padding:18px 12px 0 0;font-size:16px;font-weight:700;letter-spacing:-.01em}
-.stages__item::before{content:"";position:absolute;left:0;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--cream-2);border:2px solid var(--ink)}
+.stages__item::before{content:"";position:absolute;z-index:1;left:0;top:-9px;width:12px;height:12px;border-radius:50%;background:var(--cream-2);border:2px solid var(--ink)}
 .stages__item:last-child::before{background:var(--coral);border-color:var(--coral)}
 .stages__more{display:inline-block;margin-top:28px}
 @media (max-width:520px){
   .stages{grid-template-columns:1fr;border-top:0;border-left:2px solid var(--ink);margin-left:6px}
   .stages__item{padding:0 0 18px 22px}
-  .stages__item::before{left:-8px;top:3px}
+  .stages__item::before{left:-9px;top:3px}
   .stages__item:last-child{padding-bottom:0}
 }
 
@@ -1322,3 +1280,96 @@ html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{an
 .cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}
 .cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}
 /* projets:fin */
+
+/* ---- Design Memory pieces (telaventis.js §9) ------------------------------------------------
+   slide-text-button (Kokonut UI, MIT): the label rolls up, a copy takes its place. Hover/focus
+   only, and only where hover exists; the roll is an instant swap with reduced motion. */
+.btn__roll{display:inline-grid;overflow:hidden;line-height:1.2;height:1.2em}
+.btn__t{grid-area:1/1;display:block;transition:transform .5s var(--ease)}
+.btn__t + .btn__t{transform:translateY(100%)}
+.btn:focus-visible .btn__t:first-child{transform:translateY(-100%)}
+.btn:focus-visible .btn__t + .btn__t{transform:translateY(0)}
+@media (hover:hover){.btn:hover .btn__t:first-child{transform:translateY(-100%)}.btn:hover .btn__t + .btn__t{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.btn__t{transition:none}}
+/* shadow-text (Kokonut UI, MIT): the hero title's shadow is written by script; this only keeps
+   the stack from being cut by the title's own box */
+.hero .h-hero[data-shadow]{overflow:visible}
+/* morphic-navbar (Kokonut UI, MIT): the project bar is one hairline rail that splits around the
+   active project. The item padding takes the place of the old flex gap, so the rail is unbroken
+   until the script opens it (margin-right per item). The marker highlight is untouched. */
+.work-bar--morph .work-bar__in{gap:0}
+.work-bar--morph .work-bar__item{--g:clamp(18px,3.4vw,48px);padding-inline:calc(var(--g) / 2)}
+.work-bar--morph .work-bar__item:first-child{margin-left:calc(var(--g) / -2)}
+.work-bar--morph .work-bar__item::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:2px;border-radius:2px;background:var(--ink);opacity:.16;transition:background-color .3s ease,opacity .3s ease}
+.work-bar--morph .work-bar__item:hover::after,.work-bar--morph .work-bar__item:focus-visible::after{opacity:.4}
+.work-bar--morph .work-bar__item.is-on::after{background:var(--ac);opacity:1}
+
+/* the hero title's changing part (telaventis.js §9d): every letter arrives like the title's own, and from the second value
+   on is filled with one of the site's artworks. */
+.tmorph{position:relative;display:inline-block;max-width:100%}
+.tmorph__stage{position:relative;display:block;transition:width .7s cubic-bezier(.22,1,.36,1)}
+.tmorph__strut{visibility:hidden;white-space:pre}   /* (an inline-block with overflow:hidden has its baseline at its bottom edge, which is what had raised the word) */
+.tmorph__l{position:absolute;left:0;top:0;display:block;width:max-content;white-space:pre;transition:left .7s cubic-bezier(.22,1,.36,1)}   /* the outgoing word re-centres in the new width with the same easing as the box: it used to jump sideways at the start of a change */   /* no transform on the layers: a transformed layer is drawn apart and escapes the heading's pointer-ink clip (letters went blurry or ghosted) */
+.tmorph__f{display:block}
+/* an ink word carries its own colour: the heading's pointer-ink makes the heading's own text transparent and paints a picture through it, which does not reach these positioned letters (they showed up white for a moment) */
+.tmorph__l:not(.tmorph__l--art) .tmorph__f .wt-c{color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.tmorph__s{position:absolute;left:0;top:0;display:none;white-space:pre;pointer-events:none}
+.tmorph__s .wt-c{color:transparent;-webkit-text-fill-color:transparent}
+.tmorph__l--art .tmorph__s{display:block}
+.tmorph__l.is-in .tmorph__f .wt-c,.tmorph__l.is-out .tmorph__f .wt-c{text-shadow:none}
+.tmorph__l:not(.tmorph__l--art) .tmorph__s .wt-c{text-shadow:none}
+.tmorph__l.is-in .wt-c{animation:wt-arrive 1s var(--ease) both;animation-delay:calc(var(--i) * 14ms + 280ms)}   /* the incoming letters wait for the outgoing ones to be mostly gone: no overlap of two words */
+.tmorph__l.is-out .wt-c{animation:tm-leave .45s ease both;animation-delay:calc(var(--i) * 8ms)}
+@keyframes tm-leave{to{opacity:0;transform:translateY(-.14em)}}
+.tmorph__l--sky .tmorph__f .wt-c{background-color:#b3b3b3 !important}
+.tmorph__l--art .tmorph__f .wt-c{padding:.1em 0 .22em;margin:-.1em 0 -.22em;color:transparent;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;background-repeat:no-repeat;background-color:#8f8f8f;background-blend-mode:multiply;text-shadow:none}
+@media (prefers-reduced-motion:reduce){.tmorph__stage{transition:none}}
+
+/* the menu page's working example, livelier (telaventis.js §9e) */
+.qr-left{min-width:0}
+.qr-status{display:inline-flex;align-items:center;gap:10px;margin:0 0 14px;padding:7px 14px 7px 12px;border-radius:999px;background:rgba(22,32,43,.06);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);transition:background-color .4s ease,color .4s ease}
+.qr-status__dot{width:8px;height:8px;border-radius:50%;background:rgba(22,32,43,.32);transition:background-color .3s ease}
+.qr-status[data-state="busy"]{color:var(--ink);background:rgba(224,116,47,.15)}
+.qr-status[data-state="busy"] .qr-status__dot{background:var(--coral);animation:qr-pulse .7s ease-in-out infinite}
+.qr-status[data-state="done"]{color:#1B4458;background:rgba(27,68,88,.1)}
+.qr-status[data-state="done"] .qr-status__dot{background:#1B4458}
+@keyframes qr-pulse{50%{transform:scale(1.6);opacity:.55}}
+.qr-pr{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.qr-pr .qr-sheet__p{width:4.6em;max-width:none;text-align:center}
+.qr-pr__b{display:grid;place-items:center;flex:none;width:32px;height:32px;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:18px;line-height:1;cursor:pointer;transition:background-color .25s ease,color .25s ease,transform .2s ease}
+.qr-pr__b:hover{background:var(--ink);color:var(--cream)}
+.qr-pr__b:active{transform:scale(.88)}
+.qr-pr__b:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.qr-toast{position:absolute;left:50%;bottom:18px;padding:8px 14px;border-radius:999px;background:var(--ink);color:var(--cream);font-size:12.5px;font-weight:600;white-space:nowrap;opacity:0;transform:translate(-50%,12px);transition:opacity .3s ease,transform .45s var(--ease);pointer-events:none}
+.qr-toast.is-on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.qr-status__dot{animation:none !important}.qr-toast,.qr-pr__b{transition:none}}
+
+/* the hero title's box is as wide as its lines: the changing value can make a line longer than 12em, and glyphs outside the heading's box lose the pointer-ink fill (the ghost "?") */
+.hero .h-hero{max-width:none}
+
+/* the four steps played in order (telaventis.js §9f): one run, step after step. Step k starts at k x 1.5 s: its tick
+   turns red, its word is written (a stepped reveal, one step per letter), then the line travels to the next tick and
+   arrives exactly as that one starts. The tick's centre is the line's centre (both on y = -1px) and the tick is above the line. */
+.stages.is-armed{border-top-color:rgba(22,32,43,.14)}
+.stages.is-armed .stages__item::after{content:"";position:absolute;left:0;right:0;top:-2px;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:left}
+.stages.is-armed .stages__item::before{opacity:.3;transform:scale(.5)}
+.stages.is-armed .stages__t{display:inline-block;clip-path:inset(-.15em 100% -.15em 0)}
+.stages.is-play .stages__item::before{animation:stg-dot .5s var(--ease) calc(var(--k) * 1.5s) both}
+.stages.is-play .stages__t{animation:stg-write .65s steps(var(--n,10)) calc(var(--k) * 1.5s + .15s) both}
+.stages.is-play .stages__item::after{animation:stg-line .7s cubic-bezier(.5,0,.5,1) calc(var(--k) * 1.5s + .8s) both}
+@keyframes stg-line{to{transform:scaleX(1)}}
+@keyframes stg-lineY{to{transform:scaleY(1)}}
+@keyframes stg-dot{0%{opacity:.3;transform:scale(.5)}60%{transform:scale(1.25)}100%{opacity:1;transform:scale(1);background:var(--coral);border-color:var(--coral)}}
+@keyframes stg-write{to{clip-path:inset(-.15em 0 -.15em 0)}}
+@media (max-width:520px){
+  .stages.is-armed{border-left-color:rgba(22,32,43,.14)}
+  .stages.is-armed .stages__item::after{left:-2px;right:auto;top:0;bottom:0;width:2px;height:auto;transform:scaleY(0);transform-origin:top}
+  .stages.is-play .stages__item::after{animation-name:stg-lineY}
+}
+
+/* the price cards: a soft glow that follows the pointer, and a thin coral line that draws across the top (telaventis.js §9g) */
+.pcard{position:relative}
+.pcard::after{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:2px;background:var(--coral);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease);pointer-events:none}
+.pcard:hover::after,.pcard:focus-within::after{transform:scaleX(1)}
+@media (hover:hover){.pcard:hover{background-image:radial-gradient(360px circle at var(--mx,50%) var(--my,0%),rgba(224,116,47,.12),transparent 65%)}}
+@media (prefers-reduced-motion:reduce){.pcard::after{transition:none}}

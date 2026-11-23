@@ -206,7 +206,7 @@
 .era__w:nth-child(5n+3),.fx-word:nth-child(5n+3){--lp:6.2s;--ld:1.75s}
 .era__w:nth-child(5n+4),.fx-word:nth-child(5n+4){--lp:5s;--ld:2.6s}
 .era__w:nth-child(5n+5),.fx-word:nth-child(5n+5){--lp:5.8s;--ld:1.6s}
-@keyframes era-lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-.3em)}}
+@keyframes era-lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-.075em)}}   /* 23 Nov: a light drag upward, not a bob (was -.3em) */
 @media print,(prefers-reduced-motion: reduce){.era__w,.fx-word{animation:none !important}}
 
 /* the cue: one wide open triangle, two fine strokes (no arrow, no thread), above the
@@ -446,7 +446,7 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
   margin:0;font-weight:700;letter-spacing:-.035em;line-height:1.03;
   font-size:clamp(30px,6.2vw,84px);color:var(--cream);
 }
-.era__phrase--serif{font-family:var(--serif);font-weight:350;letter-spacing:-.045em;max-width:17ch;margin:0}   /* Source Serif 4 at its display optical size, light: the phrases read as set type, not as a UI line (tried against Archivo and a heavier serif: this one keeps the key words' bubbles as the only weight on the screen) */
+.era__phrase--serif{font-family:var(--sans);font-weight:300;letter-spacing:-.035em;max-width:19ch;margin:0}   /* 23 Nov: the third phrase in the same Archivo, light, as the two before it (it was the book serif) */   /* Source Serif 4 at its display optical size, light: the phrases read as set type, not as a UI line (tried against Archivo and a heavier serif: this one keeps the key words' bubbles as the only weight on the screen) */
 .era__body .link{color:var(--coral-2);border-color:rgba(224,116,47,.4)}
 .era__body .link:hover{color:var(--cream);border-color:var(--cream)}
 
@@ -562,3 +562,17 @@ html.fx-scroll-held .era[data-era-live] .era__sticky{position:fixed;top:0;left:0
 @media print{
   .fx-path-svg{display:none}
 }
+
+/* ---- Design Memory layers on the sentences section (telaventis-fx.js §6) ------------------
+   ink-background: the key words written in ink; once it works, the bubble field's canvas steps
+   aside (it stays in the page and keeps running, so the last phrase still hands over to its
+   heading as before). Without WebGL2 neither class is added and the section is as it was. */
+.era__ink{transition:opacity .34s ease;position:absolute;top:0;left:0;z-index:4;width:100%;height:100svh;height:100lvh;display:block;pointer-events:none}
+.era--ink .era__morph{opacity:0;transition:opacity .4s ease}
+
+/* the words around the ink: a light Archivo (the family of the heavy key words, at the other end of its weight axis)
+   instead of the book serif, so the line reads as one voice, thick and thin. The key words keep their own face. */
+.era__mix{font-family:var(--sans);font-weight:300;letter-spacing:-.015em}
+@media (max-width:759px){.era__mix{font-weight:340}}
+.era__ripple{display:none !important}
+@media (max-width:759px){.era__phrase--serif{font-weight:340}}

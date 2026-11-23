@@ -266,14 +266,15 @@
    * sentence (aria-label); the letters are aria-hidden. */
   var windTitle = document.querySelector('.hero .h-hero');
   if (windTitle && !reduce && window.CSS && CSS.supports('font-variation-settings', '"wght" 700')) {
-    var rawTitle = Array.prototype.map.call(windTitle.childNodes, function (n) { return n.nodeName === 'BR' ? '\n' : n.textContent; }).join('');   /* a <br> is a hard break, kept as \n */
+    var rawTitle = Array.prototype.map.call(windTitle.childNodes, function (n) { return n.nodeName === 'BR' ? (n.classList.contains('br-always') ? '\u2028' : '\n') : n.textContent; }).join('');   /* a <br> is a hard break, kept as \n */
     windTitle.setAttribute('aria-label', rawTitle.replace(/\s+/g, ' ').trim());
     var wtBox = document.createElement('span');
     wtBox.className = 'wt';
     wtBox.setAttribute('aria-hidden', 'true');
     var wtChars = [], wtWords = [];
-    rawTitle.split(/( +|\n)/).forEach(function (tok) {   /* regular spaces only: a no-break space stays inside its word */
+    rawTitle.split(/( +|\n|\u2028)/).forEach(function (tok) {   /* regular spaces only: a no-break space stays inside its word */
       if (!tok) return;
+      if (tok === '\u2028') { var br2 = document.createElement('br'); br2.className = 'wt-br wt-br--always'; wtWords.push(br2); return; }   /* a break kept at every width */
       if (tok === '\n') { var br = document.createElement('br'); br.className = 'wt-br'; wtWords.push(br); return; }   /* hard break; shown only where CSS displays .wt-br */
       if (/^ +$/.test(tok)) { wtWords.push(null); return; }
       var w = document.createElement('span');
@@ -734,3 +735,455 @@
       });
   });
 })();
+
+
+/* ==========================================================================
+   9. Design Memory (appended 23 November) — three small pieces, one per component
+
+   9a. (first a long soft shadow, then:) text-effects/swoosh-text — see 9a below. Before: Kokonut UI "Shadow Text" (MIT): the hero title cast one long,
+       soft shadow, aimed like a sundial from the reader's clock (sun on the left in the morning,
+       short at noon, long on the right at dusk, a faint moon at night) and, with a fine pointer
+       near the title, from the cursor as a lamp. Only after the arrival is over (class wt-settled,
+       or at once when there is no arrival) — and the whole title shares one shadow, not one per
+       letter: the letters are already re-shaped every frame by §2c. Reduced motion / touch: the
+       sun alone, no easing, no pointer.
+   9b. primitives/slide-text-button — Kokonut UI "Slide Text Button" (MIT): the label rolls up
+       and a second copy takes its place (hover or keyboard focus only; the copy is aria-hidden).
+       Links only (`a.btn`): the form's submit button rewrites its own text.
+   9c. navigation/morphic-navbar — Kokonut UI "Morphic Navbar" (MIT): the project bar is a
+       continuous hairline rail that splits open around the active project (and a little around
+       the hovered one) with springs; arrow keys / Home / End move focus along it. The marker
+       highlight on the words stays as it was.
+   ========================================================================== */
+(function () {
+  'use strict';
+  var doc = document;
+  var reduceM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var fine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+
+  /* ---- 9a. shadow text (Kokonut UI "Shadow Text", MIT) — the first version, softer: STRENGTH 0.30 instead of 0.62 (23 Nov: "less black, not white") ---- */
+  (function () {
+    var title = doc.querySelector('.hero .h-hero');
+    if (!title) return;
+    var STEPS = 12, EASE = 0.14, NEAR = 160, REACH = 0.5, STRENGTH = 0.13;
+    var rgb = (getComputedStyle(title).color.match(/\d+(\.\d+)?/g) || [14, 22, 32]).slice(0, 3).join(',');
+    var cur = { x: 0, y: 0, s: 0 }, goal = { x: 0, y: 0, s: 0 }, lamp = null, raf = 0, on = false, size = 64, box = null;
+
+    var sunAt = function (d) {
+      var h = d.getHours() + d.getMinutes() / 60, t = (h - 6) / 14;
+      if (t < 0 || t > 1) return { x: 0.5, height: 0.7, strength: 0.35 };   /* night: a faint, high moon */
+      return { x: t, height: Math.sin(Math.PI * t), strength: 1 };
+    };
+    var cast = function (dx, dy, s) {
+      var len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 0.5 || s < 0.01) return 'none';
+      var spacing = len / STEPS, parts = [];
+      for (var i = 1; i <= STEPS; i++) {
+        var f = i / STEPS, blur = Math.max(spacing * 1.15, 0.3 + f * len * 0.08);
+        var a = s * STRENGTH * (3.6 / STEPS) * Math.pow(1 - f, 1.6);
+        parts.push((dx * f).toFixed(1) + 'px ' + (dy * f).toFixed(1) + 'px ' + blur.toFixed(1) + 'px rgba(' + rgb + ',' + a.toFixed(3) + ')');
+      }
+      return parts.join(',');
+    };
+    var aim = function () {
+      box = title.getBoundingClientRect();
+      size = parseFloat(getComputedStyle(title).fontSize) || 64;
+      var longest = REACH * size, cx = box.left + box.width / 2, cy = box.top + box.height * 0.55;
+      if (lamp && fine && !reduceM &&
+          lamp.x > box.left - NEAR && lamp.x < box.right + NEAR && lamp.y > box.top - NEAR && lamp.y < box.bottom + NEAR) {
+        /* a lamp in your hand: the farther away, the longer the shadow */
+        var dx = cx - lamp.x, dy = cy - lamp.y, d = Math.max(1, Math.sqrt(dx * dx + dy * dy)), len = Math.min(longest, d * 0.14);
+        goal = { x: dx / d * len, y: dy / d * len, s: 1 };
+      } else {
+        var sun = sunAt(new Date());
+        var lx = box.width * (sun.x * 1.6 - 0.3), ly = -box.height * 3;
+        var sx = (box.width / 2) - lx, sy = (box.height * 0.55) - ly, sd = Math.sqrt(sx * sx + sy * sy);
+        var sl = longest * (0.18 + (1 - sun.height) * 0.82);
+        goal = { x: sx / sd * sl, y: sy / sd * sl, s: sun.strength };
+      }
+    };
+    var paint = function () { title.style.textShadow = cast(cur.x, cur.y, cur.s); };
+    var frame = function () {
+      raf = 0;
+      cur.x += (goal.x - cur.x) * EASE; cur.y += (goal.y - cur.y) * EASE; cur.s += (goal.s - cur.s) * EASE;
+      paint();
+      if (Math.abs(goal.x - cur.x) > 0.05 || Math.abs(goal.y - cur.y) > 0.05 || Math.abs(goal.s - cur.s) > 0.002) raf = requestAnimationFrame(frame);
+    };
+    var update = function () {
+      if (!on) return;
+      aim();
+      if (reduceM) { cur = { x: goal.x, y: goal.y, s: goal.s }; paint(); }
+      else if (!raf) raf = requestAnimationFrame(frame);
+    };
+    var begin = function () {
+      if (on) return; on = true;
+      title.setAttribute('data-shadow', '');
+      update();
+      if (fine && !reduceM) {
+        var hero = doc.querySelector('.hero');
+        hero.addEventListener('pointermove', function (e) { lamp = { x: e.clientX, y: e.clientY }; update(); }, { passive: true });
+        hero.addEventListener('pointerleave', function () { lamp = null; update(); });
+      }
+      window.addEventListener('resize', update, { passive: true });
+      setInterval(function () { if (!doc.hidden) update(); }, 30000);   /* the sun moves on */
+    };
+    /* the arrival first: wait for wt-settled (the script of §2c adds it); with no arrival, the load is enough */
+    var ready = function () { return title.classList.contains('wt-settled') || !title.classList.contains('wt-host') && (reduceM || !window.CSS || !CSS.supports('font-variation-settings', '"wght" 700')); };
+    if (ready()) begin();
+    else {
+      var mo = new MutationObserver(function () { if (title.classList.contains('wt-settled')) { mo.disconnect(); begin(); } });
+      mo.observe(title, { attributes: true, attributeFilter: ['class'] });
+      setTimeout(function () { if (!on && title.classList.contains('wt-host')) { mo.disconnect(); begin(); } }, 6000);   /* a slow font never blocks it for good */
+    }
+  }());
+
+  /* ---- 9b. slide text button ---------------------------------------------- */
+  [].forEach.call(doc.querySelectorAll('a.btn'), function (a) {
+    if (a.querySelector('.btn__roll')) return;
+    var label = a.textContent.replace(/\s+/g, ' ').trim();
+    if (!label) return;
+    var roll = doc.createElement('span'); roll.className = 'btn__roll';
+    var t1 = doc.createElement('span'); t1.className = 'btn__t'; t1.textContent = label;
+    var t2 = doc.createElement('span'); t2.className = 'btn__t'; t2.setAttribute('aria-hidden', 'true'); t2.textContent = label;
+    roll.appendChild(t1); roll.appendChild(t2);
+    a.textContent = ''; a.appendChild(roll);
+  });
+
+  /* ---- 9c. morphic bar ----------------------------------------------------- */
+  [].forEach.call(doc.querySelectorAll('[data-work-bar]'), function (bar) {
+    var items = [].slice.call(bar.querySelectorAll('.work-bar__item'));
+    if (items.length < 2) return;
+    var ACT = 14, HOV = 6, K = 260, C = 22;
+    var gap = items.map(function () { return { x: 0, v: 0, to: 0 }; });   /* gap AFTER item k */
+    var hover = -1, raf = 0, last = 0;
+    bar.classList.add('work-bar--morph');
+    var activeIdx = function () { for (var i = 0; i < items.length; i++) if (items[i].classList.contains('is-on')) return i; return -1; };
+    var retarget = function () {
+      var a = activeIdx();
+      for (var k = 0; k < items.length; k++) {
+        var g = 0;
+        if (a >= 0 && (k === a || k + 1 === a)) g = ACT;
+        if (hover >= 0 && (k === hover || k + 1 === hover)) g = Math.max(g, HOV);
+        gap[k].to = g;
+      }
+      if (reduceM) { gap.forEach(function (q, k) { q.x = q.to; items[k].style.marginRight = q.x + 'px'; }); return; }
+      if (!raf) { last = 0; raf = requestAnimationFrame(tick); }
+    };
+    var tick = function (now) {
+      raf = 0;
+      var dt = Math.min(0.032, (now - (last || now - 16)) / 1000); last = now;
+      var moving = false;
+      for (var k = 0; k < items.length; k++) {
+        var q = gap[k];
+        q.v += ((q.to - q.x) * K - q.v * C) * dt;       /* a spring: a little overshoot, then rest */
+        q.x += q.v * dt;
+        if (Math.abs(q.to - q.x) > 0.05 || Math.abs(q.v) > 0.5) moving = true; else { q.x = q.to; q.v = 0; }
+        items[k].style.marginRight = Math.max(0, q.x).toFixed(2) + 'px';
+      }
+      if (moving) raf = requestAnimationFrame(tick);
+    };
+    items.forEach(function (it, i) {
+      it.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { hover = i; retarget(); } });
+      it.addEventListener('pointerleave', function () { if (hover === i) { hover = -1; retarget(); } });
+      it.addEventListener('focus', function () { hover = i; retarget(); });
+      it.addEventListener('blur', function () { if (hover === i) { hover = -1; retarget(); } });
+    });
+    /* the active project comes from §7's scroll spy (class is-on): follow it */
+    var mo = new MutationObserver(retarget);
+    items.forEach(function (it) { mo.observe(it, { attributes: true, attributeFilter: ['class'] }); });
+    bar.addEventListener('keydown', function (e) {
+      var i = items.indexOf(doc.activeElement), n = -1;
+      if (i < 0) return;
+      if (e.key === 'ArrowRight') n = Math.min(items.length - 1, i + 1);
+      else if (e.key === 'ArrowLeft') n = Math.max(0, i - 1);
+      else if (e.key === 'Home') n = 0;
+      else if (e.key === 'End') n = items.length - 1;
+      if (n < 0) return;
+      e.preventDefault(); items[n].focus();
+    });
+    retarget();
+  });
+}());
+
+(function () {
+  'use strict';
+  /* 9d. The hero title's changing part. "votre activité" (the "votre" included) stays as it is for ~4 s after the title has
+     arrived; then the next value takes its place — "votre entreprise", "votre association", "votre boutique", "votre agence",
+     and back. Only that part changes. It gets the title's own effect: every letter of the incoming value arrives the way the
+     title's letters did (rise, a slight widening that relaxes, staggered 14 ms apart), the outgoing letters lift away, the
+     letters follow the pointer like the title's (weight and width opening near the cursor), the pointer-ink and the title's
+     shadow apply to them too. From the second value on, each letter is filled with one of the site's artworks (assets/art/),
+     the image running across the whole word: the background is set on every letter (not on the word) because letters that
+     are animated are drawn on their own layers, where a clip set on their parent shows nothing. Their shadow is drawn by a
+     twin of the word under it (transparent letters carrying the title's shadow), since a shadow on a clipped letter would
+     fall over the picture. If an artwork cannot be loaded, the value stays in ink. The two layers are never rebuilt at the end
+     of a change: the incoming one simply becomes the resting one (a rebuild was a visible pop). The slot's box follows the
+     value's size; its baseline comes from an invisible in-flow copy of the value, so it sits on the title's line at any size.
+     Stops under the pointer, off screen and in a hidden tab (WCAG 2.2.2). Reduced motion / no JS: the first value, in ink,
+     still. The title's aria-label stays the plain sentence. */
+  var title = document.querySelector('.hero .h-hero');
+  if (!title || !title.getAttribute('data-words')) return;
+  var reduceM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (reduceM) return;
+  var fine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  var words = title.getAttribute('data-words').split('|'), arts = (title.getAttribute('data-art') || '').split('|');
+  var me = document.querySelector('script[src*="telaventis.js"]');
+  var base = me ? new URL('art/', me.src).href : '/assets/art/';   /* next to the scripts, whatever the page's depth or the server's root */
+  var POS = [[0.38, 0.30], [0.52, 0.40], [0.40, 0.58], [0.60, 0.48], [0.30, 0.60]];   /* where in each painting the letters look: away from the corners (the signature) */
+  var clamp = function (v) { return Math.min(1, Math.max(0, v)); };
+  var SKY = 'cumulus03.avif';   /* the painting behind the TELAVENTIS wordmark: the value that closes the loop ("votre activité" again) is filled with it */
+  var ok = {};   /* artwork url -> loaded */
+  var load = function (f) {   /* one artwork, at low priority, decoded before it is declared usable (its first paint is what made a change stutter) */
+    if (!f) return;
+    var u = base + f; if (u in ok) return; ok[u] = false;
+    var im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low';   /* never ahead of what the page itself needs */
+    var done = function () { ok[u] = true; };   /* a picture that fails to load or decode is never marked usable: the value stays in ink */
+    im.src = u;
+    if (im.decode) im.decode().then(done, function () {}); else { im.onload = done; }
+  };
+  /* the file for step k (k counts from 0 = the landing value, which stays in ink) */
+  var fileFor = function (k, returned) { var m = k % words.length; return (m === 0 && (k > 0 || returned)) ? SKY : arts[m]; };
+
+  var build = function (host, hide) {
+    var HOLD = 1000, ARRIVE = 1650;
+    /* the width the slot's original words occupy right now, measured before anything is replaced: the box starts at exactly that width, so what follows it on the line ("évidente ?") does not move by the few pixels that separate the original letters' widths from the new layer's */
+    var w0 = (hide.length ? hide[hide.length - 1].getBoundingClientRect().right : host.getBoundingClientRect().right) - host.getBoundingClientRect().left;
+    var stage = document.createElement('span'); stage.className = 'tmorph__stage'; stage.setAttribute('aria-hidden', 'true');
+    var strut = document.createElement('span'); strut.className = 'tmorph__strut';   /* an invisible, in-flow copy of the current value */
+    var mkLayer = function () {
+      var l = document.createElement('span'); l.className = 'tmorph__l';
+      var s = document.createElement('span'); s.className = 'tmorph__s';   /* the twin that carries the shadow of an artwork word */
+      var f = document.createElement('span'); f.className = 'tmorph__f';   /* the letters */
+      l.appendChild(s); l.appendChild(f); l._s = s; l._f = f;
+      return l;
+    };
+    var a = mkLayer(), b = mkLayer();
+    stage.appendChild(strut); stage.appendChild(a); stage.appendChild(b);
+    host.textContent = ''; host.classList.add('tmorph'); host.appendChild(stage);
+    /* the other words of the slot stay in the line (a hidden word with no box would make §2c's line-locking start a new line),
+       but with no width (and NOT overflow:hidden: an inline-block with overflow hidden sits on its bottom edge, which pushed the next line down when the slot was taken over), and pulled back by one space so the gap after the slot stays a single space */
+    var sp = document.createElement('span'); sp.style.cssText = 'position:absolute;visibility:hidden;white-space:pre'; sp.textContent = ' ​'; title.appendChild(sp);
+    var spw = sp.getBoundingClientRect().width; title.removeChild(sp);
+    hide.forEach(function (w) { w.style.cssText = 'display:inline-block;width:0;visibility:hidden;margin-left:-' + spw.toFixed(2) + 'px'; });
+
+    var idx = 0, morphing = false, timer = 0, paused = false, onScreen = true, ptr = null, raf = 0;
+    var cells = [];   /* the letters of the resting layer, with their centres, for the pointer */
+    var letters = function (n, text) {
+      n._f.textContent = ''; n._s.textContent = '';
+      var i = 0;
+      Array.prototype.forEach.call(text, function (ch) {
+        [n._f, n._s].forEach(function (box) {
+          var c = document.createElement('span'); c.className = 'wt-c'; c.textContent = ch; c.style.setProperty('--i', i); box.appendChild(c);
+        });
+        i++;
+      });
+    };
+    /* the artwork, laid across the whole word: every letter gets the same picture, shifted by its own left edge */
+    var returned = false;   /* the loop has come back to its first value at least once */
+    var artFor = function (k) { var f = fileFor(k, returned); return f ? base + f : ''; };
+    var ahead = function () { load(fileFor(idx + 1, returned)); load(fileFor(idx + 2, returned)); };   /* only the next two pictures, never all of them */
+    var paint = function (n, k) {
+      var u = artFor(k), cs = n._f.children, W = n.offsetWidth || 1, p = POS[k % POS.length], i;
+      var art = !!(u && ok[u]);
+      n._artUrl = art ? u : '';
+      n.classList.toggle('tmorph__l--art', art);
+      n.classList.toggle('tmorph__l--sky', art && u.indexOf(SKY) > -1);
+      for (i = 0; i < cs.length; i++) {
+        var c = cs[i];
+        if (art) {
+          var size = Math.max(W * 2.2, 420);
+          c.style.backgroundImage = 'url(' + u + ')';
+          c.style.backgroundSize = size.toFixed(0) + 'px auto';
+          c.style.backgroundPosition = (-(c.offsetLeft + (size - W) * p[0])).toFixed(1) + 'px ' + (p[1] * 100).toFixed(0) + '%';
+        } else { c.style.backgroundImage = ''; }
+      }
+    };
+    var fill = function (n, k) { n.className = 'tmorph__l'; letters(n, words[k % words.length]); paint(n, k); };
+    var size = function (n) { stage.style.width = n.offsetWidth + 'px'; };   /* only the width is set: the height always comes from the invisible in-flow copy, i.e. exactly one line of the title (a height taken from the layers was taller and pushed the next line down) */
+    var measure = function () {
+      cells = [];
+      Array.prototype.forEach.call(a._f.children, function (c, i) {
+        var r = c.getBoundingClientRect();
+        cells.push({ el: c, twin: a._s.children[i], x: r.left + r.width / 2, y: r.top + r.height / 2, w: 750, d: 100 });
+      });
+    };
+    var rest = function () {
+      b.style.visibility = 'hidden'; a.style.visibility = 'visible'; a.style.left = '0px'; b.style.left = '0px';
+      fill(a, idx); fill(b, idx + 1); strut.textContent = words[idx];
+      var t = stage.style.transition; stage.style.transition = 'none'; size(a); void stage.offsetWidth; stage.style.transition = t;
+      measure();
+    };
+    /* the title's weather, reduced to a pointer: weight and width open near the cursor (quantised, written only when they change) */
+    var weather = function () {
+      raf = 0;
+      var fs = parseFloat(getComputedStyle(title).fontSize) || 60, R = fs * 1.7;
+      cells.forEach(function (c) {
+        var t = 0;
+        if (ptr && !morphing) { var dx = c.x - ptr.x, dy = c.y - ptr.y, d = Math.sqrt(dx * dx + dy * dy); t = clamp(1 - d / R); t = Math.round(t * t * 4) / 4; }
+        var w = Math.round(750 - 390 * t), d2 = Math.round(100 + 25 * t);
+        if (w !== c.w || d2 !== c.d) {
+          c.w = w; c.d = d2;
+          [c.el, c.twin].forEach(function (e) { if (e) { e.style.setProperty('--wg', w); e.style.setProperty('--wd', d2); } });
+        }
+      });
+    };
+    var kick = function () { if (!raf) raf = requestAnimationFrame(weather); };
+    var schedule = function (ms) { clearTimeout(timer); timer = setTimeout(go, ms); };
+    var go = function () {
+      if (paused || !onScreen || document.hidden) { schedule(600); return; }
+      morphing = true;
+      var want = artFor(idx + 1); if (!!(want && ok[want]) !== !!b._artUrl) paint(b, idx + 1);   /* already built after the last change: no work at the start of a change */
+      size(b);
+      a.style.left = ((b.offsetWidth - a.offsetWidth) / 2).toFixed(1) + 'px';   /* centred in the width it is shrinking or growing to */
+      title.setAttribute('data-ink-wait', '');   /* §2's pointer-ink clips an image into the glyphs; letters in motion escape that clip, so it rests while they move */
+      b.style.visibility = 'visible'; b.classList.add('is-in'); a.classList.add('is-out');
+      setTimeout(function () {
+        /* the incoming layer becomes the resting one: nothing is rebuilt, so nothing pops */
+        var t = a; a = b; b = t;
+        idx = (idx + 1) % words.length;
+        if (idx === 0) returned = true;
+        a.classList.remove('is-in'); a.style.left = '0px';
+        b.style.visibility = 'hidden'; b.style.left = '0px';
+        fill(b, idx + 1); strut.textContent = words[idx]; ahead();
+        measure(); morphing = false; title.removeAttribute('data-ink-wait');
+        schedule(HOLD);
+      }, ARRIVE);
+    };
+    rest(); ahead();
+    { var tr0 = stage.style.transition; stage.style.transition = 'none'; stage.style.width = w0.toFixed(2) + 'px'; void stage.offsetWidth; stage.style.transition = tr0; }
+    window.addEventListener('resize', function () { if (!morphing) rest(); }, { passive: true });
+    title.addEventListener('pointerenter', function () { paused = true; });
+    title.addEventListener('pointerleave', function () { paused = false; ptr = null; kick(); });
+    if (fine) document.querySelector('.hero').addEventListener('pointermove', function (e) { ptr = { x: e.clientX, y: e.clientY }; kick(); }, { passive: true });
+    new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }).observe(title);
+    schedule(300);   /* built ~3.2 s after the title has arrived (see begin), so the first change is ~4 s after it */
+  };
+
+  var begin = function () {
+    var toks = words[0].split(' '), all = [].slice.call(title.querySelectorAll('.wt-w')), host = null, hide = [];
+    for (var i = 0; i + toks.length <= all.length && !host; i++) {
+      var good = true;
+      for (var k = 0; k < toks.length; k++) if (all[i + k].textContent !== toks[k]) { good = false; break; }
+      if (good) { host = all[i]; hide = all.slice(i + 1, i + toks.length); }
+    }
+    if (!host) return;
+    /* The slot is only taken over once the title's own "gust" (§2c, ~1.7 s after the arrival) has passed: until then the
+       original letters stay in place and take part in it, so nothing in the line looks out of step. The artworks load meanwhile. */
+    load(arts[1]);   /* just the first picture, as soon as the title has settled; the next ones are fetched two steps ahead (see `ahead`) */
+    setTimeout(function () { build(host, hide); }, 3200);
+  };
+  /* wait for the arrival to be over (class wt-settled, added by §2c): a light poll, up to 25 s, then give up (the title stays as it is) */
+  if (title.classList.contains('wt-settled')) begin();
+  else {
+    var tries = 0, iv = setInterval(function () {
+      if (title.classList.contains('wt-settled')) { clearInterval(iv); begin(); }
+      else if (++tries > 83) clearInterval(iv);
+    }, 300);
+  }
+}());
+
+(function () {
+  'use strict';
+  /* 9e. The menu page's working example, given more to touch (23 Nov, from the design system):
+     · a status pill above the sheet, after Kokonut UI "Save Status" (MIT): it says what is happening — waiting for a change,
+       "updating…", then "online" — so the link between the sheet and the phone is stated, not only shown;
+     · − / + steppers on the prices, after Kokonut UI "Team Selector" (MIT): the price moves by 0,10 € a press (the number
+       is still typed by hand if you prefer);
+     · a toast inside the phone ("price updated", "sold out") that appears for a moment, like a real menu would on change.
+     No server, nothing saved: it is the same illustration as before (MODE-EMPLOI §9), only livelier. §8 still does the work
+     of updating the phone; this file only listens to the same events. */
+  var qd = document.querySelector('[data-qr-demo]');
+  if (!qd) return;
+  var lang = (qd.getAttribute('data-lang') || 'fr');
+  var T = {
+    fr: { idle: 'Changez un prix, décochez un plat', busy: 'Mise à jour…', done: 'En ligne sur le téléphone', up: 'Prix mis à jour', out: 'Plat épuisé', back: 'De nouveau disponible', minus: 'Baisser de 0,10 €', plus: 'Monter de 0,10 €' },
+    en: { idle: 'Change a price, untick a dish', busy: 'Updating…', done: 'Live on the phone', up: 'Price updated', out: 'Sold out', back: 'Available again', minus: 'Lower by €0.10', plus: 'Raise by €0.10' },
+    it: { idle: 'Cambia un prezzo, togli un piatto', busy: 'Aggiornamento…', done: 'Online sul telefono', up: 'Prezzo aggiornato', out: 'Esaurito', back: 'Di nuovo disponibile', minus: 'Abbassa di 0,10 €', plus: 'Alza di 0,10 €' }
+  }[lang] || null;
+  if (!T) return;
+  var sheet = qd.querySelector('.qr-sheet'), phone = qd.querySelector('.qr-phone');
+  if (!sheet || !phone) return;
+
+  /* status pill */
+  var pill = document.createElement('p');
+  pill.className = 'qr-status'; pill.setAttribute('role', 'status'); pill.setAttribute('aria-live', 'polite');
+  pill.innerHTML = '<i class="qr-status__dot" aria-hidden="true"></i><span class="qr-status__t">' + T.idle + '</span>';
+  var label = pill.querySelector('.qr-status__t'), pillTimer = 0;
+  var left = document.createElement('div'); left.className = 'qr-left';   /* one grid cell for the pill and the sheet */
+  sheet.parentNode.insertBefore(left, sheet); left.appendChild(pill); left.appendChild(sheet);
+  var setState = function (state, text) { pill.setAttribute('data-state', state); label.textContent = text; };
+  var touched = function () {
+    setState('busy', T.busy);
+    clearTimeout(pillTimer);
+    pillTimer = setTimeout(function () { setState('done', T.done); pillTimer = setTimeout(function () { setState('idle', T.idle); }, 3200); }, 650);
+  };
+
+  /* toast in the phone */
+  var toast = document.createElement('div');
+  toast.className = 'qr-toast'; toast.setAttribute('aria-hidden', 'true');
+  phone.appendChild(toast);
+  var toastTimer = 0;
+  var say = function (text) {
+    toast.textContent = text; toast.classList.add('is-on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.classList.remove('is-on'); }, 1700);
+  };
+
+  /* steppers */
+  var fmt = function (n) { var s = n.toFixed(2); return lang === 'en' ? s : s.replace('.', ','); };
+  [].forEach.call(qd.querySelectorAll('.qr-sheet__p'), function (input) {
+    var wrap = document.createElement('span'); wrap.className = 'qr-pr';
+    var minus = document.createElement('button'), plus = document.createElement('button');
+    minus.type = plus.type = 'button'; minus.className = 'qr-pr__b'; plus.className = 'qr-pr__b';
+    minus.textContent = '−'; plus.textContent = '+';
+    minus.setAttribute('aria-label', T.minus); plus.setAttribute('aria-label', T.plus);
+    input.parentNode.insertBefore(wrap, input); wrap.appendChild(minus); wrap.appendChild(input); wrap.appendChild(plus);
+    var bump = function (d) {
+      var v = parseFloat(String(input.value).replace(',', '.'));
+      if (isNaN(v)) v = 0;
+      input.value = fmt(Math.max(0, Math.round((v + d) * 100) / 100));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    minus.addEventListener('click', function () { bump(-0.1); });
+    plus.addEventListener('click', function () { bump(0.1); });
+  });
+
+  qd.addEventListener('input', function (e) { if (e.target.classList.contains('qr-sheet__p')) { touched(); say(T.up); } });
+  qd.addEventListener('change', function (e) { if (e.target.classList.contains('qr-sheet__ok')) { touched(); say(e.target.checked ? T.back : T.out); } });
+}());
+
+(function () {
+  'use strict';
+  /* 9f. The four working steps of the home page (Comprendre / Structurer / Concevoir / Mettre en ligne), played once when they
+     come into view: step by step, the ruled line draws on toward the next tick, the tick turns red, and the word is written
+     from left to right (a stepped reveal, one step per letter), then a pause before the next. All of it driven by one delay per
+     step (--k), so line, tick and word move together. Without script, or with reduced motion, the list is shown as it always
+     was. */
+  var list = document.querySelector('.stages');
+  if (!list) return;
+  var reduceM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (reduceM || !('IntersectionObserver' in window)) return;
+  [].forEach.call(list.children, function (li, k) {
+    var t = li.textContent.trim(), span = document.createElement('span');
+    span.className = 'stages__t'; span.textContent = t;
+    li.textContent = ''; li.appendChild(span);
+    li.style.setProperty('--k', k); li.style.setProperty('--n', Math.max(1, t.length));
+  });
+  list.classList.add('is-armed');
+  var io = new IntersectionObserver(function (es) {
+    if (es[0].isIntersecting) { io.disconnect(); list.classList.add('is-play'); }
+  }, { threshold: 0.6 });
+  io.observe(list);
+}());
+
+(function () {
+  'use strict';
+  /* 9g. The price cards follow the pointer with a soft glow (CSS reads --mx / --my); written only while the pointer is on a card. */
+  var cards = document.querySelectorAll('.pcard');
+  if (!cards.length || !window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;
+  [].forEach.call(cards, function (el) {
+    el.addEventListener('pointermove', function (e) {
+      var r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', (e.clientX - r.left).toFixed(0) + 'px'); el.style.setProperty('--my', (e.clientY - r.top).toFixed(0) + 'px');
+    }, { passive: true });
+  });
+}());

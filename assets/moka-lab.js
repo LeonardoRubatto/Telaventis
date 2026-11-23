@@ -249,7 +249,7 @@
       var finish=ease(range(p,.84,.92));
       var fadeSources=1-range(p,.14,.27);
 
-      if(progress)progress.style.transform='scaleY('+p.toFixed(4)+')';
+      if(progress){progress.style.transform='scaleY('+p.toFixed(4)+')';progress.parentNode.style.setProperty('--p',p.toFixed(4));}
       if(browser){browser.style.setProperty('--open',open.toFixed(4));browser.style.opacity=(open*(1-.13*finish)).toFixed(4);browser.style.transform='translate(-50%,-50%) scale('+(0.72+open*.28-finish*.055).toFixed(4)+')';}
       if(page)page.style.transform='translate3d(0,'+(-maxInner*inner).toFixed(2)+'px,0)';
       /* Fragments are clamped against the canvas's *actual* rendered size

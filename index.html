@@ -44,13 +44,13 @@
      background-image): Archivo draws the headline and the wordmark; the sky fills the lower half of the letters. -->
 <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/art/cumulus03.avif" as="image" type="image/avif" fetchpriority="high">
-<link rel="stylesheet" href="assets/telaventis.css?v=83">
+<link rel="stylesheet" href="assets/telaventis.css?v=117">
 <!-- MOKA experiment (scroll-driven Atelier Moka case study) — delete this
      <link>, the <section id="direction-lab">…</section> below, and the
      matching <script> near </body> to remove it with zero effect on the
      rest of the site. -->
-<link rel="stylesheet" href="assets/moka-lab.css?v=48">
-<link rel="stylesheet" href="assets/telaventis-fx.css?v=82">
+<link rel="stylesheet" href="assets/moka-lab.css?v=82">
+<link rel="stylesheet" href="assets/telaventis-fx.css?v=116">
 
 <!-- TODO Leonardo: ajouter SIRET / adresse / téléphone dès que ces informations
      sont arrêtées — volontairement omis plutôt qu'inventé (voir mentions-legales.html). -->
@@ -128,17 +128,9 @@
   <section class="hero">
     <div class="wrap hero__in">
       <div class="hero__copy">
-        <h1 class="h-hero" data-ink>Un site qui rend votre activité évidente&nbsp;?<br class="wt-br"> On vous le crée.</h1>
+        <h1 class="h-hero" data-ink data-words="votre activité|votre entreprise|votre association|votre boutique|votre agence" data-art="|susan-j-harris.webp|alexandra-fox.webp|rathi-thevi-5.jpg|cafe-delight.webp">Un site qui rend<br class="br-always"> votre activité évidente&nbsp;?<br class="br-always"> On vous le crée.</h1>
         <div class="hero__foot">
           <p class="hero__lead">Telaventis transforme vos idées, vos textes et vos canaux dispersés en une présence claire, distinctive et entièrement à vous.</p>
-          <a class="hero__cue" href="#digital-era" aria-label="Faire défiler la page">
-            <svg class="hero__cue-svg" viewBox="0 0 44 132" width="44" height="132" aria-hidden="true" focusable="false">
-              <defs><filter id="cue-goo" x="-60%" y="-10%" width="220%" height="125%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter></defs>
-              <g filter="url(#cue-goo)"><circle class="cue-src" cx="22" cy="10" r="5.5"/><circle class="cue-drop" cx="22" cy="10" r="4.6"/></g>
-              <ellipse class="cue-ring" cx="22" cy="122" rx="5" ry="1.6"/>
-            </svg>
-            <span class="hero__cue-t" aria-hidden="true">Défiler</span>
-          </a>
         </div>
       </div>
     </div>
@@ -626,10 +618,10 @@
   </div>
 </footer>
 
-<script src="assets/telaventis.js?v=71" defer fetchpriority="high"></script>
-<script src="assets/telaventis-fx.js?v=97" defer fetchpriority="high"></script>
+<script src="assets/telaventis.js?v=105" defer fetchpriority="high"></script>
+<script src="assets/telaventis-fx.js?v=131" defer fetchpriority="high"></script>
 <!-- MOKA experiment — remove this line together with the CSS <link> and
      the #direction-lab section to deactivate it. -->
-<script src="assets/moka-lab.js?v=53" defer fetchpriority="low"></script>
+<script src="assets/moka-lab.js?v=87" defer fetchpriority="low"></script>
 </body>
 </html>
