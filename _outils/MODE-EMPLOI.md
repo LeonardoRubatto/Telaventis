@@ -443,6 +443,7 @@ hors des mots, image par image) ; l'ancienne version donne ~60 % pendant ~170 ms
 - **Transitions entre pages** : le balayage diagonal sur ordinateur révèle la nouvelle page au-dessus d'une capture opaque de la page précédente. Avec un pointeur tactile, la nouvelle page affiche directement son propre effet d'entrée.
 - **Captures latérales des exemples** : le sélecteur de proportion cible les images à l'intérieur de `<picture>`. Leur hauteur suit leur largeur et le ratio du fichier choisi par le navigateur.
 - **Ombre des lettres illustrées** : l'image garde sa place au-dessus de son ombre après la fin des transformations. Le retrait de l'animation ne doit plus assombrir l'intérieur des lettres.
+- **Rythme du titre dans les trois langues** : le français fixe les repères de l'apparition et de chaque changement de texte. Les lettres anglaises et italiennes se répartissent sur ces mêmes durées, même quand les expressions sont plus longues.
 - **Boutons** (`a.btn`) : texte qui roule (« Slide Text Button »). **Barre des projets** : trait qui s'ouvre autour du projet courant (« Morphic Navbar »). **Démo de la page menu** : pastille d'état, boutons − / + sur les prix, bulle dans le téléphone (§9e).
 - **Moka** : cadre du navigateur plus grand, plus de chiffres, trait de progression moderne avec une goutte en tête ; la retenue après le titre « Même activité. Autre perception. » est ~1,2 s plus courte.
 - Crédits (Kokonut UI, Componentry) dans les trois `mentions-legales.html`.

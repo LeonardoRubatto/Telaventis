@@ -288,6 +288,7 @@
     wtBox.className = 'wt';
     wtBox.setAttribute('aria-hidden', 'true');
     var wtChars = [], wtWords = [];
+    var phraseStart = -1, phraseEnd = -1;
     var addLetters = function (box, word) {
       Array.prototype.forEach.call(word, function (ch) {
         var c = document.createElement('span');
@@ -309,15 +310,30 @@
         var parts = tok.slice(1).split('\u0002');
         var phrase = document.createElement('span');
         phrase.setAttribute('data-hero-phrase', '');
+        phraseStart = wtChars.length;
         parts[0].split(/( )/).forEach(function (part) {
           if (part === ' ') phrase.appendChild(document.createTextNode(part));
           else addLetters(phrase, part);
         });
+        phraseEnd = wtChars.length;
         w.appendChild(phrase);
         addLetters(w, parts[1]);   /* punctuation stays next to the slot, outside the rotation */
       } else addLetters(w, tok);
       wtWords.push(w);
     });
+    var arrivalSlots = wtChars.length;
+    if (phraseStart > 0 && phraseEnd > phraseStart && phraseEnd < wtChars.length) {
+      /* The French title sets the timing before, inside and after the changing phrase.
+         Distribute each translation's letters over those same time windows. */
+      var stagger = function (from, to, first, last) {
+        var step = (last - first) / Math.max(1, to - from - 1);
+        for (var i = from; i < to; i++) wtChars[i].style.setProperty('--i', first + (i - from) * step);
+      };
+      stagger(0, phraseStart, 0, 12);
+      stagger(phraseStart, phraseEnd, 13, 25);
+      stagger(phraseEnd, wtChars.length, 26, 48);
+      arrivalSlots = 49;
+    }
     var layWords = function () {
       /* flat first, so the browser wraps them itself, then lock what it chose */
       wtBox.textContent = '';
@@ -422,7 +438,7 @@
          real face.
        The face swap itself moves nothing: the fallback is scaled to
        Archivo's measured widths (telaventis.css). */
-    var arrive = (wtChars.length * 14 + 60 + 1000), wtStarted = false;
+    var arrive = (arrivalSlots * 14 + 60 + 1000), wtStarted = false;
     var startArrival = function () {
       if (wtStarted) return;
       /* the fail-safe may have shown the title while we waited for a smooth
@@ -950,6 +966,7 @@
   if (reduceM) return;
   var fine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
   var words = title.getAttribute('data-words').split('|'), arts = (title.getAttribute('data-art') || '').split('|');
+  var wordSlots = [14, 16, 17, 14, 12];   /* glyphs and spaces in the French cycle */
   var me = document.querySelector('script[src*="telaventis.js"]');
   var base = me ? new URL('art/', me.src).href : '/assets/art/';   /* next to the scripts, whatever the page's depth or the server's root */
   /* Frame the lighter parts of each artwork consistently across translations. */
@@ -990,12 +1007,12 @@
 
     var idx = 0, morphing = false, timer = 0, paused = false, onScreen = true, ptr = null, raf = 0;
     var cells = [];   /* the letters of the resting layer, with their centres, for the pointer */
-    var letters = function (n, text) {
+    var letters = function (n, text, slots) {
       n._f.textContent = ''; n._s.textContent = '';
-      var i = 0;
+      var i = 0, step = (slots - 1) / Math.max(1, text.length - 1);
       Array.prototype.forEach.call(text, function (ch) {
         [n._f, n._s].forEach(function (box) {
-          var c = document.createElement('span'); c.className = 'wt-c'; c.textContent = ch; c.style.setProperty('--i', i); box.appendChild(c);
+          var c = document.createElement('span'); c.className = 'wt-c'; c.textContent = ch; c.style.setProperty('--i', i * step); box.appendChild(c);
         });
         i++;
       });
@@ -1021,7 +1038,12 @@
         } else { c.style.backgroundImage = ''; }
       }
     };
-    var fill = function (n, k) { n.className = 'tmorph__l'; letters(n, words[k % words.length]); paint(n, k); };
+    var fill = function (n, k) {
+      var i = k % words.length, word = words[i];
+      n.className = 'tmorph__l';
+      letters(n, word, wordSlots[i] || word.length);
+      paint(n, k);
+    };
     var size = function (n) { stage.style.width = n.offsetWidth + 'px'; };   /* only the width is set: the height always comes from the invisible in-flow copy, i.e. exactly one line of the title (a height taken from the layers was taller and pushed the next line down) */
     var measure = function () {
       cells = [];
