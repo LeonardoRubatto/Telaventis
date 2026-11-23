@@ -351,7 +351,7 @@
     var W_REST = 750, W_OPEN = 360, D_REST = 100, D_OPEN = 125;
     var wtCur = wtChars.map(function () { return 0; });   /* 0 = at rest, 1 = fully open */
     var wtPtr = { x: -1e5, y: -1e5, on: false };
-    var gustT0 = 0, GUST_MS = 1700, wtRaf = 0, wtReady = false;
+    var gustT0 = 0, GUST_MS = 1700, gustPending = false, wtRaf = 0, wtReady = false;
     /* Changing a letter's weight/width re-shapes it and re-lays-out its line,
        which is real work (tens of letters, every frame). So: values are
        quantised (a handful of distinct instances per letter, which the font
@@ -368,7 +368,7 @@
       wtRaf = 0;
       if (wtOff) return;
       var dt = wtLastNow ? now - wtLastNow : 1000 / 60;
-      if (wtPtr.on && !gustT0 && dt < 120) {
+      if (wtPtr.on && !gustPending && dt < 120) {
         if (dt > 28) { if (++wtSlow >= 10) { wtStop(); return; } } else if (wtSlow > 0) wtSlow--;
       } else wtSlow = 0;
       wtLastNow = now;
@@ -399,6 +399,12 @@
         var nd = D_REST + Math.round((D_OPEN - D_REST) * c / 2.5) * 2.5;
         if (nw !== wtW[i]) { wtW[i] = nw; wtChars[i].style.setProperty('--wg', nw); }
         if (nd !== wtD[i]) { wtD[i] = nd; wtChars[i].style.setProperty('--wd', nd); }
+      }
+      /* The pointer can keep letters moving after the gust has passed. */
+      if (gustPending && !gustT0 && (!moving || wtPtr.on)) {
+        gustPending = false;
+        windTitle.classList.add('wt-gust-ended');
+        windTitle.dispatchEvent(new Event('hero-gust-end'));
       }
       if (moving || gustT0 || wtPtr.on) wtRaf = requestAnimationFrame(wtFrame); else wtLastNow = 0;
     };
@@ -457,6 +463,7 @@
       wtMeasure();
       wtReady = true;
       gustT0 = performance.now();
+      gustPending = true;
       wtKick();
     };
     var wtMode = '', plainTimer = 0;
@@ -921,8 +928,8 @@
 
 (function () {
   'use strict';
-  /* 9d. The hero title's changing part. "votre activité" (the "votre" included) stays as it is for ~4 s after the title has
-     arrived; then the next value takes its place — "votre entreprise", "votre association", "votre boutique", "votre agence",
+  /* 9d. The hero title's changing part. "votre activité" (the "votre" included) stays as it is until half a second after
+     the gust; then the next value takes its place — "votre entreprise", "votre association", "votre boutique", "votre agence",
      and back. Only that part changes. It gets the title's own effect: every letter of the incoming value arrives the way the
      title's letters did (rise, a slight widening that relaxes, staggered 14 ms apart), the outgoing letters lift away, the
      letters follow the pointer like the title's (weight and width opening near the cursor), the pointer-ink and the title's
@@ -1072,7 +1079,8 @@
     title.addEventListener('pointerleave', function () { paused = false; ptr = null; kick(); });
     if (fine) document.querySelector('.hero').addEventListener('pointermove', function (e) { ptr = { x: e.clientX, y: e.clientY }; kick(); }, { passive: true });
     new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }).observe(title);
-    schedule(3500);
+    if (title.classList.contains('wt-gust-ended')) schedule(500);
+    else title.addEventListener('hero-gust-end', function () { schedule(500); }, { once: true });
   };
 
   var begin = function () {
