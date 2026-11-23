@@ -78,13 +78,13 @@ def video(pre, k, kind, cls, vt=False):
     # data-poster, not poster: a browser fetches a poster the moment it sees
     # the attribute, even with preload="none" - ten of them were taking the
     # headline's bandwidth on a slow first visit. telaventis.js applies them
-    # as each scene nears (loadPoster); without script, the <noscript> still
+    # as a layer over the video when each scene nears; without script, the <noscript> still
     # takes the video's place (telaventis.css hides the video then).
-    return (f'<video class="{cls}" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" '
-            f'width="{w}" height="{h}" data-poster="{poster}"{v}>'
+    return (f'<span class="cst__screen"{v}><video class="{cls}" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" '
+            f'width="{w}" height="{h}" data-poster="{poster}">'
             f'<source src="{pre}assets/video/{k}-{kind}.webm" type="{AV1}">'
             f'<source src="{pre}assets/video/{k}-{kind}.mp4" type="video/mp4"></video>'
-            f'<noscript><img class="{cls}" src="{poster}" width="{w}" height="{h}" alt=""></noscript>')
+            f'<noscript><img class="{cls}" src="{poster}" width="{w}" height="{h}" alt=""></noscript></span>')
 
 
 # ---------------------------------------------------------------- travaux --

@@ -38,14 +38,23 @@
     var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     return !!(c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || '')));
   }());
-  /* posters are applied by script, as the video's scene comes near (the
-     browser fetches a poster the moment it sees the attribute, even with
-     preload="none": ten of them, 420 KB, used to be fetched before the
-     headline's own font). The generator writes data-poster; without script
-     a <noscript> still stands in for the video. */
+  /* Load the still only as its scene nears, and keep it over the video
+     until a decoded frame reaches the compositor. */
   var loadPoster = function (v) {
     var p = v.getAttribute && v.getAttribute('data-poster');
-    if (p) { v.setAttribute('poster', p); v.removeAttribute('data-poster'); }
+    if (!p || v.parentElement.querySelector('.cst__poster')) return;
+    var screen = v.parentElement, still = new Image();
+    still.className = 'cst__poster';
+    still.alt = '';
+    still.decoding = 'async';
+    still.src = p;
+    screen.appendChild(still);
+    var showFrame = function () { if (!v.error) screen.classList.add('has-frame'); };
+    v.addEventListener('playing', function () {
+      if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(showFrame);
+      else requestAnimationFrame(function () { requestAnimationFrame(showFrame); });
+    }, { once: true });
+    v.addEventListener('error', function () { screen.classList.remove('has-frame'); });
   };
 
   /* --- 0. mobile menu: close the <details> disclosure after a link is
@@ -613,7 +622,11 @@
       var cvio = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           var v = e.target;
-          if (e.isIntersecting && !document.hidden) { v.preload = 'auto'; var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+          if (e.isIntersecting && e.intersectionRatio >= 0.33 && !document.hidden) {
+            loadPoster(v);
+            v.preload = 'auto';
+            var pr = v.play(); if (pr && pr.catch) pr.catch(function () {});
+          }
           else if (!v.paused) v.pause();
         });
       }, { threshold: 0.33 });

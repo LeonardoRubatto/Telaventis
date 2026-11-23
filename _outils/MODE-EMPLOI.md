@@ -292,15 +292,16 @@ c'est l'**ordre de chargement** — le hero d'abord, tout le reste après :
   rien ne bouge. Son animation (opacité et position seulement : elle ne fait travailler que
   le compositeur) ne démarre qu'au premier moment fluide (4 images de suite sous 24 ms,
   0,9 s au plus : `whenSmooth`) ; si Archivo n'est pas là, le titre reste où il est et le
-  coup de vent passe quand la police arrive (quantifié, et abandonné de lui-même si la page
-  ne suit plus : `wtStop`). Le mot TELAVENTIS a un fond uni et un aperçu flou du ciel
+  coup de vent passe quand la police arrive (quantifié ; `wtStop` concerne uniquement
+  le suivi continu de la souris). Le mot TELAVENTIS a un fond uni et un aperçu flou du ciel
   (`--sky-lqip`, 332 octets) : entier dès la première image.
 - **Préchargé, en haute priorité :** la police Archivo et le ciel (`<link rel="preload">`
   dans chaque page, et `Link:` dans `_headers` pour les trois accueils : Early Hints), les
   deux scripts `telaventis.js` et `telaventis-fx.js`.
 - **Après, en priorité basse ou à l'approche :** `moka-lab.js`, les images du bas de page,
-  les affiches des vidéos (`data-poster`, appliquées par `loadPoster()` ; un `<noscript>`
-  garde l'image sans JavaScript), les vidéos (la scène courante et la suivante seulement),
+  les affiches des vidéos (`data-poster`, chargées par `loadPoster()` ; l'image recouvre le
+  lecteur jusqu'à la première image vidéo prête à l'affichage ; un `<noscript>` garde
+  l'image sans JavaScript), les vidéos (lecture quand un tiers du cadre est visible),
   les images de l'histoire Moka (en 640 px pour la mosaïque).
 - **Repoussé après le titre :** l'échantillonnage des mots-clés des bulles (~270 ms, un
   mot par tâche, `WARM_AT`), la première mesure de l'histoire
@@ -439,6 +440,7 @@ hors des mots, image par image) ; l'ancienne version donne ~60 % pendant ~170 ms
 - **Titre du hero** : `telaventis.js` §9a (ombre douce d'après « Shadow Text », force 0,30) et §9d. Dans les trois langues, `data-hero-phrase` délimite la partie qui tourne, indépendamment de la ponctuation. La première valeur participe à la vague du titre (§2c), puis ses lettres d'origine ne quittent leur place qu'au début de la première transition, 0,5 s après la fin de la vague. Les valeurs et leurs images vivent dans `data-words` et `data-art` sur le `<h1>`. En italien, la boucle commence par « la tua attività » puis « il tuo ristorante » et le « ? » reste à côté. Les `<br class="br-always">` gardent les sauts de ligne à toutes les largeurs. Le flou de « Text Morph » a été essayé puis écarté.
 - **Section des phrases** (`telaventis-fx.js` §6 et §7) : mots-clés en encre (solveur de fluide WebGL2, d'après « Ink Background » ; police des mots-clés inchangée, les mots autour sont en Archivo léger), plus de bulles qui suivent le curseur, repère « goutte » dans la marge droite (fil sinueux, goutte à vitesse variable, pas de texte) à la place du repère du hero. Le flow field a été retiré (demande de Leonardo).
 - **Deuxième vague du titre** : le garde-fou de fluidité concerne l'effet continu de la souris. La rafale d'entrée traverse toujours le titre de gauche à droite. Son retour au repos tient compte du temps écoulé entre deux images.
+- **Transitions entre pages** : le balayage diagonal révèle la nouvelle page au-dessus d'une capture opaque de la page précédente. Garder cette base opaque évite de découvrir brièvement le fond du navigateur.
 - **Boutons** (`a.btn`) : texte qui roule (« Slide Text Button »). **Barre des projets** : trait qui s'ouvre autour du projet courant (« Morphic Navbar »). **Démo de la page menu** : pastille d'état, boutons − / + sur les prix, bulle dans le téléphone (§9e).
 - **Moka** : cadre du navigateur plus grand, plus de chiffres, trait de progression moderne avec une goutte en tête ; la retenue après le titre « Même activité. Autre perception. » est ~1,2 s plus courte.
 - Crédits (Kokonut UI, Componentry) dans les trois `mentions-legales.html`.
