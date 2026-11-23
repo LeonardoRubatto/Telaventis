@@ -4,8 +4,8 @@
  *  1   staggered reveal-on-scroll for [data-reveal] — a handful of major
  *      narrative groups per page, not every card
  *  2   the "ink" pointer effect on [data-ink] headings (idle until near)
- *  2c  the home headline's weather: letters arrive wide and thin, a gust
- *      crosses, the pointer parts them (Archivo's wght/wdth axes)
+ *  2c  the home headline's weather: letters arrive wide and thin, and the
+ *      pointer parts them (Archivo's wght/wdth axes)
  *  3   hero band: the diagonal cut steepens and slips with scroll, the sky
  *      in the letters follows the pointer
  *  5   live proof: this page's own numbers (Performance API)
@@ -38,8 +38,8 @@
     var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     return !!(c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || '')));
   }());
-  /* Load the still only as its scene nears, and keep it over the video
-     until a decoded frame reaches the compositor. */
+  /* Keep the still over the video until the compositor has received two
+     frames. Keep a copy behind the video if its surface becomes transparent. */
   var loadPoster = function (v) {
     var p = v.getAttribute && v.getAttribute('data-poster');
     if (!p || v.parentElement.querySelector('.cst__poster')) return;
@@ -49,9 +49,14 @@
     still.decoding = 'async';
     still.src = p;
     screen.appendChild(still);
+    still.addEventListener('load', function () {
+      screen.style.backgroundImage = 'url("' + still.src + '")';
+    }, { once: true });
     var showFrame = function () { if (!v.error) screen.classList.add('has-frame'); };
     v.addEventListener('playing', function () {
-      if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(showFrame);
+      if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(function () {
+        v.requestVideoFrameCallback(function () { requestAnimationFrame(showFrame); });
+      });
       else requestAnimationFrame(function () { requestAnimationFrame(showFrame); });
     }, { once: true });
     v.addEventListener('error', function () { screen.classList.remove('has-frame'); });
@@ -264,9 +269,7 @@
    * drives both, letter by letter (after design-memory's variable-font
    * items — hover-by-letter, font-and-cursor — without React/Motion):
    *  · arrival: every letter blows in wide and thin and settles into the
-   *    heavy, upright setting, left to right, like a gust dying down;
-   *  · then one gust crosses the line: a band of letters opens (lighter,
-   *    wider) and closes again as it passes — phones get this too;
+   *    heavy, upright setting, left to right;
    *  · with a mouse, the letters near the pointer open the same way and
    *    close behind it, so the title parts around the cursor like grass.
    * Lines are measured once the font is in and each is locked (nowrap), so
@@ -360,46 +363,37 @@
     var W_REST = 750, W_OPEN = 360, D_REST = 100, D_OPEN = 125;
     var wtCur = wtChars.map(function () { return 0; });   /* 0 = at rest, 1 = fully open */
     var wtPtr = { x: -1e5, y: -1e5, on: false };
-    var gustT0 = 0, GUST_MS = 1700, gustPending = false, wtRaf = 0, wtReady = false;
+    var wtRaf = 0, wtReady = false;
     /* Changing a letter's weight/width re-shapes it and re-lays-out its line,
        which is real work (tens of letters, every frame). So: values are
        quantised (a handful of distinct instances per letter, which the font
        cache then reuses instead of re-shaping a new one each frame), a letter
-       is only written when its value changes. The timed gust always finishes.
-       The continuous pointer effect can stop if rendering remains slow. */
+       is only written when its value changes. The continuous pointer effect
+       can stop if rendering remains slow. */
     var wtW = wtChars.map(function () { return W_REST; }), wtD = wtChars.map(function () { return D_REST; });
     var wtOff = false, wtSlow = 0, wtLastNow = 0;
     var wtStop = function () {
-      wtOff = true; gustT0 = 0; wtPtr.on = false;
+      wtOff = true; wtPtr.on = false;
       for (var i = 0; i < wtChars.length; i++) { wtChars[i].style.removeProperty('--wg'); wtChars[i].style.removeProperty('--wd'); wtW[i] = W_REST; wtD[i] = D_REST; }
     };
     var wtFrame = function (now) {
       wtRaf = 0;
       if (wtOff) return;
       var dt = wtLastNow ? now - wtLastNow : 1000 / 60;
-      if (wtPtr.on && !gustPending && dt < 120) {
+      if (wtPtr.on && dt < 120) {
         if (dt > 28) { if (++wtSlow >= 10) { wtStop(); return; } } else if (wtSlow > 0) wtSlow--;
       } else wtSlow = 0;
       wtLastNow = now;
       var blend = 1 - Math.pow(0.84, Math.min(dt, 120) * 60 / 1000);
       var b = windTitle.getBoundingClientRect();
       var px = wtPtr.x - b.left, py = wtPtr.y - b.top, R = wtFs * 1.35;
-      var gx = -1;
-      if (gustT0) {
-        var g = (now - gustT0) / GUST_MS;
-        if (g >= 1) gustT0 = 0; else gx = -0.15 + g * 1.3;     /* the gust's centre, in title widths */
-      }
-      var moving = false, bw = b.width || 1;
+      var moving = false;
       for (var i = 0; i < wtChars.length; i++) {
         var p = wtPos[i]; if (!p) continue;
         var target = 0;
         if (wtPtr.on) {
           var dx = p.x - px, dy = (p.y - py) * 1.5, d = Math.sqrt(dx * dx + dy * dy);
           if (d < R) { var f = 1 - d / R; target = f * f * (3 - 2 * f); }
-        }
-        if (gx > -1) {
-          var gd = (p.x / bw) - gx;
-          target = Math.max(target, 0.8 * Math.exp(-(gd * gd) / 0.012));
         }
         var c = wtCur[i] + (target - wtCur[i]) * blend;
         if (Math.abs(c - wtCur[i]) > 0.001 || Math.abs(target - c) > 0.002) moving = true;
@@ -409,13 +403,7 @@
         if (nw !== wtW[i]) { wtW[i] = nw; wtChars[i].style.setProperty('--wg', nw); }
         if (nd !== wtD[i]) { wtD[i] = nd; wtChars[i].style.setProperty('--wd', nd); }
       }
-      /* The pointer can keep letters moving after the gust has passed. */
-      if (gustPending && !gustT0 && (!moving || wtPtr.on)) {
-        gustPending = false;
-        windTitle.classList.add('wt-gust-ended');
-        windTitle.dispatchEvent(new Event('hero-gust-end'));
-      }
-      if (moving || gustT0 || wtPtr.on) wtRaf = requestAnimationFrame(wtFrame); else wtLastNow = 0;
+      if (moving || wtPtr.on) wtRaf = requestAnimationFrame(wtFrame); else wtLastNow = 0;
     };
     var wtKick = function () { if (wtReady && !wtOff && !wtRaf) wtRaf = requestAnimationFrame(wtFrame); };
     /* The title never waits for the network. Three cases, decided once, at
@@ -431,7 +419,7 @@
          size-matched fallback face: leave it exactly where it is, never
          hide and replay it (that blank-then-again was the glitch on a slow
          first visit), and when Archivo arrives re-lock the lines on the
-         real face and let the gust cross.
+         real face.
        The face swap itself moves nothing: the fallback is scaled to
        Archivo's measured widths (telaventis.css). */
     var arrive = (wtChars.length * 14 + 60 + 1000), wtStarted = false;
@@ -462,6 +450,9 @@
          resize (both currently skipped for layWords by wt-settled's own
          guard) shifted anything. */
       layWords();
+      wtBox.addEventListener('animationstart', function () {
+        windTitle.classList.add('wt-visible');
+      }, { once: true });
       windTitle.classList.add('wt-host');
       setTimeout(settleTitle, arrive);
     };
@@ -469,18 +460,16 @@
       windTitle.classList.add('wt-settled');
       windTitle.removeAttribute('data-ink-wait');
       layWords();
-      wtMeasure();
+      if (pointerFine) wtMeasure();
       wtReady = true;
-      gustT0 = performance.now();
-      gustPending = true;
-      wtKick();
+      if (wtPtr.on) wtKick();
     };
     var wtMode = '', plainTimer = 0;
     var plainStart = function () {
       if (wtStarted) return;
       wtStarted = true; wtMode = 'plain';
       layWords();
-      windTitle.classList.add('wt-host', 'wt-settled');   /* settled = no arrival animation: it simply shows */
+      windTitle.classList.add('wt-host', 'wt-settled', 'wt-visible');   /* no arrival animation: it simply shows */
     };
     /* A CSS animation runs on the clock, not on frames: started in the middle
        of the page's start-up (a first layout of the whole page, scripts, the
@@ -941,8 +930,8 @@
 
 (function () {
   'use strict';
-  /* 9d. The hero title's changing part. "votre activité" (the "votre" included) stays as it is until half a second after
-     the gust; then the next value takes its place — "votre entreprise", "votre association", "votre boutique", "votre agence",
+  /* 9d. The first rotation starts two seconds after the title begins to appear.
+     Then the next value takes its place — "votre entreprise", "votre association", "votre boutique", "votre agence",
      and back. Only that part changes. It gets the title's own effect: every letter of the incoming value arrives the way the
      title's letters did (rise, a slight widening that relaxes, staggered 14 ms apart), the outgoing letters lift away, the
      letters follow the pointer like the title's (weight and width opening near the cursor), the pointer-ink and the title's
@@ -963,7 +952,14 @@
   var words = title.getAttribute('data-words').split('|'), arts = (title.getAttribute('data-art') || '').split('|');
   var me = document.querySelector('script[src*="telaventis.js"]');
   var base = me ? new URL('art/', me.src).href : '/assets/art/';   /* next to the scripts, whatever the page's depth or the server's root */
-  var POS = [[0.38, 0.30], [0.52, 0.40], [0.40, 0.58], [0.60, 0.48], [0.30, 0.60]];   /* where in each painting the letters look: away from the corners (the signature) */
+  /* Frame the lighter parts of each artwork consistently across translations. */
+  var POS = {
+    'susan-j-harris.webp': [0.34, 0.42],
+    'alexandra-fox.webp': [0.53, 0.44],
+    'rathi-thevi-5.jpg': [0.51, 0.48],
+    'cafe-delight.webp': [0.59, 0.42],
+    'cumulus03.avif': [0.46, 0.53]
+  };
   var clamp = function (v) { return Math.min(1, Math.max(0, v)); };
   var SKY = 'cumulus03.avif';   /* the painting behind the TELAVENTIS wordmark: the value that closes the loop ("votre activité" again) is filled with it */
   var ok = {};   /* artwork url -> loaded */
@@ -1009,7 +1005,9 @@
     var artFor = function (k) { var f = fileFor(k, returned); return f ? base + f : ''; };
     var ahead = function () { load(fileFor(idx + 1, returned)); load(fileFor(idx + 2, returned)); };   /* only the next two pictures, never all of them */
     var paint = function (n, k) {
-      var u = artFor(k), cs = n._f.children, W = n.offsetWidth || 1, p = POS[k % POS.length], i;
+      var file = fileFor(k, returned);
+      var u = artFor(k), cs = n._f.children, W = n.offsetWidth || 1, p = POS[file] || [0.5, 0.5], i;
+      var size = Math.max(W * 1.7, 350);
       var art = !!(u && ok[u]);
       n._artUrl = art ? u : '';
       n.classList.toggle('tmorph__l--art', art);
@@ -1017,7 +1015,6 @@
       for (i = 0; i < cs.length; i++) {
         var c = cs[i];
         if (art) {
-          var size = Math.max(W * 2.2, 420);
           c.style.backgroundImage = 'url(' + u + ')';
           c.style.backgroundSize = size.toFixed(0) + 'px auto';
           c.style.backgroundPosition = (-(c.offsetLeft + (size - W) * p[0])).toFixed(1) + 'px ' + (p[1] * 100).toFixed(0) + '%';
@@ -1092,8 +1089,7 @@
     title.addEventListener('pointerleave', function () { paused = false; ptr = null; kick(); });
     if (fine) document.querySelector('.hero').addEventListener('pointermove', function (e) { ptr = { x: e.clientX, y: e.clientY }; kick(); }, { passive: true });
     new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }).observe(title);
-    if (title.classList.contains('wt-gust-ended')) schedule(500);
-    else title.addEventListener('hero-gust-end', function () { schedule(500); }, { once: true });
+    schedule(2000);
   };
 
   var begin = function () {
@@ -1101,13 +1097,15 @@
     if (!host) return;
     build(host);
   };
-  /* wait for the arrival to be over (class wt-settled, added by §2c): a light poll, up to 25 s, then give up (the title stays as it is) */
-  if (title.classList.contains('wt-settled')) begin();
-  else {
-    var tries = 0, iv = setInterval(function () {
-      if (title.classList.contains('wt-settled')) { clearInterval(iv); begin(); }
-      else if (++tries > 83) clearInterval(iv);
-    }, 300);
+  /* Start the countdown with the first letter's entrance or the static fallback. */
+  if (title.classList.contains('wt-visible')) begin();
+  else if (title.querySelector('.wt [data-hero-phrase]')) {
+    var visible = new MutationObserver(function () {
+      if (!title.classList.contains('wt-visible')) return;
+      visible.disconnect();
+      begin();
+    });
+    visible.observe(title, { attributes: true, attributeFilter: ['class'] });
   }
 }());
 
