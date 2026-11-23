@@ -1318,6 +1318,8 @@ html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{an
 .tmorph__strut{visibility:hidden;white-space:pre}   /* (an inline-block with overflow:hidden has its baseline at its bottom edge, which is what had raised the word) */
 .tmorph__l{position:absolute;left:0;top:0;display:block;width:max-content;white-space:pre;transition:left .7s cubic-bezier(.22,1,.36,1)}   /* the outgoing word re-centres in the new width with the same easing as the box: it used to jump sideways at the start of a change */   /* no transform on the layers: a transformed layer is drawn apart and escapes the heading's pointer-ink clip (letters went blurry or ghosted) */
 .tmorph__f{display:block}
+/* Keep the artwork above its shadow after the letter transforms end. */
+.tmorph__l--art .tmorph__f{position:relative;z-index:1}
 .tmorph__l--original .tmorph__f{white-space:normal}
 /* an ink word carries its own colour: the heading's pointer-ink makes the heading's own text transparent and paints a picture through it, which does not reach these positioned letters (they showed up white for a moment) */
 .tmorph__l:not(.tmorph__l--art) .tmorph__f .wt-c{color:var(--ink);-webkit-text-fill-color:var(--ink)}
