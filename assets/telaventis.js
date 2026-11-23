@@ -266,27 +266,44 @@
    * sentence (aria-label); the letters are aria-hidden. */
   var windTitle = document.querySelector('.hero .h-hero');
   if (windTitle && !reduce && window.CSS && CSS.supports('font-variation-settings', '"wght" 700')) {
-    var rawTitle = Array.prototype.map.call(windTitle.childNodes, function (n) { return n.nodeName === 'BR' ? (n.classList.contains('br-always') ? '\u2028' : '\n') : n.textContent; }).join('');   /* a <br> is a hard break, kept as \n */
-    windTitle.setAttribute('aria-label', rawTitle.replace(/\s+/g, ' ').trim());
+    var rawTitle = Array.prototype.map.call(windTitle.childNodes, function (n) {
+      if (n.nodeName === 'BR') return n.classList.contains('br-always') ? '\u2028' : '\n';
+      return n.nodeType === 1 && n.hasAttribute('data-hero-phrase') ? '\u0001' + n.textContent + '\u0002' : n.textContent;
+    }).join('');
+    var plainTitle = rawTitle.replace(/[\u0001\u0002]/g, '');
+    windTitle.setAttribute('aria-label', plainTitle.replace(/\s+/g, ' ').trim());
     var wtBox = document.createElement('span');
     wtBox.className = 'wt';
     wtBox.setAttribute('aria-hidden', 'true');
     var wtChars = [], wtWords = [];
-    rawTitle.split(/( +|\n|\u2028)/).forEach(function (tok) {   /* regular spaces only: a no-break space stays inside its word */
+    var addLetters = function (box, word) {
+      Array.prototype.forEach.call(word, function (ch) {
+        var c = document.createElement('span');
+        c.className = 'wt-c';
+        c.textContent = ch;
+        c.style.setProperty('--i', wtChars.length);
+        wtChars.push(c);
+        box.appendChild(c);
+      });
+    };
+    rawTitle.split(/(\u0001[^\u0002]*\u0002[^ \n\u2028]*| +|\n|\u2028)/).forEach(function (tok) {
       if (!tok) return;
       if (tok === '\u2028') { var br2 = document.createElement('br'); br2.className = 'wt-br wt-br--always'; wtWords.push(br2); return; }   /* a break kept at every width */
       if (tok === '\n') { var br = document.createElement('br'); br.className = 'wt-br'; wtWords.push(br); return; }   /* hard break; shown only where CSS displays .wt-br */
       if (/^ +$/.test(tok)) { wtWords.push(null); return; }
       var w = document.createElement('span');
       w.className = 'wt-w';
-      Array.prototype.forEach.call(tok, function (ch) {
-        var c = document.createElement('span');
-        c.className = 'wt-c';
-        c.textContent = ch;
-        c.style.setProperty('--i', wtChars.length);
-        wtChars.push(c);
-        w.appendChild(c);
-      });
+      if (tok.charAt(0) === '\u0001') {
+        var parts = tok.slice(1).split('\u0002');
+        var phrase = document.createElement('span');
+        phrase.setAttribute('data-hero-phrase', '');
+        parts[0].split(/( )/).forEach(function (part) {
+          if (part === ' ') phrase.appendChild(document.createTextNode(part));
+          else addLetters(phrase, part);
+        });
+        w.appendChild(phrase);
+        addLetters(w, parts[1]);   /* punctuation stays next to the slot, outside the rotation */
+      } else addLetters(w, tok);
       wtWords.push(w);
     });
     var layWords = function () {
@@ -339,10 +356,8 @@
        which is real work (tens of letters, every frame). So: values are
        quantised (a handful of distinct instances per letter, which the font
        cache then reuses instead of re-shaping a new one each frame), a letter
-       is only written when its value actually changed, and if the page cannot
-       keep up while the effect runs (slow frames, 10 in a row) the effect is
-       dropped for good and the letters return to rest: a title that stays
-       still is better than one that stutters. The lite tier never runs it. */
+       is only written when its value changes. The timed gust always finishes.
+       The continuous pointer effect can stop if rendering remains slow. */
     var wtW = wtChars.map(function () { return W_REST; }), wtD = wtChars.map(function () { return D_REST; });
     var wtOff = false, wtSlow = 0, wtLastNow = 0;
     var wtStop = function () {
@@ -352,11 +367,12 @@
     var wtFrame = function (now) {
       wtRaf = 0;
       if (wtOff) return;
-      if (wtLastNow && now - wtLastNow < 120) {
-        /* only judge frames that follow each other (not the gap after idling) */
-        if (now - wtLastNow > 28) { if (++wtSlow >= 10) { wtStop(); return; } } else if (wtSlow > 0) wtSlow--;
-      }
+      var dt = wtLastNow ? now - wtLastNow : 1000 / 60;
+      if (wtPtr.on && !gustT0 && dt < 120) {
+        if (dt > 28) { if (++wtSlow >= 10) { wtStop(); return; } } else if (wtSlow > 0) wtSlow--;
+      } else wtSlow = 0;
       wtLastNow = now;
+      var blend = 1 - Math.pow(0.84, Math.min(dt, 120) * 60 / 1000);
       var b = windTitle.getBoundingClientRect();
       var px = wtPtr.x - b.left, py = wtPtr.y - b.top, R = wtFs * 1.35;
       var gx = -1;
@@ -376,10 +392,11 @@
           var gd = (p.x / bw) - gx;
           target = Math.max(target, 0.8 * Math.exp(-(gd * gd) / 0.012));
         }
-        var c = wtCur[i] + (target - wtCur[i]) * 0.16;
+        var c = wtCur[i] + (target - wtCur[i]) * blend;
         if (Math.abs(c - wtCur[i]) > 0.001 || Math.abs(target - c) > 0.002) moving = true;
         wtCur[i] = c;
-        var nw = Math.round((W_REST + (W_OPEN - W_REST) * c) / 18) * 18, nd = Math.round((D_REST + (D_OPEN - D_REST) * c) / 2.5) * 2.5;
+        var nw = W_REST + Math.round((W_OPEN - W_REST) * c / 18) * 18;
+        var nd = D_REST + Math.round((D_OPEN - D_REST) * c / 2.5) * 2.5;
         if (nw !== wtW[i]) { wtW[i] = nw; wtChars[i].style.setProperty('--wg', nw); }
         if (nd !== wtD[i]) { wtD[i] = nd; wtChars[i].style.setProperty('--wd', nd); }
       }
@@ -394,8 +411,8 @@
          letters blow in wide and thin and settle. Archivo itself is
          preloaded in the head, so on a good connection this is the case.
        · Archivo is not in yet, but the title is still held by the CSS: wait
-         for it at most 450 ms, then show the title as it is.
-       · The CSS fail-safe (0.6 s) has already shown the title in the
+         for it until the CSS fail-safe, then show the title as it is.
+       · The CSS fail-safe (1.1 s) has already shown the title in the
          size-matched fallback face: leave it exactly where it is, never
          hide and replay it (that blank-then-again was the glitch on a slow
          first visit), and when Archivo arrives re-lock the lines on the
@@ -407,7 +424,7 @@
       if (wtStarted) return;
       /* the fail-safe may have shown the title while we waited for a smooth
          moment: never hide it again to replay it */
-      if (parseFloat(getComputedStyle(windTitle).opacity) > 0.5) { plainStart(); return; }
+      if (parseFloat(getComputedStyle(windTitle).opacity) > 0.5) { plainStart(); settleTitle(); return; }
       wtStarted = true; wtMode = 'arrival';
       /* lock the lines NOW, one frame before any letter starts moving —
          layWords() measures the browser's own wrap at whatever width the
@@ -471,13 +488,10 @@
       else if (wtMode === 'plain') settleTitle();
     };
     var fonts = document.fonts;
-    var fontIn = (fonts && fonts.load) ? fonts.load('750 64px Archivo', rawTitle) : Promise.resolve();
-    var fontNow = true;
-    try { fontNow = !fonts || !fonts.check || fonts.check('750 64px Archivo', rawTitle); } catch (e) {}
+    var fontIn = (fonts && fonts.load) ? fonts.load('750 64px Archivo', plainTitle) : Promise.resolve();
     var shownAlready = parseFloat(getComputedStyle(windTitle).opacity) > 0.5;
     if (shownAlready) plainStart();
-    else if (fontNow) whenSmooth(startArrival);
-    else plainTimer = setTimeout(plainStart, 450);
+    else plainTimer = setTimeout(plainStart, 1100);
     fontIn.then(onFont, onFont);
     if (pointerFine) {
       var heroEl = document.querySelector('.hero');
@@ -944,10 +958,8 @@
   /* the file for step k (k counts from 0 = the landing value, which stays in ink) */
   var fileFor = function (k, returned) { var m = k % words.length; return (m === 0 && (k > 0 || returned)) ? SKY : arts[m]; };
 
-  var build = function (host, hide) {
+  var build = function (host) {
     var HOLD = 1000, ARRIVE = 1650;
-    /* the width the slot's original words occupy right now, measured before anything is replaced: the box starts at exactly that width, so what follows it on the line ("évidente ?") does not move by the few pixels that separate the original letters' widths from the new layer's */
-    var w0 = (hide.length ? hide[hide.length - 1].getBoundingClientRect().right : host.getBoundingClientRect().right) - host.getBoundingClientRect().left;
     var stage = document.createElement('span'); stage.className = 'tmorph__stage'; stage.setAttribute('aria-hidden', 'true');
     var strut = document.createElement('span'); strut.className = 'tmorph__strut';   /* an invisible, in-flow copy of the current value */
     var mkLayer = function () {
@@ -959,12 +971,6 @@
     };
     var a = mkLayer(), b = mkLayer();
     stage.appendChild(strut); stage.appendChild(a); stage.appendChild(b);
-    host.textContent = ''; host.classList.add('tmorph'); host.appendChild(stage);
-    /* the other words of the slot stay in the line (a hidden word with no box would make §2c's line-locking start a new line),
-       but with no width (and NOT overflow:hidden: an inline-block with overflow hidden sits on its bottom edge, which pushed the next line down when the slot was taken over), and pulled back by one space so the gap after the slot stays a single space */
-    var sp = document.createElement('span'); sp.style.cssText = 'position:absolute;visibility:hidden;white-space:pre'; sp.textContent = ' ​'; title.appendChild(sp);
-    var spw = sp.getBoundingClientRect().width; title.removeChild(sp);
-    hide.forEach(function (w) { w.style.cssText = 'display:inline-block;width:0;visibility:hidden;margin-left:-' + spw.toFixed(2) + 'px'; });
 
     var idx = 0, morphing = false, timer = 0, paused = false, onScreen = true, ptr = null, raf = 0;
     var cells = [];   /* the letters of the resting layer, with their centres, for the pointer */
@@ -1007,12 +1013,6 @@
         cells.push({ el: c, twin: a._s.children[i], x: r.left + r.width / 2, y: r.top + r.height / 2, w: 750, d: 100 });
       });
     };
-    var rest = function () {
-      b.style.visibility = 'hidden'; a.style.visibility = 'visible'; a.style.left = '0px'; b.style.left = '0px';
-      fill(a, idx); fill(b, idx + 1); strut.textContent = words[idx];
-      var t = stage.style.transition; stage.style.transition = 'none'; size(a); void stage.offsetWidth; stage.style.transition = t;
-      measure();
-    };
     /* the title's weather, reduced to a pointer: weight and width open near the cursor (quantised, written only when they change) */
     var weather = function () {
       raf = 0;
@@ -1030,8 +1030,20 @@
     var kick = function () { if (!raf) raf = requestAnimationFrame(weather); };
     var schedule = function (ms) { clearTimeout(timer); timer = setTimeout(go, ms); };
     var go = function () {
-      if (paused || !onScreen || document.hidden) { schedule(600); return; }
+      if (paused || (fine && title.matches(':hover')) || !onScreen || document.hidden) { schedule(600); return; }
       morphing = true;
+      if (!stage.isConnected) {
+        var width = host.getBoundingClientRect().width;
+        strut.textContent = words[0];
+        /* Keep the exact letters and spaces from the first reveal for their exit. */
+        while (host.firstChild) a._f.appendChild(host.firstChild);
+        a.classList.add('tmorph__l--original');
+        stage.style.width = width + 'px';
+        host.classList.add('tmorph');
+        host.appendChild(stage);
+        b.style.visibility = 'hidden';
+        fill(b, 1);
+      }
       var want = artFor(idx + 1); if (!!(want && ok[want]) !== !!b._artUrl) paint(b, idx + 1);   /* already built after the last change: no work at the start of a change */
       size(b);
       a.style.left = ((b.offsetWidth - a.offsetWidth) / 2).toFixed(1) + 'px';   /* centred in the width it is shrinking or growing to */
@@ -1049,28 +1061,24 @@
         schedule(HOLD);
       }, ARRIVE);
     };
-    rest(); ahead();
-    { var tr0 = stage.style.transition; stage.style.transition = 'none'; stage.style.width = w0.toFixed(2) + 'px'; void stage.offsetWidth; stage.style.transition = tr0; }
-    window.addEventListener('resize', function () { if (!morphing) rest(); }, { passive: true });
+    ahead();
+    window.addEventListener('resize', function () {
+      if (!stage.isConnected || morphing) return;
+      stage.style.transition = 'none';
+      size(a); paint(a, idx); measure();
+      stage.style.transition = '';
+    }, { passive: true });
     title.addEventListener('pointerenter', function () { paused = true; });
     title.addEventListener('pointerleave', function () { paused = false; ptr = null; kick(); });
     if (fine) document.querySelector('.hero').addEventListener('pointermove', function (e) { ptr = { x: e.clientX, y: e.clientY }; kick(); }, { passive: true });
     new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }).observe(title);
-    schedule(300);   /* built ~3.2 s after the title has arrived (see begin), so the first change is ~4 s after it */
+    schedule(3500);
   };
 
   var begin = function () {
-    var toks = words[0].split(' '), all = [].slice.call(title.querySelectorAll('.wt-w')), host = null, hide = [];
-    for (var i = 0; i + toks.length <= all.length && !host; i++) {
-      var good = true;
-      for (var k = 0; k < toks.length; k++) if (all[i + k].textContent !== toks[k]) { good = false; break; }
-      if (good) { host = all[i]; hide = all.slice(i + 1, i + toks.length); }
-    }
+    var host = title.querySelector('.wt [data-hero-phrase]');
     if (!host) return;
-    /* The slot is only taken over once the title's own "gust" (§2c, ~1.7 s after the arrival) has passed: until then the
-       original letters stay in place and take part in it, so nothing in the line looks out of step. The artworks load meanwhile. */
-    load(arts[1]);   /* just the first picture, as soon as the title has settled; the next ones are fetched two steps ahead (see `ahead`) */
-    setTimeout(function () { build(host, hide); }, 3200);
+    build(host);
   };
   /* wait for the arrival to be over (class wt-settled, added by §2c): a light poll, up to 25 s, then give up (the title stays as it is) */
   if (title.classList.contains('wt-settled')) begin();

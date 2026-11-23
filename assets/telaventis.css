@@ -1306,11 +1306,13 @@ html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{an
 
 /* the hero title's changing part (telaventis.js §9d): every letter arrives like the title's own, and from the second value
    on is filled with one of the site's artworks. */
-.tmorph{position:relative;display:inline-block;max-width:100%}
+.wt [data-hero-phrase]{display:inline-block}
+.tmorph{position:relative;max-width:100%}
 .tmorph__stage{position:relative;display:block;transition:width .7s cubic-bezier(.22,1,.36,1)}
 .tmorph__strut{visibility:hidden;white-space:pre}   /* (an inline-block with overflow:hidden has its baseline at its bottom edge, which is what had raised the word) */
 .tmorph__l{position:absolute;left:0;top:0;display:block;width:max-content;white-space:pre;transition:left .7s cubic-bezier(.22,1,.36,1)}   /* the outgoing word re-centres in the new width with the same easing as the box: it used to jump sideways at the start of a change */   /* no transform on the layers: a transformed layer is drawn apart and escapes the heading's pointer-ink clip (letters went blurry or ghosted) */
 .tmorph__f{display:block}
+.tmorph__l--original .tmorph__f{white-space:normal}
 /* an ink word carries its own colour: the heading's pointer-ink makes the heading's own text transparent and paints a picture through it, which does not reach these positioned letters (they showed up white for a moment) */
 .tmorph__l:not(.tmorph__l--art) .tmorph__f .wt-c{color:var(--ink);-webkit-text-fill-color:var(--ink)}
 .tmorph__s{position:absolute;left:0;top:0;display:none;white-space:pre;pointer-events:none}
