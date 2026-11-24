@@ -1277,11 +1277,13 @@ html.js .qr-demo:not(.is-touched) .qr-sheet tbody tr:first-child .qr-sheet__p{an
 @font-face{font-family:'Jakarta TV';font-style:normal;font-weight:800;font-display:swap;src:url('fonts/clients/plus-jakarta-sans-name.woff2') format('woff2')}
 @font-face{font-family:'Instrument Serif TV';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/clients/instrument-serif-name.woff2') format('woff2')}
 @font-face{font-family:'Cormorant TV';font-style:italic;font-weight:300 700;font-display:swap;src:url('fonts/clients/cormorant-garamond-italic-name.woff2') format('woff2')}
+@font-face{font-family:'Archivo Black TV';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/clients/archivo-black-name.woff2') format('woff2')}
 .scene--qualamantis{--nf:'Newsreader TV',var(--serif);--nw:300;--nls:-.03em}
 .scene--bde{--nf:'Unbounded TV',var(--sans);--nw:900;--ntt:uppercase;--nls:-.01em;--nsize:clamp(32px,3.9vw,66px)}
 .scene--wecalc{--nf:'Jakarta TV',var(--sans);--nw:800;--nls:-.04em}
 .scene--jeanne-randu{--nf:'Instrument Serif TV',var(--serif);--nw:400;--nls:-.02em;--nsize:clamp(52px,6.6vw,112px)}
 .scene--cave-antoine{--nf:'Cormorant TV',var(--serif);--nw:500;--nst:italic;--nls:-.01em;--nsize:clamp(48px,6.2vw,104px)}
+.scene--agora-dau{--nf:'Archivo Black TV',var(--sans);--nw:400;--nls:-.06em;--nsize:clamp(36px,4.6vw,78px)}
 .work-bar__item.scene--bde > span{font-size:15px}
 .cst.scene--bde .cst__name{font-size:clamp(30px,3.2vw,54px)}
 .cst.scene--bde .name-outline{-webkit-text-stroke-color:var(--fg)}

@@ -144,6 +144,8 @@ def vitrine(P, lg, pre):
     # défilement naturel), avec une barre qui suit le défilement mais qui porte
     # les CATÉGORIES génériques, pas les noms des clients (telaventis.js §7 la
     # suit : le projet en vue est souligné à la couleur de son client)
+    # "accueil": false dans projets.json = projet réservé à la page Travaux
+    P = [p for p in P if p.get('accueil', True)]
     bar = ''.join(
         f'\n      <a class="work-bar__item" href="#scene-{p["cle"]}" style="--ac:{p["couleurs"]["accent"]}">'
         f'<span>{esc(p["textes"][lg]["categorie"])}</span></a>' for p in P)

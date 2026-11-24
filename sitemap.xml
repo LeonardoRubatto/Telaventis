@@ -325,4 +325,31 @@
     <xhtml:link rel="alternate" hreflang="it" href="https://telaventis.fr/it/mentions-legales"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/mentions-legales"/>
   </url>
+  <url>
+    <loc>https://telaventis.fr/project-agora-dau</loc>
+    <lastmod>2026-11-24</lastmod>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://telaventis.fr/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://telaventis.fr/en/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://telaventis.fr/it/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/project-agora-dau"/>
+  </url>
+  <url>
+    <loc>https://telaventis.fr/en/project-agora-dau</loc>
+    <lastmod>2026-11-24</lastmod>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://telaventis.fr/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://telaventis.fr/en/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://telaventis.fr/it/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/project-agora-dau"/>
+  </url>
+  <url>
+    <loc>https://telaventis.fr/it/project-agora-dau</loc>
+    <lastmod>2026-11-24</lastmod>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://telaventis.fr/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://telaventis.fr/en/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://telaventis.fr/it/project-agora-dau"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://telaventis.fr/project-agora-dau"/>
+  </url>
 </urlset>

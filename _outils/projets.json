@@ -367,6 +367,81 @@
         ],
         "telephone": "https://caveantoine.pages.dev/la-cave.html"
       }
+    },
+    {
+      "cle": "agora-dau",
+      "nom": "Agora Dau",
+      "nom_html": null,
+      "site": "https://agoradau.pages.dev",
+      "site_libelle": "agoradau.pages.dev",
+      "couleurs": {
+        "fond": "#191412",
+        "texte": "#F0EDE6",
+        "accent": "#FF3B30",
+        "doux": "#B9AFA3"
+      },
+      "nuancier": [
+        "#F0EDE6",
+        "#0A0A0A",
+        "#191412",
+        "#FF3B30",
+        "#A81A16"
+      ],
+      "typos": "Archivo Black · Barlow Condensed · Source Sans 3",
+      "logo_barre": null,
+      "logo_titre": null,
+      "textes": {
+        "fr": {
+          "categorie": "Média étudiant",
+          "probleme": "un média étudiant sans lieu à lui : analyses, podcast et vie de l'association dispersés entre réseaux sociaux et documents.",
+          "reponse": "un site éditorial en papier et encre : le journal, Ago'radio et l'association au même endroit, avec une charte contre l'IA et une page pour proposer un sujet.",
+          "resume": "Média étudiant indépendant. Site en ligne.",
+          "legendes": [
+            "Le journal",
+            "Ago'radio, le podcast",
+            "Agora Dau, sur téléphone"
+          ]
+        },
+        "en": {
+          "categorie": "Student media",
+          "probleme": "a student outlet with no home of its own: analyses, podcast and association life scattered across social networks and documents.",
+          "reponse": "an editorial site in paper and ink: the journal, Ago'radio and the association in one place, with an anti-AI charter and a page to pitch a topic.",
+          "resume": "Independent student media. Live site.",
+          "legendes": [
+            "The journal",
+            "Ago'radio, the podcast",
+            "Agora Dau, on a phone"
+          ]
+        },
+        "it": {
+          "categorie": "Media studentesco",
+          "probleme": "un media studentesco senza una casa propria: analisi, podcast e vita dell'associazione sparsi tra social e documenti.",
+          "reponse": "un sito editoriale di carta e inchiostro: il giornale, Ago'radio e l'associazione in un solo posto, con una carta contro l'IA e una pagina per proporre un tema.",
+          "resume": "Media studentesco indipendente. Sito online.",
+          "legendes": [
+            "Il giornale",
+            "Ago'radio, il podcast",
+            "Agora Dau, su smartphone"
+          ]
+        }
+      },
+      "police_nom": {
+        "famille": "Archivo Black TV",
+        "fichier": "archivo-black-name.woff2",
+        "graisse": "400",
+        "style": "normal",
+        "repli": "var(--sans)",
+        "reglages": "--nw:400;--nls:-.06em;--nsize:clamp(36px,4.6vw,78px)"
+      },
+      "css_en_plus": null,
+      "captures": {
+        "ordinateur": [
+          "https://agoradau.pages.dev/journal/",
+          "https://agoradau.pages.dev/ecouter/"
+        ],
+        "telephone": "https://agoradau.pages.dev/"
+      },
+      "accueil": false
     }
   ]
 }
