@@ -992,7 +992,7 @@
   var fileFor = function (k, returned) { var m = k % words.length; return (m === 0 && (k > 0 || returned)) ? SKY : arts[m]; };
 
   var build = function (host) {
-    var HOLD = 1000, ARRIVE = 1650;
+    var HOLD = 500, ARRIVE = 1650;
     var stage = document.createElement('span'); stage.className = 'tmorph__stage'; stage.setAttribute('aria-hidden', 'true');
     var strut = document.createElement('span'); strut.className = 'tmorph__strut';   /* an invisible, in-flow copy of the current value */
     var mkLayer = function () {
