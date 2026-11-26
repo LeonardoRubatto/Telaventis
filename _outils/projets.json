@@ -76,7 +76,7 @@
     },
     {
       "cle": "bde",
-      "version_medias": "c9007ff",
+      "version_medias": "05eedf8",
       "nom": "BDE Dauphine",
       "nom_html": "BDE <span class=\"name-outline\">Dauphine</span>",
       "site": "https://bdedauphine.fr",
@@ -104,7 +104,7 @@
           "legendes": [
             "Les événements",
             "Le label Les Nuits Dauphine",
-            "How We Dau, sur téléphone"
+            "L’accueil sur mobile"
           ]
         },
         "en": {
@@ -115,7 +115,7 @@
           "legendes": [
             "Events",
             "The Nuits Dauphine label",
-            "How We Dau, on a phone"
+            "The homepage on mobile"
           ]
         },
         "it": {
@@ -126,7 +126,7 @@
           "legendes": [
             "Gli eventi",
             "Il marchio Les Nuits Dauphine",
-            "How We Dau, su smartphone"
+            "La homepage su smartphone"
           ]
         }
       },
