@@ -71,10 +71,10 @@ def style(p):
     return f"--bg:{c['fond']};--fg:{c['texte']};--ac:{c['accent']};--mu:{c['doux']}"
 
 
-def video(pre, k, kind, cls, vt=False):
+def video(pre, k, kind, cls, vt=False, version=''):
     w, h = (1280, 800) if kind == 'desk' else (360, 780)
     v = f' style="view-transition-name:shot-{k}"' if vt else ''
-    poster = f'{pre}assets/video/{k}-{kind}-poster.webp'
+    poster = f'{pre}assets/video/{k}-{kind}-poster.webp{version}'
     # data-poster, not poster: a browser fetches a poster the moment it sees
     # the attribute, even with preload="none" - ten of them were taking the
     # headline's bandwidth on a slow first visit. telaventis.js applies them
@@ -82,18 +82,18 @@ def video(pre, k, kind, cls, vt=False):
     # takes the video's place (telaventis.css hides the video then).
     return (f'<span class="cst__screen"{v}><video class="{cls}" muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true" tabindex="-1" '
             f'width="{w}" height="{h}" data-poster="{poster}">'
-            f'<source src="{pre}assets/video/{k}-{kind}.webm" type="{AV1}">'
-            f'<source src="{pre}assets/video/{k}-{kind}.mp4" type="video/mp4"></video>'
+            f'<source src="{pre}assets/video/{k}-{kind}.webm{version}" type="{AV1}">'
+            f'<source src="{pre}assets/video/{k}-{kind}.mp4{version}" type="video/mp4"></video>'
             f'<noscript><img class="{cls}" src="{poster}" width="{w}" height="{h}" alt=""></noscript></span>')
 
 
 # ---------------------------------------------------------------- travaux --
-def shot(pre, k, kind, sizes):
+def shot(pre, k, kind, sizes, version=''):
     w1, w2 = (420, 780) if kind == 'm1' else (900, 1440)
     h = 1688 * w1 // 780 if kind == 'm1' else round(900 * w1 / 1440)
-    return (f'<picture><source type="image/avif" srcset="{pre}assets/work/{k}-{kind}-{w1}.avif {w1}w, {pre}assets/work/{k}-{kind}-{w2}.avif {w2}w" sizes="{sizes}">'
-            f'<source type="image/webp" srcset="{pre}assets/work/{k}-{kind}-{w1}.webp {w1}w, {pre}assets/work/{k}-{kind}-{w2}.webp {w2}w" sizes="{sizes}">'
-            f'<img src="{pre}assets/work/{k}-{kind}-{w1}.webp" width="{w1}" height="{h}" alt="" loading="lazy" decoding="async"></picture>')
+    return (f'<picture><source type="image/avif" srcset="{pre}assets/work/{k}-{kind}-{w1}.avif{version} {w1}w, {pre}assets/work/{k}-{kind}-{w2}.avif{version} {w2}w" sizes="{sizes}">'
+            f'<source type="image/webp" srcset="{pre}assets/work/{k}-{kind}-{w1}.webp{version} {w1}w, {pre}assets/work/{k}-{kind}-{w2}.webp{version} {w2}w" sizes="{sizes}">'
+            f'<img src="{pre}assets/work/{k}-{kind}-{w1}.webp{version}" width="{w1}" height="{h}" alt="" loading="lazy" decoding="async"></picture>')
 
 
 def barre(P, lg, pre):
@@ -116,6 +116,7 @@ def travaux(P, lg, pre, home=False):
         logo = (f'\n        <img class="cst__logo" src="{pre}assets/logos/{p["logo_titre"]}" width="160" height="160" alt="">'
                 if p.get('logo_titre') else '')
         cap = t['legendes']
+        version = f'?v={attr(p["version_medias"])}' if p.get('version_medias') else ''
         # the previous block's ground, for the liquid seam (telaventis.css: .cst::before/::after)
         pv = f";--pv:{P[i - 1]['couleurs']['fond']}" if i else ''
         out.append(f'''
@@ -128,11 +129,11 @@ def travaux(P, lg, pre, home=False):
       </header>
       <div class="cst__stage">
         <a class="cst__main" href="project-{k}" aria-label="{attr(l['joue'].format(n=p['nom']))}">
-          {video(pre, k, 'desk', 'cst__video', vt=True)}
+          {video(pre, k, 'desk', 'cst__video', vt=True, version=version)}
         </a>
-        <figure class="cst__float cst__float--a">{shot(pre, k, 'd1', '(min-width:1000px) 28vw, 44vw')}<figcaption>{esc(cap[0])}</figcaption></figure>
-        <figure class="cst__float cst__float--b">{shot(pre, k, 'd2', '(min-width:1000px) 26vw, 44vw')}<figcaption>{esc(cap[1])}</figcaption></figure>
-        <figure class="cst__float cst__float--phone">{video(pre, k, 'phone', 'cst__video cst__video--phone')}<figcaption>{esc(cap[2])}</figcaption></figure>
+        <figure class="cst__float cst__float--a">{shot(pre, k, 'd1', '(min-width:1000px) 28vw, 44vw', version=version)}<figcaption>{esc(cap[0])}</figcaption></figure>
+        <figure class="cst__float cst__float--b">{shot(pre, k, 'd2', '(min-width:1000px) 26vw, 44vw', version=version)}<figcaption>{esc(cap[1])}</figcaption></figure>
+        <figure class="cst__float cst__float--phone">{video(pre, k, 'phone', 'cst__video cst__video--phone', version=version)}<figcaption>{esc(cap[2])}</figcaption></figure>
       </div>
     </div>
   </article>''')

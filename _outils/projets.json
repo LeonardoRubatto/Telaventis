@@ -76,6 +76,7 @@
     },
     {
       "cle": "bde",
+      "version_medias": "c9007ff",
       "nom": "BDE Dauphine",
       "nom_html": "BDE <span class=\"name-outline\">Dauphine</span>",
       "site": "https://bdedauphine.fr",
